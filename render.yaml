@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: tapza-app
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend run:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PORT
+        value: 10000

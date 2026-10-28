@@ -1,0 +1,659 @@
+from flask import Blueprint, request, jsonify, g, current_app
+from app.db import get_db, transaction
+from app.utils.auth_helpers import token_required, role_required
+from app.services.broadcast_service import (
+    create_broadcast_order,
+    compute_remaining_seconds,
+    get_current_utc_timestamp,
+    format_iso_timestamp
+)
+
+order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
+
+@order_bp.route("", methods=["POST"])
+@token_required
+@role_required("CUSTOMER")
+def create_order():
+    data = request.get_json() or {}
+    items = data.get("items") or []
+    delivery_address = (data.get("delivery_address") or "").strip()
+    zone = (data.get("zone") or g.zone or "").strip().upper()
+
+    if not items or not isinstance(items, list):
+        return jsonify({"error": "Order must contain at least one medicine item"}), 400
+
+    if not delivery_address:
+        return jsonify({"error": "Delivery address is required"}), 400
+
+    if not zone:
+        return jsonify({"error": "Delivery zone is required (e.g. ZONE_A, ZONE_B)"}), 400
+
+    db = get_db()
+    broadcast_seconds = current_app.config.get("BROADCAST_WINDOW_SECONDS", 240)
+
+    try:
+        result = create_broadcast_order(
+            db=db,
+            customer_id=g.user_id,
+            zone=zone,
+            delivery_address=delivery_address,
+            items=items,
+            broadcast_seconds=broadcast_seconds
+        )
+        return jsonify({
+            "message": "Order created and broadcasted successfully",
+            "order": result
+        }), 201
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to create order: {str(e)}"}), 500
+
+
+@order_bp.route("/prescription", methods=["POST"])
+@token_required
+@role_required("CUSTOMER")
+def create_prescription_order():
+    data = request.get_json() or {}
+    prescription_image = (data.get("prescription_image") or "").strip()
+    delivery_address = (data.get("delivery_address") or "").strip()
+    zone = (data.get("zone") or g.zone or "").strip().upper()
+    notes = (data.get("notes") or "").strip()
+
+    if not prescription_image:
+        return jsonify({"error": "Prescription image is required"}), 400
+
+    if not delivery_address:
+        return jsonify({"error": "Delivery address is required"}), 400
+
+    if not zone:
+        return jsonify({"error": "Delivery zone is required (e.g. Warangal, Hanamkonda, Kazipet)"}), 400
+
+    db = get_db()
+    broadcast_seconds = current_app.config.get("BROADCAST_WINDOW_SECONDS", 240)
+    now_ts = get_current_utc_timestamp()
+    expires_ts = now_ts + broadcast_seconds
+    started_at_str = format_iso_timestamp(now_ts)
+    expires_at_str = format_iso_timestamp(expires_ts)
+
+    try:
+        with transaction(db):
+            cursor = db.execute(
+                """
+                INSERT INTO orders (
+                    customer_id, zone, delivery_address, status,
+                    broadcast_started_at, broadcast_expires_at, total_mrp, final_amount, mock_payment_status,
+                    order_type, prescription_url, prescription_notes, is_ocr_scanned
+                )
+                VALUES (?, ?, ?, 'BROADCASTING', ?, ?, 0.0, 0.0, 'UNPAID', 'PRESCRIPTION', ?, ?, 0)
+                """,
+                (
+                    g.user_id,
+                    zone,
+                    delivery_address,
+                    started_at_str,
+                    expires_at_str,
+                    prescription_image,
+                    notes
+                )
+            )
+            order_id = cursor.lastrowid
+
+            # Persist Customer Notification (Customer-friendly, Rapido/Swiggy style)
+            db.execute(
+                """
+                INSERT INTO notifications (user_id, title, message, event_type, reference_id)
+                VALUES (?, ?, ?, 'ORDER_REQUEST_PLACED', ?)
+                """,
+                (
+                    g.user_id,
+                    "Order Request Placed Successfully",
+                    "Your request has been processed successfully. Please wait until nearby pharmacies accept your request.",
+                    order_id
+                )
+            )
+
+            # Notify ALL active eligible pharmacies in this zone
+            cust_row = db.execute("SELECT full_name FROM users WHERE id = ?", (g.user_id,)).fetchone()
+            cust_name = cust_row["full_name"] if cust_row else "Customer"
+
+            eligible_pharmacies = db.execute(
+                """
+                SELECT p.user_id, p.pharmacy_name
+                FROM pharmacy_profiles p
+                WHERE LOWER(p.zone) = LOWER(?) AND p.is_active = 1
+                """,
+                (zone,)
+            ).fetchall()
+
+            for ep in eligible_pharmacies:
+                db.execute(
+                    """
+                    INSERT INTO notifications (user_id, title, message, event_type, reference_id)
+                    VALUES (?, ?, ?, 'NEW_PRESCRIPTION_BROADCAST', ?)
+                    """,
+                    (
+                        ep["user_id"],
+                        f"New Prescription Request in {zone}",
+                        f"Customer {cust_name} uploaded a doctor prescription for delivery to {delivery_address}. Open your dashboard and scan prescription to submit a quote.",
+                        order_id
+                    )
+                )
+
+        return jsonify({
+            "message": "Prescription order created and broadcasted successfully",
+            "order": {
+                "order_id": order_id,
+                "customer_id": g.user_id,
+                "zone": zone,
+                "delivery_address": delivery_address,
+                "status": "BROADCASTING",
+                "order_type": "PRESCRIPTION",
+                "prescription_url": prescription_image,
+                "prescription_notes": notes,
+                "remaining_broadcast_seconds": broadcast_seconds
+            }
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to create prescription order: {str(e)}"}), 500
+
+
+@order_bp.route("/<int:order_id>/scan-prescription", methods=["POST"])
+@token_required
+def scan_order_prescription(order_id: int):
+    """
+    Pharmacy or customer triggers OCR scan on prescription.
+    Extracts prescribed medicines and matches them against catalog.
+    """
+    data = request.get_json() or {}
+    client_ocr_text = data.get("ocr_text")
+
+    db = get_db()
+    from app.services.ocr_service import process_prescription_ocr
+    try:
+        res = process_prescription_ocr(db=db, order_id=order_id, client_ocr_text=client_ocr_text)
+        return jsonify(res), 200
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 404
+    except Exception as e:
+        return jsonify({"error": f"OCR processing failed: {str(e)}"}), 500
+
+
+@order_bp.route("/<int:order_id>/items/add", methods=["POST"])
+@token_required
+def add_order_item(order_id: int):
+    """Adds a new medicine item to an active order. Pharmacist can freely type medicine name from physical shop without searching catalog."""
+    data = request.get_json() or {}
+    medicine_id = data.get("medicine_id")
+    medicine_name = (data.get("medicine_name") or data.get("name") or "").strip()
+    quantity = int(data.get("quantity", 10))
+    custom_price = data.get("price") or data.get("unit_mrp")
+
+    if quantity <= 0:
+        return jsonify({"error": "Quantity must be greater than 0"}), 400
+
+    if not medicine_id and not medicine_name:
+        return jsonify({"error": "Medicine name or ID is required"}), 400
+
+    db = get_db()
+    if medicine_id:
+        med = db.execute("SELECT id, name, mrp, dosage_form, pack_size FROM medicines WHERE id = ?", (medicine_id,)).fetchone()
+        if not med:
+            return jsonify({"error": f"Medicine #{medicine_id} not found"}), 404
+        name = med["name"]
+        med_id = med["id"]
+        dosage_form = med["dosage_form"] or "Tablet"
+        pack_size = med["pack_size"] or "Unit"
+        unit_mrp = float(custom_price) if custom_price is not None and float(custom_price) > 0 else float(med["mrp"])
+    else:
+        # Pharmacist freely typed medicine name from physical shelf!
+        name = medicine_name
+        unit_mrp = float(custom_price) if custom_price is not None and float(custom_price) > 0 else 50.0
+        existing = db.execute("SELECT id, dosage_form, pack_size FROM medicines WHERE LOWER(name) = LOWER(?)", (name,)).fetchone()
+        if existing:
+            med_id = existing["id"]
+            dosage_form = existing["dosage_form"] or "Tablet"
+            pack_size = existing["pack_size"] or "Unit"
+        else:
+            with transaction(db):
+                cur_m = db.execute(
+                    """
+                    INSERT INTO medicines (name, generic_name, dosage_form, mrp, pack_size, is_active)
+                    VALUES (?, ?, 'Tablet', ?, 'Unit', 1)
+                    """,
+                    (name, name, unit_mrp)
+                )
+                med_id = cur_m.lastrowid
+            dosage_form = "Tablet"
+            pack_size = "Unit"
+
+    subtotal_mrp = round(unit_mrp * quantity, 2)
+
+    with transaction(db):
+        cur = db.execute(
+            """
+            INSERT INTO order_items (order_id, medicine_id, quantity, unit_mrp, subtotal_mrp)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (order_id, med_id, quantity, unit_mrp, subtotal_mrp)
+        )
+        item_id = cur.lastrowid
+
+        tot = db.execute("SELECT SUM(subtotal_mrp) as total FROM order_items WHERE order_id = ?", (order_id,)).fetchone()["total"] or 0.0
+        db.execute("UPDATE orders SET total_mrp = ?, final_amount = ? WHERE id = ?", (tot, tot, order_id))
+
+    return jsonify({
+        "message": "Medicine added successfully",
+        "item": {
+            "id": item_id,
+            "medicine_id": med_id,
+            "medicine_name": name,
+            "quantity": quantity,
+            "unit_mrp": unit_mrp,
+            "subtotal_mrp": subtotal_mrp,
+            "dosage_form": dosage_form,
+            "pack_size": pack_size
+        },
+        "order_total_mrp": round(tot, 2)
+    }), 201
+
+
+@order_bp.route("/<int:order_id>/items/<int:item_id>/replace", methods=["PUT", "POST"])
+@token_required
+def replace_order_item(order_id: int, item_id: int):
+    """Pharmacist directly edits/replaces a medicine name without needing online catalog search."""
+    data = request.get_json() or {}
+    new_medicine_id = data.get("medicine_id")
+    medicine_name = (data.get("medicine_name") or data.get("name") or "").strip()
+    quantity = data.get("quantity")
+    custom_price = data.get("price") or data.get("unit_mrp")
+
+    if not new_medicine_id and not medicine_name:
+        return jsonify({"error": "Medicine name or ID is required"}), 400
+
+    db = get_db()
+    existing_item = db.execute("SELECT id, medicine_id, quantity, unit_mrp FROM order_items WHERE id = ? AND order_id = ?", (item_id, order_id)).fetchone()
+    if not existing_item:
+        return jsonify({"error": "Order item not found"}), 404
+
+    qty = int(quantity) if quantity is not None and int(quantity) > 0 else existing_item["quantity"]
+
+    if new_medicine_id:
+        med = db.execute("SELECT id, name, mrp, dosage_form, pack_size FROM medicines WHERE id = ?", (new_medicine_id,)).fetchone()
+        if not med:
+            return jsonify({"error": "Replacement medicine not found"}), 404
+        med_id = med["id"]
+        name = med["name"]
+        dosage_form = med["dosage_form"] or "Tablet"
+        pack_size = med["pack_size"] or "Unit"
+        unit_mrp = float(custom_price) if custom_price is not None and float(custom_price) > 0 else float(med["mrp"])
+    else:
+        # Pharmacist directly typed a new/corrected medicine name!
+        name = medicine_name
+        unit_mrp = float(custom_price) if custom_price is not None and float(custom_price) > 0 else float(existing_item["unit_mrp"])
+        existing = db.execute("SELECT id, dosage_form, pack_size FROM medicines WHERE LOWER(name) = LOWER(?)", (name,)).fetchone()
+        if existing:
+            med_id = existing["id"]
+            dosage_form = existing["dosage_form"] or "Tablet"
+            pack_size = existing["pack_size"] or "Unit"
+        else:
+            with transaction(db):
+                cur_m = db.execute(
+                    """
+                    INSERT INTO medicines (name, generic_name, dosage_form, mrp, pack_size, is_active)
+                    VALUES (?, ?, 'Tablet', ?, 'Unit', 1)
+                    """,
+                    (name, name, unit_mrp)
+                )
+                med_id = cur_m.lastrowid
+            dosage_form = "Tablet"
+            pack_size = "Unit"
+
+    subtotal_mrp = round(unit_mrp * qty, 2)
+
+    with transaction(db):
+        db.execute(
+            """
+            UPDATE order_items
+            SET medicine_id = ?, quantity = ?, unit_mrp = ?, subtotal_mrp = ?
+            WHERE id = ?
+            """,
+            (med_id, qty, unit_mrp, subtotal_mrp, item_id)
+        )
+
+        tot = db.execute("SELECT SUM(subtotal_mrp) as total FROM order_items WHERE order_id = ?", (order_id,)).fetchone()["total"] or 0.0
+        db.execute("UPDATE orders SET total_mrp = ?, final_amount = ? WHERE id = ?", (tot, tot, order_id))
+
+    return jsonify({
+        "message": "Medicine updated successfully",
+        "item": {
+            "id": item_id,
+            "medicine_id": med_id,
+            "medicine_name": name,
+            "quantity": qty,
+            "unit_mrp": unit_mrp,
+            "subtotal_mrp": subtotal_mrp,
+            "dosage_form": dosage_form,
+            "pack_size": pack_size
+        },
+        "order_total_mrp": round(tot, 2)
+    }), 200
+
+
+@order_bp.route("/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
+@token_required
+def delete_order_item(order_id: int, item_id: int):
+    """Pharmacist deletes an unwanted or wrongly recognized medicine from quote."""
+    db = get_db()
+    existing_item = db.execute("SELECT id FROM order_items WHERE id = ? AND order_id = ?", (item_id, order_id)).fetchone()
+    if not existing_item:
+        return jsonify({"error": "Order item not found"}), 404
+
+    with transaction(db):
+        db.execute("DELETE FROM order_items WHERE id = ?", (item_id,))
+        tot = db.execute("SELECT COALESCE(SUM(subtotal_mrp), 0.0) as total FROM order_items WHERE order_id = ?", (order_id,)).fetchone()["total"]
+        db.execute("UPDATE orders SET total_mrp = ?, final_amount = ? WHERE id = ?", (tot, tot, order_id))
+
+    cnt = db.execute("SELECT COUNT(*) as cnt FROM order_items WHERE order_id = ?", (order_id,)).fetchone()["cnt"]
+    return jsonify({
+        "message": "Item deleted successfully",
+        "remaining_count": cnt,
+        "order_total_mrp": round(tot, 2)
+    }), 200
+
+
+@order_bp.route("/<int:order_id>/items/<int:item_id>/quantity", methods=["PUT", "POST"])
+@token_required
+def update_item_quantity(order_id: int, item_id: int):
+    """Updates prescribed/quoted quantity for an item."""
+    data = request.get_json() or {}
+    quantity = int(data.get("quantity", 1))
+    if quantity <= 0:
+        return jsonify({"error": "Quantity must be greater than 0"}), 400
+
+    db = get_db()
+    item = db.execute("SELECT id, unit_mrp FROM order_items WHERE id = ? AND order_id = ?", (item_id, order_id)).fetchone()
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+
+    subtotal_mrp = round(float(item["unit_mrp"]) * quantity, 2)
+    with transaction(db):
+        db.execute("UPDATE order_items SET quantity = ?, subtotal_mrp = ? WHERE id = ?", (quantity, subtotal_mrp, item_id))
+        tot = db.execute("SELECT SUM(subtotal_mrp) as total FROM order_items WHERE order_id = ?", (order_id,)).fetchone()["total"] or 0.0
+        db.execute("UPDATE orders SET total_mrp = ?, final_amount = ? WHERE id = ?", (tot, tot, order_id))
+
+    return jsonify({
+        "message": "Quantity updated",
+        "item_id": item_id,
+        "quantity": quantity,
+        "subtotal_mrp": subtotal_mrp,
+        "order_total_mrp": round(tot, 2)
+    }), 200
+
+
+@order_bp.route("/my-orders", methods=["GET"])
+@token_required
+@role_required("CUSTOMER")
+def list_my_orders():
+    db = get_db()
+    rows = db.execute(
+        """
+        SELECT o.id, o.zone, o.delivery_address, o.status,
+               o.broadcast_started_at, o.broadcast_expires_at,
+               o.total_mrp, o.final_amount, o.mock_payment_status, o.created_at,
+               o.order_type, o.prescription_url, o.prescription_notes, o.is_ocr_scanned,
+               (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
+               (SELECT COUNT(*) FROM quotes WHERE order_id = o.id) as quote_count,
+               oa.pharmacy_id as assigned_pharmacy_id,
+               oa.confirmation_status as pharmacy_confirmation_status,
+               p.pharmacy_name as assigned_pharmacy_name
+        FROM orders o
+        LEFT JOIN order_assignments oa ON o.id = oa.order_id
+        LEFT JOIN pharmacy_profiles p ON oa.pharmacy_id = p.user_id
+        WHERE o.customer_id = ?
+        ORDER BY o.id DESC
+        """,
+        (g.user_id,)
+    ).fetchall()
+
+    orders = []
+    for r in rows:
+        remaining = compute_remaining_seconds(r["broadcast_expires_at"]) if r["status"] == "BROADCASTING" else 0
+        items_rows = db.execute(
+            """
+            SELECT oi.medicine_id, oi.quantity, m.name as medicine_name, m.mrp, m.strength
+            FROM order_items oi
+            JOIN medicines m ON oi.medicine_id = m.id
+            WHERE oi.order_id = ?
+            """,
+            (r["id"],)
+        ).fetchall()
+        order_items = [
+            {
+                "medicine_id": it["medicine_id"],
+                "name": it["medicine_name"],
+                "quantity": it["quantity"],
+                "mrp": float(it["mrp"]),
+                "strength": it["strength"]
+            }
+            for it in items_rows
+        ]
+
+        orders.append({
+            "id": r["id"],
+            "zone": r["zone"],
+            "delivery_address": r["delivery_address"],
+            "status": r["status"],
+            "order_type": r["order_type"] or "CATALOGUE",
+            "prescription_url": r["prescription_url"],
+            "prescription_notes": r["prescription_notes"],
+            "is_ocr_scanned": bool(r["is_ocr_scanned"]),
+            "broadcast_started_at": str(r["broadcast_started_at"]),
+            "broadcast_expires_at": str(r["broadcast_expires_at"]),
+            "remaining_broadcast_seconds": remaining,
+            "total_mrp": float(r["total_mrp"]),
+            "final_amount": float(r["final_amount"]) if r["final_amount"] is not None else float(r["total_mrp"]),
+            "mock_payment_status": r["mock_payment_status"],
+            "item_count": r["item_count"],
+            "quote_count": r["quote_count"],
+            "items": order_items,
+            "assigned_pharmacy": {
+                "id": r["assigned_pharmacy_id"],
+                "name": r["assigned_pharmacy_name"],
+                "confirmation_status": r["pharmacy_confirmation_status"]
+            } if r["assigned_pharmacy_id"] else None,
+            "created_at": str(r["created_at"])
+        })
+
+    return jsonify({"orders": orders}), 200
+
+
+@order_bp.route("/<int:order_id>", methods=["GET"])
+@token_required
+def get_order_details(order_id: int):
+    db = get_db()
+    order = db.execute(
+        """
+        SELECT o.id, o.customer_id, o.zone, o.delivery_address, o.status,
+               o.broadcast_started_at, o.broadcast_expires_at,
+               o.total_mrp, o.final_amount, o.mock_payment_status, o.created_at,
+               o.order_type, o.prescription_url, o.prescription_notes, o.is_ocr_scanned,
+               u.full_name as customer_name, u.phone as customer_phone,
+               oa.pharmacy_id as assigned_pharmacy_id,
+               oa.quote_id as assigned_quote_id,
+               oa.confirmation_status as pharmacy_confirmation_status,
+               p.pharmacy_name as assigned_pharmacy_name
+        FROM orders o
+        JOIN users u ON o.customer_id = u.id
+        LEFT JOIN order_assignments oa ON o.id = oa.order_id
+        LEFT JOIN pharmacy_profiles p ON oa.pharmacy_id = p.user_id
+        WHERE o.id = ?
+        """,
+        (order_id,)
+    ).fetchone()
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    # RBAC Access Check: Customer can view their own, Admin can view all, Pharmacy can view if zone matches or assigned
+    if g.role == "CUSTOMER" and order["customer_id"] != g.user_id:
+        return jsonify({"error": "Access denied"}), 403
+
+    # Items with preserved MRP
+    items_rows = db.execute(
+        """
+        SELECT oi.id, oi.medicine_id, oi.quantity, oi.unit_mrp, oi.subtotal_mrp,
+               m.name as medicine_name, m.dosage_form, m.pack_size, m.requires_prescription
+        FROM order_items oi
+        JOIN medicines m ON oi.medicine_id = m.id
+        WHERE oi.order_id = ?
+        """,
+        (order_id,)
+    ).fetchall()
+
+    items = [
+        {
+            "id": ir["id"],
+            "medicine_id": ir["medicine_id"],
+            "medicine_name": ir["medicine_name"],
+            "dosage_form": ir["dosage_form"],
+            "pack_size": ir["pack_size"],
+            "requires_prescription": bool(ir["requires_prescription"]),
+            "quantity": ir["quantity"],
+            "unit_mrp": float(ir["unit_mrp"]),
+            "subtotal_mrp": float(ir["subtotal_mrp"])
+        }
+        for ir in items_rows
+    ]
+
+    remaining = compute_remaining_seconds(order["broadcast_expires_at"]) if order["status"] == "BROADCASTING" else 0
+
+    # Auto transition state if broadcast timer elapsed and still marked BROADCASTING
+    current_status = order["status"]
+    if current_status == "BROADCASTING" and remaining == 0:
+        quotes_count = db.execute("SELECT COUNT(*) as cnt FROM quotes WHERE order_id = ?", (order_id,)).fetchone()["cnt"]
+        new_status = "PENDING_SELECTION" if quotes_count > 0 else "EXPIRED"
+        with transaction(db):
+            db.execute("UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id))
+        current_status = new_status
+
+    return jsonify({
+        "order": {
+            "id": order["id"],
+            "customer_id": order["customer_id"],
+            "customer_name": order["customer_name"],
+            "customer_phone": order["customer_phone"],
+            "zone": order["zone"],
+            "delivery_address": order["delivery_address"],
+            "status": current_status,
+            "order_type": order["order_type"] or "CATALOGUE",
+            "prescription_url": order["prescription_url"],
+            "prescription_notes": order["prescription_notes"],
+            "is_ocr_scanned": bool(order["is_ocr_scanned"]),
+            "broadcast_started_at": str(order["broadcast_started_at"]),
+            "broadcast_expires_at": str(order["broadcast_expires_at"]),
+            "remaining_broadcast_seconds": remaining,
+            "total_mrp": float(order["total_mrp"]),
+            "final_amount": float(order["final_amount"]) if order["final_amount"] is not None else float(order["total_mrp"]),
+            "mock_payment_status": order["mock_payment_status"],
+            "assigned_pharmacy": {
+                "id": order["assigned_pharmacy_id"],
+                "name": order["assigned_pharmacy_name"],
+                "quote_id": order["assigned_quote_id"],
+                "confirmation_status": order["pharmacy_confirmation_status"]
+            } if order["assigned_pharmacy_id"] else None,
+            "items": items,
+            "created_at": str(order["created_at"])
+        }
+    }), 200
+
+
+@order_bp.route("/<int:order_id>/cancel", methods=["POST"])
+@token_required
+@role_required("CUSTOMER")
+def cancel_order(order_id: int):
+    db = get_db()
+    order = db.execute(
+        "SELECT id, customer_id, status FROM orders WHERE id = ?",
+        (order_id,)
+    ).fetchone()
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    if order["customer_id"] != g.user_id:
+        return jsonify({"error": "Access denied"}), 403
+
+    if order["status"] not in ("BROADCASTING", "PENDING_SELECTION"):
+        return jsonify({"error": f"Cannot cancel order in status '{order['status']}'"}), 400
+
+    with transaction(db):
+        db.execute("UPDATE orders SET status = 'CANCELLED' WHERE id = ?", (order_id,))
+        db.execute("UPDATE quotes SET status = 'EXPIRED' WHERE order_id = ?", (order_id,))
+        db.execute(
+            """
+            INSERT INTO notifications (user_id, title, message, event_type, reference_id)
+            VALUES (?, ?, ?, 'ORDER_CANCELLED', ?)
+            """,
+            (g.user_id, "Order Cancelled", f"Your order #{order_id} has been cancelled.", order_id)
+        )
+
+    return jsonify({"message": "Order cancelled successfully"}), 200
+
+
+# Notification blueprint endpoints
+notification_bp = Blueprint("notifications", __name__, url_prefix="/api/notifications")
+
+@notification_bp.route("", methods=["GET"])
+@token_required
+def list_notifications():
+    db = get_db()
+    rows = db.execute(
+        """
+        SELECT id, title, message, event_type, reference_id, is_read, created_at
+        FROM notifications
+        WHERE user_id = ?
+        ORDER BY id DESC
+        LIMIT 50
+        """,
+        (g.user_id,)
+    ).fetchall()
+
+    notifications = [
+        {
+            "id": r["id"],
+            "title": r["title"],
+            "message": r["message"],
+            "event_type": r["event_type"],
+            "reference_id": r["reference_id"],
+            "is_read": bool(r["is_read"]),
+            "created_at": r["created_at"]
+        }
+        for r in rows
+    ]
+    return jsonify({"notifications": notifications}), 200
+
+
+@notification_bp.route("/<int:notif_id>/read", methods=["POST"])
+@token_required
+def mark_read(notif_id: int):
+    db = get_db()
+    with transaction(db):
+        db.execute(
+            "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
+            (notif_id, g.user_id)
+        )
+    return jsonify({"message": "Notification marked as read"}), 200
+
+
+@notification_bp.route("/read-all", methods=["POST"])
+@token_required
+def mark_all_read():
+    db = get_db()
+    with transaction(db):
+        db.execute(
+            "UPDATE notifications SET is_read = 1 WHERE user_id = ?",
+            (g.user_id,)
+        )
+    return jsonify({"message": "All notifications marked as read"}), 200

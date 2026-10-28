@@ -1,0 +1,22 @@
+{
+  "name": "Tapza - Healthcare Delivered",
+  "short_name": "Tapza",
+  "description": "Hyperlocal medicine delivery and pharmacy quoting network.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#059669",
+  "theme_color": "#059669",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
