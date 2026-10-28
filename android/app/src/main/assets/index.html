@@ -7280,7 +7280,7 @@
                 <span style="font-size:11px; font-weight:800; color:#334155; white-space:nowrap; display:flex; align-items:center; gap:4px;">
                   <span>📝</span> Note for this medicine:
                 </span>
-                <input type="text" id="p-item-note-${b.order_id}-${it.id}" value="${escapeHtml(itemDraft.note !== undefined ? itemDraft.note : (it.notes || ''))}" placeholder="e.g. Substituted with generic Paracetamol 650mg, dosage 1-0-1 after food..." style="flex:1; min-width:160px; padding:5px 8px; border-radius:5px; border:1px solid #cbd5e1; font-size:11.5px; background:#fff;" oninput="recordPharmacyDraftItemNote(${b.order_id}, ${it.id}, this.value)">
+                <input type="text" id="p-item-note-${b.order_id}-${it.id}" value="${escapeHtml(itemDraft.note !== undefined ? itemDraft.note : (it.notes || ''))}" placeholder="Type note for this medicine (e.g. 1 tablet after food, substitute brand)..." style="flex:1; min-width:160px; padding:5px 8px; border-radius:5px; border:1px solid #cbd5e1; font-size:11.5px; background:#fff;" oninput="recordPharmacyDraftItemNote(${b.order_id}, ${it.id}, this.value)">
               </div>
 
               <!-- Inline substitute medicine box (Isolated strictly to this pharmacy's quote) -->
@@ -7413,7 +7413,7 @@
                 <label style="font-size:11.5px; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">
                   💬 Pharmacist Advice / Remarks for Customer (Optional):
                 </label>
-                <input type="text" id="p-note-${b.order_id}" value="${noteVal.replace(/"/g, '&quot;')}" oninput="recordPharmacyDraftNote(${b.order_id}, this.value)" placeholder="e.g. In stock, substitute available, or instructions: take after food..." style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border); font-size:12px; background:#fff; color:var(--text);">
+                <input type="text" id="p-note-${b.order_id}" value="${noteVal.replace(/"/g, '&quot;')}" oninput="recordPharmacyDraftNote(${b.order_id}, this.value)" placeholder="Type main message for customer (e.g. Free fast delivery in 15 mins, calling you to confirm)..." style="width:100%; padding:7px 10px; border-radius:6px; border:1px solid var(--border); font-size:12px; background:#fff; color:var(--text);">
               </div>
 
               <!-- Reverse-Auction Quote Summary Footer -->
@@ -7665,7 +7665,7 @@
           body: JSON.stringify({
             order_id: oid,
             items,
-            notes: notes || "Direct from licensed pharmacy"
+            notes: notes || null
           })
         });
         const d = await res.json();

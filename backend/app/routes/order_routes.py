@@ -58,6 +58,11 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
             return
 
         discounts = [0.15, 0.22, 0.10]
+        med_notes_list = [
+            "Original sealed strip from licensed batch. Expiry: 2027.",
+            "Genuine manufacturer packaging with verifiable hologram. Take after food.",
+            "Full course available in fresh inventory. 100% authentic medicine."
+        ]
         notes_list = [
             "Genuine sealed batch in stock. Free fast doorstep delivery.",
             "Best price guaranteed. Verified licensed pharmacist packaging.",
@@ -70,6 +75,7 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
                 p_name = p["pharmacy_name"] or p["full_name"]
                 disc = discounts[idx % len(discounts)]
                 p_notes = notes_list[idx % len(notes_list)]
+                med_note = med_notes_list[idx % len(med_notes_list)]
 
                 total_quoted = 0.0
                 quote_item_rows = []
@@ -80,7 +86,7 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
                     selling_price = round(unit_mrp * (1.0 - disc), 2)
                     subtotal = round(selling_price * qty, 2)
                     total_quoted += subtotal
-                    quote_item_rows.append((oi["id"], 1, selling_price, subtotal, f"{int(disc*100)}% discount applied"))
+                    quote_item_rows.append((oi["id"], 1, selling_price, subtotal, med_note))
 
                 total_quoted = round(total_quoted, 2)
 

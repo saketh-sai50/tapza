@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.10
-          name: "Tapza Android App v1.0.10 (Multi-Pharmacy Quote Isolation & Independent Dashboard Bidding)"
-          body: "Official Android APK release with strict per-pharmacy credential quote isolation, customer master order protection, independent substitute medicine remarks, and dedicated draft scoping."
+          tag_name: v1.0.11
+          name: "Tapza Android App v1.0.11 (Pharmacist Medicine Note & Main Advice Message Routing)"
+          body: "Official Android APK release with distinct routing for individual medicine advice notes (light green badge) and overall pharmacy order messages (dashed advice box)."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
