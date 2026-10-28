@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Android APK
@@ -34,7 +37,7 @@ jobs:
         run: |
           mkdir -p output
           find android/app/build/outputs/apk -name "*.apk" -exec cp {} output/Tapza.apk \;
-          ls -la output/
+          ls -lh output/
 
       - name: Upload Tapza APK Artifact
         uses: actions/upload-artifact@v4
@@ -42,3 +45,14 @@ jobs:
           name: Tapza-Android-APK
           path: output/Tapza.apk
           retention-days: 30
+
+      - name: Create Public GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "Tapza Android App v1.0.0"
+          body: "Download the ready-to-install Android APK file below."
+          files: output/Tapza.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
