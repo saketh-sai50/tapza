@@ -2476,7 +2476,9 @@
 
 
   <script>
-    const API = window.location.origin + "/api";
+    const API = (window.location.origin && window.location.origin !== "null" && !window.location.origin.startsWith("file"))
+      ? window.location.origin + "/api"
+      : (localStorage.getItem("tapza_server_url") || "https://tapza-app.onrender.com") + "/api";
     let token = localStorage.getItem("tapza_token");
     let currentUser = null;
     let authRoleTab = "CUSTOMER";

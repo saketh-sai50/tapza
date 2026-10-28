@@ -87,8 +87,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request.isForMainFrame()) {
+                if (request.isForMainFrame() && !request.getUrl().toString().startsWith("file:")) {
                     swipeRefresh.setRefreshing(false);
+                    view.loadUrl("file:///android_asset/index.html");
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse errorResponse) {
+                if (request.isForMainFrame() && errorResponse.getStatusCode() >= 400 && !request.getUrl().toString().startsWith("file:")) {
+                    swipeRefresh.setRefreshing(false);
+                    view.loadUrl("file:///android_asset/index.html");
                 }
             }
         });

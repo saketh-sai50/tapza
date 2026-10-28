@@ -50,8 +50,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0
-          name: "Tapza Android App v1.0.0"
+          tag_name: v1.0.1
+          name: "Tapza Android App v1.0.1"
           body: "Download the ready-to-install Android APK file below."
           files: output/Tapza.apk
         env:
