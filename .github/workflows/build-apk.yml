@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.5
-          name: "Tapza Android App v1.0.5 (Mobile Full-Bleed, Purple Status Bar, GPS Location & Instant Search)"
-          body: "Official Android APK featuring edge-to-edge full-bleed mobile UI (no side gaps), royal purple #240a5e status bar, customer greeting badge, interactive GPS location picker, and instant zero-latency catalogue search."
+          tag_name: v1.0.6
+          name: "Tapza Android App v1.0.6 (Category Toggles, Dedicated Search Bar, Logout Confirmation & Status Bar Fix)"
+          body: "Official Android APK featuring interactive toggleable category icons, prominent full-width search bar, logout confirmation modal with fresh guest mode reset, and native royal purple status bar."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
