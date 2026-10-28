@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.9
-          name: "Tapza Android App v1.0.9 (Fixed Cart Drawer Open and Live Bidding System)"
-          body: "Official Android APK with floating cart drawer click fix, synchronized database medicine IDs, and real-time reverse auction bidding from local pharmacies."
+          tag_name: v1.0.10
+          name: "Tapza Android App v1.0.10 (Multi-Pharmacy Quote Isolation & Independent Dashboard Bidding)"
+          body: "Official Android APK release with strict per-pharmacy credential quote isolation, customer master order protection, independent substitute medicine remarks, and dedicated draft scoping."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

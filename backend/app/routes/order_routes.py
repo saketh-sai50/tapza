@@ -13,6 +13,8 @@ order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
 def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: int):
     """
     Simulates real-time competitive pharmacy quotes for the order from registered local pharmacies.
+    CRITICAL ISOLATION: Manual testing accounts (testpharm001, testpharm002, testpharm003) are strictly
+    EXCLUDED from auto-quotes so they remain 100% clean, unquoted, and independently actionable by testers.
     """
     try:
         pharmacies = db.execute(
@@ -20,20 +22,27 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
             SELECT u.id, u.full_name, p.pharmacy_name
             FROM users u
             JOIN pharmacy_profiles p ON u.id = p.user_id
-            WHERE (LOWER(u.zone) = LOWER(?) OR LOWER(p.zone) = LOWER(?)) AND p.is_active = 1
-            LIMIT 3
+            WHERE (LOWER(u.zone) = LOWER(?) OR LOWER(p.zone) = LOWER(?))
+              AND p.is_active = 1
+              AND u.id NOT IN (11, 12, 13)
+              AND (u.username IS NULL OR (u.username NOT IN ('testpharm001', 'testpharm002', 'testpharm003')))
+              AND (u.email IS NULL OR (u.email NOT LIKE 'testpharm001%' AND u.email NOT LIKE 'testpharm002%' AND u.email NOT LIKE 'testpharm003%'))
+            LIMIT 2
             """,
             (zone, zone)
         ).fetchall()
 
-        if len(pharmacies) < 2:
+        if len(pharmacies) < 1:
             pharmacies = db.execute(
                 """
                 SELECT u.id, u.full_name, p.pharmacy_name
                 FROM users u
                 JOIN pharmacy_profiles p ON u.id = p.user_id
                 WHERE p.is_active = 1
-                LIMIT 3
+                  AND u.id NOT IN (11, 12, 13)
+                  AND (u.username IS NULL OR (u.username NOT IN ('testpharm001', 'testpharm002', 'testpharm003')))
+                  AND (u.email IS NULL OR (u.email NOT LIKE 'testpharm001%' AND u.email NOT LIKE 'testpharm002%' AND u.email NOT LIKE 'testpharm003%'))
+                LIMIT 2
                 """
             ).fetchall()
 

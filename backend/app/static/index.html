@@ -5119,6 +5119,8 @@
       currentUser = null;
       cart = {};
       activeOrderId = null;
+      pharmacyDrafts = {};
+      window.lastBroadcasts = [];
       localStorage.removeItem("tapza_token");
       localStorage.removeItem("tapza_user");
       localStorage.removeItem("tapza_cart");
@@ -5155,6 +5157,8 @@
     function logoutSession() {
       token = null;
       currentUser = null;
+      pharmacyDrafts = {};
+      window.lastBroadcasts = [];
       localStorage.removeItem("tapza_token");
       seenNotificationIds.clear();
       hasInitialNotificationsLoaded = false;
@@ -7119,30 +7123,39 @@
       }
     }
 
+    function getDraftKey(oid) {
+      const uid = currentUser && currentUser.id ? currentUser.id : "anon";
+      return `${uid}_${oid}`;
+    }
+
     // 5. PHARMACY RADAR & QUOTING LOGIC
     function recordPharmacyDraftStock(oid, itId, isChecked) {
-      if (!pharmacyDrafts[oid]) pharmacyDrafts[oid] = { items: {}, note: "" };
-      if (!pharmacyDrafts[oid].items[itId]) pharmacyDrafts[oid].items[itId] = {};
-      pharmacyDrafts[oid].items[itId].is_available = isChecked;
+      const draftKey = getDraftKey(oid);
+      if (!pharmacyDrafts[draftKey]) pharmacyDrafts[draftKey] = { items: {}, note: "" };
+      if (!pharmacyDrafts[draftKey].items[itId]) pharmacyDrafts[draftKey].items[itId] = {};
+      pharmacyDrafts[draftKey].items[itId].is_available = isChecked;
       recalcQuoteTotal(oid);
     }
 
     function recordPharmacyDraftPrice(oid, itId, val) {
-      if (!pharmacyDrafts[oid]) pharmacyDrafts[oid] = { items: {}, note: "" };
-      if (!pharmacyDrafts[oid].items[itId]) pharmacyDrafts[oid].items[itId] = {};
-      pharmacyDrafts[oid].items[itId].price = parseFloat(val) || 0;
+      const draftKey = getDraftKey(oid);
+      if (!pharmacyDrafts[draftKey]) pharmacyDrafts[draftKey] = { items: {}, note: "" };
+      if (!pharmacyDrafts[draftKey].items[itId]) pharmacyDrafts[draftKey].items[itId] = {};
+      pharmacyDrafts[draftKey].items[itId].price = parseFloat(val) || 0;
       recalcQuoteTotal(oid);
     }
 
     function recordPharmacyDraftNote(oid, val) {
-      if (!pharmacyDrafts[oid]) pharmacyDrafts[oid] = { items: {}, note: "" };
-      pharmacyDrafts[oid].note = val;
+      const draftKey = getDraftKey(oid);
+      if (!pharmacyDrafts[draftKey]) pharmacyDrafts[draftKey] = { items: {}, note: "" };
+      pharmacyDrafts[draftKey].note = val;
     }
 
     function recordPharmacyDraftItemNote(oid, itId, val) {
-      if (!pharmacyDrafts[oid]) pharmacyDrafts[oid] = { items: {}, note: "" };
-      if (!pharmacyDrafts[oid].items[itId]) pharmacyDrafts[oid].items[itId] = {};
-      pharmacyDrafts[oid].items[itId].note = val;
+      const draftKey = getDraftKey(oid);
+      if (!pharmacyDrafts[draftKey]) pharmacyDrafts[draftKey] = { items: {}, note: "" };
+      if (!pharmacyDrafts[draftKey].items[itId]) pharmacyDrafts[draftKey].items[itId] = {};
+      pharmacyDrafts[draftKey].items[itId].note = val;
     }
 
     async function loadPharmacyRadar() {
@@ -7201,7 +7214,8 @@
       }
 
       el.innerHTML = broadcasts.map(b => {
-        const draft = pharmacyDrafts[b.order_id] || { items: {}, note: "" };
+        const draftKey = getDraftKey(b.order_id);
+        const draft = pharmacyDrafts[draftKey] || { items: {}, note: "" };
 
         let computedTotal = 0;
         let totalMrpSum = 0;
@@ -7214,11 +7228,18 @@
             totalMrpSum += it.unit_mrp * it.quantity;
           }
 
+          const displayName = itemDraft.custom_name || it.medicine_name;
+          const isSubstitute = !!itemDraft.custom_name && itemDraft.custom_name !== it.medicine_name;
+
           return `
             <div class="broadcast-row" style="flex-direction:column; align-items:stretch; gap:6px; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:8px; background:#fff;">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
                 <div style="flex:1; min-width:180px;">
-                  <div style="font-weight:700; font-size:13.5px; color:var(--text);">${escapeHtml(it.medicine_name)}</div>
+                  <div style="font-weight:700; font-size:13.5px; color:var(--text); display:flex; align-items:center; gap:6px;">
+                    <span>${escapeHtml(displayName)}</span>
+                    ${isSubstitute ? '<span style="font-size:10px; color:#b45309; background:#fef3c7; border:1px solid #fde68a; padding:1px 5px; border-radius:4px; font-weight:800;">Substitute Offered</span>' : ''}
+                  </div>
+                  ${isSubstitute ? `<div style="font-size:11px; color:#64748b; margin-top:2px;">Requested: ${escapeHtml(it.medicine_name)}</div>` : ''}
                   <div style="font-size:12px; color:#475569; margin-top:2px; display:flex; align-items:center; gap:6px;">
                     <span style="font-weight:800; color:#065f46; background:#ecfdf5; padding:2px 7px; border-radius:4px; border:1px solid #a7f3d0;">
                       MRP: ₹${it.unit_mrp.toFixed(2)}
@@ -7228,11 +7249,11 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
                   <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">Qty:</span>
-                  <input type="number" min="1" max="1000" value="${it.quantity}" style="width:52px; padding:4px 6px; border-radius:6px; border:1px solid #cbd5e1; font-size:12px; font-weight:700; text-align:center;" onchange="updatePharmacyItemQty(${b.order_id}, ${it.id}, this.value)">
-                  <button type="button" class="btn-logout" style="padding:4px 8px; font-size:11px; font-weight:700; color:#2563eb; border-color:#bfdbfe; background:#eff6ff;" onclick="toggleInlineRenameBox(${b.order_id}, ${it.id})" title="Edit medicine name directly from your shop stock">
-                    ✏️ Edit Name
+                  <span style="display:inline-block; padding:4px 8px; background:#f1f5f9; border-radius:6px; font-size:12px; font-weight:800; color:#1e293b;">${it.quantity}</span>
+                  <button type="button" class="btn-logout" style="padding:4px 8px; font-size:11px; font-weight:700; color:#2563eb; border-color:#bfdbfe; background:#eff6ff;" onclick="toggleInlineRenameBox(${b.order_id}, ${it.id})" title="Offer a substitute medicine from your stock">
+                    ✏️ Substitute
                   </button>
-                  <button type="button" class="btn-logout" style="padding:4px 8px; font-size:11px; font-weight:700; color:#dc2626; border-color:#fecaca; background:#fef2f2;" onclick="removeMedicineFromQuote(${b.order_id}, ${it.id}, '${escapeHtml(it.medicine_name)}')" title="Delete wrong medicine from quote">
+                  <button type="button" class="btn-logout" style="padding:4px 8px; font-size:11px; font-weight:700; color:#dc2626; border-color:#fecaca; background:#fef2f2;" onclick="removeMedicineFromQuote(${b.order_id}, ${it.id}, '${escapeHtml(it.medicine_name)}')" title="Mark as unavailable in your quote">
                     🗑️
                   </button>
                 </div>
@@ -7262,16 +7283,16 @@
                 <input type="text" id="p-item-note-${b.order_id}-${it.id}" value="${escapeHtml(itemDraft.note !== undefined ? itemDraft.note : (it.notes || ''))}" placeholder="e.g. Substituted with generic Paracetamol 650mg, dosage 1-0-1 after food..." style="flex:1; min-width:160px; padding:5px 8px; border-radius:5px; border:1px solid #cbd5e1; font-size:11.5px; background:#fff;" oninput="recordPharmacyDraftItemNote(${b.order_id}, ${it.id}, this.value)">
               </div>
 
-              <!-- Inline direct name edit box (No catalog search needed) -->
+              <!-- Inline substitute medicine box (Isolated strictly to this pharmacy's quote) -->
               <div id="rename-box-${b.order_id}-${it.id}" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:8px; padding:10px; margin-top:6px;">
                 <div style="font-size:11px; font-weight:800; color:#166534; text-transform:uppercase; margin-bottom:6px;">
-                  ✏️ Edit Medicine Name (from your physical shop stock):
+                  ✏️ Offer Substitute Medicine (from your physical shop stock):
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                  <input type="text" id="rename-input-${b.order_id}-${it.id}" value="${escapeHtml(it.medicine_name)}" placeholder="Enter medicine name from your shelf..." style="flex:1; min-width:180px; padding:6px 10px; font-size:12.5px; font-weight:700; border:1px solid #86efac; border-radius:6px; background:#fff;">
-                  <input type="number" id="rename-price-${b.order_id}-${it.id}" value="${it.unit_mrp}" step="0.5" placeholder="MRP (₹)" style="width:75px; padding:6px 8px; font-size:12px; font-weight:700; border:1px solid #86efac; border-radius:6px; background:#fff; text-align:right;" title="Unit MRP">
+                  <input type="text" id="rename-input-${b.order_id}-${it.id}" value="${escapeHtml(displayName)}" placeholder="Enter medicine brand/name from your shelf..." style="flex:1; min-width:180px; padding:6px 10px; font-size:12.5px; font-weight:700; border:1px solid #86efac; border-radius:6px; background:#fff;">
+                  <input type="number" id="rename-price-${b.order_id}-${it.id}" value="${priceVal}" step="0.5" placeholder="MRP (₹)" style="width:75px; padding:6px 8px; font-size:12px; font-weight:700; border:1px solid #86efac; border-radius:6px; background:#fff; text-align:right;" title="Selling Price">
                   <button type="button" class="btn-auth-submit" style="width:auto; padding:6px 12px; font-size:12px; background:#16a34a; font-weight:800;" onclick="saveInlineMedicineRename(${b.order_id}, ${it.id})">
-                    ✓ Save Name
+                    ✓ Apply Substitute
                   </button>
                   <button type="button" class="btn-logout" style="padding:5px 10px; font-size:11.5px;" onclick="toggleInlineRenameBox(${b.order_id}, ${it.id})">
                     Cancel
@@ -7521,57 +7542,42 @@
       }
     }
 
-    async function saveInlineMedicineRename(oid, itId) {
+    function saveInlineMedicineRename(oid, itId) {
+      const draftKey = getDraftKey(oid);
       const inp = document.getElementById(`rename-input-${oid}-${itId}`);
       const priceInp = document.getElementById(`rename-price-${oid}-${itId}`);
       const newName = inp ? inp.value.trim() : "";
       const priceVal = priceInp ? parseFloat(priceInp.value || 0) : null;
       if (!newName) return alert("Please enter a medicine name.");
 
-      try {
-        const res = await fetch(`${API}/orders/${oid}/items/${itId}/replace`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ medicine_name: newName, price: priceVal })
-        });
-        const d = await res.json();
-        if (res.ok) {
-          if (pharmacyDrafts[oid] && pharmacyDrafts[oid].items) {
-            delete pharmacyDrafts[oid].items[itId];
-          }
-          await reloadPharmacyRadarForced();
-        } else {
-          alert("Update Error: " + (d.error || "Failed to update medicine"));
-        }
-      } catch (e) {
-        alert("Error: " + e.message);
+      if (!pharmacyDrafts[draftKey]) pharmacyDrafts[draftKey] = { items: {}, note: "" };
+      if (!pharmacyDrafts[draftKey].items[itId]) pharmacyDrafts[draftKey].items[itId] = {};
+
+      pharmacyDrafts[draftKey].items[itId].custom_name = newName;
+      if (priceVal !== null && priceVal > 0) {
+        pharmacyDrafts[draftKey].items[itId].price = priceVal;
       }
+      if (!pharmacyDrafts[draftKey].items[itId].note) {
+        pharmacyDrafts[draftKey].items[itId].note = `Substitute offered: ${newName}`;
+      }
+
+      toggleInlineRenameBox(oid, itId);
+      renderPharmacyRadar(window.lastBroadcasts || []);
+      showToast(`Substitute "${newName}" applied to your quote.`, "info");
     }
 
-    async function removeMedicineFromQuote(oid, itId, medName) {
-      if (!confirm(`Are you sure you want to remove "${medName}" from this quote?`)) return;
-      try {
-        const res = await fetch(`${API}/orders/${oid}/items/${itId}`, {
-          method: "DELETE",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        const d = await res.json();
-        if (res.ok) {
-          if (pharmacyDrafts[oid] && pharmacyDrafts[oid].items) {
-            delete pharmacyDrafts[oid].items[itId];
-          }
-          await reloadPharmacyRadarForced();
-        } else {
-          alert("Delete Error: " + (d.error || "Failed to remove item"));
-        }
-      } catch (e) {
-        alert("Error: " + e.message);
-      }
+    function removeMedicineFromQuote(oid, itId, medName) {
+      if (!confirm(`Mark "${medName}" as unavailable / not in stock for your quote?`)) return;
+      const draftKey = getDraftKey(oid);
+      if (!pharmacyDrafts[draftKey]) pharmacyDrafts[draftKey] = { items: {}, note: "" };
+      if (!pharmacyDrafts[draftKey].items[itId]) pharmacyDrafts[draftKey].items[itId] = {};
+
+      pharmacyDrafts[draftKey].items[itId].is_available = false;
+      pharmacyDrafts[draftKey].items[itId].price = 0;
+      pharmacyDrafts[draftKey].items[itId].note = "Not available at our store";
+
+      renderPharmacyRadar(window.lastBroadcasts || []);
+      showToast(`Item marked as out of stock for your quote.`, "info");
     }
 
     function toggleAddMedicineBox(oid) {
@@ -7620,15 +7626,23 @@
     }
 
     async function submitPharmacyQuote(oid) {
+      const draftKey = getDraftKey(oid);
+      const draft = pharmacyDrafts[draftKey] || { items: {}, note: "" };
       const inputs = document.querySelectorAll(`[id^="p-price-${oid}-"]`);
       const items = [];
       let totalQuoted = 0;
       inputs.forEach(inp => {
         const itId = parseInt(inp.id.split("-")[3]);
+        const itemDraft = draft.items?.[itId] || {};
         const isAvail = document.getElementById(`p-stock-${oid}-${itId}`)?.checked;
         const price = isAvail ? parseFloat(inp.value || 0) : 0;
         const itemNoteInp = document.getElementById(`p-item-note-${oid}-${itId}`);
-        const itemNote = itemNoteInp ? itemNoteInp.value.trim() : (pharmacyDrafts[oid]?.items[itId]?.note || "");
+        let itemNote = itemNoteInp ? itemNoteInp.value.trim() : (itemDraft.note || "");
+
+        if (itemDraft.custom_name && !itemNote.includes(itemDraft.custom_name)) {
+          itemNote = itemNote ? `[Alt: ${itemDraft.custom_name}] ${itemNote}` : `[Alt: ${itemDraft.custom_name}]`;
+        }
+
         totalQuoted += price;
         items.push({
           order_item_id: itId,
@@ -7639,7 +7653,7 @@
       });
 
       const noteInp = document.getElementById(`p-note-${oid}`);
-      const notes = noteInp ? noteInp.value.trim() : "";
+      const notes = noteInp ? noteInp.value.trim() : (draft.note || "");
 
       try {
         const res = await fetch(`${API}/quotes`, {
@@ -7662,21 +7676,23 @@
             type: "SUCCESS",
             duration: 6000
           });
-          delete pharmacyDrafts[oid];
+          delete pharmacyDrafts[draftKey];
           loadPharmacyRadar();
           fetchNotifications();
         } else {
           showInAppToast({
             title: "Quote Error ⚠️",
-            message: d.error || "Failed to submit quote",
-            type: "WARNING"
+            message: d.error || "Failed to submit quote.",
+            type: "ALERT",
+            duration: 5000
           });
         }
       } catch (e) {
         showInAppToast({
           title: "Network Error ⚠️",
           message: e.message,
-          type: "DANGER"
+          type: "ALERT",
+          duration: 5000
         });
       }
     }
