@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        swipeRefresh.setColorSchemeResources(R.color.design_default_color_primary);
+        swipeRefresh.setColorSchemeResources(android.R.color.holo_green_dark);
         swipeRefresh.setOnRefreshListener(() -> webView.reload());
 
         String targetUrl = getString(R.string.web_url);
