@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.3
-          name: "Tapza Android App v1.0.3 (Zepto & Apollo UI Redesign)"
-          body: "Official Android APK featuring Zepto/Apollo UI redesign, SVG crisp vector line icons, Option A Create Order hero, and dual live order tracking."
+          tag_name: v1.0.4
+          name: "Tapza Android App v1.0.4 (Themed Sections, Responsive Desktop & Dedicated Search)"
+          body: "Official Android APK featuring individual themed backgrounds for medicine categories, Zepto/Blinkit dedicated search with instant suggestions, and full responsive web & mobile styling."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
