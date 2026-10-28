@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.7
-          name: "Tapza Android App v1.0.7 (Dedicated Zepto Search Screen and Dual Guest-User Profile)"
-          body: "Official Android APK featuring dedicated Zepto search screen with frequently bought quick-add cards, instant 0ms search catalogue, and dual guest-user profile with Continue auth button."
+          tag_name: v1.0.8
+          name: "Tapza Android App v1.0.8 (Hotfix for Script Initialization and Instant Search)"
+          body: "Official Android APK with variable initialization fix for instant app load, dedicated Zepto search catalogue, and dual guest profile."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

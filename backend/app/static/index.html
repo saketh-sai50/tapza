@@ -4151,6 +4151,14 @@
     let authRoleTab = "CUSTOMER";
     let isRegisterMode = false;
     let medicines = [];
+    let allMedicinesMap = {};
+    let cart = {};
+    let activeOrderId = null;
+    let pharmacyDrafts = {};
+    let currentModalMed = null;
+    let searchDebounceTimer = null;
+    let selectedCategory = "";
+    window.lastBroadcasts = [];
 
     // -------------------------------------------------------------
     // EMBEDDED MASTER MEDICINES CATALOGUE (0ms INSTANT CLIENT-SIDE SEARCH)
@@ -4199,15 +4207,6 @@
       allMedicinesMap[m.id] = m;
     });
     medicines = [...EMBEDDED_MASTER_MEDICINES];
-
-    let allMedicinesMap = {};
-    let cart = {};
-    let activeOrderId = null;
-    let pharmacyDrafts = {}; // orderId -> { items: { itemId: { is_available, price } }, note }
-    let currentModalMed = null;
-    let searchDebounceTimer = null;
-    let selectedCategory = "";
-    window.lastBroadcasts = [];
 
     // =============================================================
     // IN-APP TOAST POP-UP SYSTEM (ZOMATO / SWIGGY / RAPIDO / UBER STYLE)
