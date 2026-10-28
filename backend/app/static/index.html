@@ -1549,6 +1549,717 @@
         top: 10px;
       }
     }
+
+    /* ==================== ZEPTO / APOLLO / SWIGGY REDESIGN CSS ==================== */
+    :root {
+      --zepto-purple: #240a5e;
+      --zepto-purple-dark: #1b0647;
+      --zepto-pink: #e11d48;
+      --zepto-pink-light: #fff1f2;
+    }
+
+    /* TOP PURPLE HEADER */
+    .zepto-header-wrap {
+      background: linear-gradient(180deg, #240a5e 0%, #1b0647 100%);
+      color: #ffffff;
+      padding: 14px 16px 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(26, 5, 71, 0.25);
+    }
+    .zepto-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .zepto-location-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .zepto-loc-icon {
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .zepto-loc-text-main {
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #ffffff;
+    }
+    .zepto-loc-text-sub {
+      font-size: 11px;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+    .zepto-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .zepto-icon-btn {
+      background: rgba(255, 255, 255, 0.16);
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .zepto-icon-btn:hover { background: rgba(255, 255, 255, 0.26); }
+
+    /* SEARCH BAR */
+    .zepto-search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 0 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    .zepto-search-box svg {
+      color: #64748b;
+      flex-shrink: 0;
+      margin-right: 10px;
+    }
+    .zepto-search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #0f172a;
+      padding: 12px 0;
+      background: transparent;
+    }
+    .zepto-search-input::placeholder { color: #94a3b8; }
+
+    /* CATEGORY BAR */
+    .zepto-cat-row {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding: 14px 2px 4px 2px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .zepto-cat-row::-webkit-scrollbar { display: none; }
+    .zepto-cat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0.85;
+      transition: all 0.15s;
+    }
+    .zepto-cat-item:hover, .zepto-cat-item.active { opacity: 1; }
+    .zepto-cat-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: all 0.15s;
+    }
+    .zepto-cat-item.active .zepto-cat-icon-wrap {
+      background: #ffffff;
+      color: var(--zepto-purple);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+    .zepto-cat-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    /* PROMOTIONAL BANNER */
+    .zepto-promo-banner {
+      background: linear-gradient(135deg, #1e0747 0%, #3b0764 100%);
+      border-radius: 16px;
+      padding: 18px 20px;
+      color: #ffffff;
+      margin: 16px 0;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(30, 7, 71, 0.15);
+      position: relative;
+    }
+    .zepto-promo-tag {
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #e9d5ff;
+    }
+    .zepto-promo-main {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin: 4px 0 2px 0;
+    }
+    .zepto-promo-sub {
+      font-size: 12px;
+      font-weight: 700;
+      color: #f5d0fe;
+    }
+    .zepto-promo-strip {
+      display: inline-block;
+      background: #c084fc;
+      color: #240a5e;
+      font-size: 11.5px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin: 10px 0 14px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .zepto-trust-pills {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 12px;
+      margin-top: 6px;
+    }
+    .zepto-trust-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    .zepto-consult-bar {
+      background: #fdf2f8;
+      border: 1px solid #fbcfe8;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #be185d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    /* HERO CREATE ORDER CARD (OPTION A) */
+    .hero-create-order-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+    .hero-create-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .hero-create-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-create-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 480px) {
+      .hero-create-actions {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+    }
+    .hero-act-btn {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .hero-act-btn:hover {
+      transform: translateY(-1px);
+    }
+    .hero-act-btn-rx {
+      background: #fdf2f8;
+      border-color: #fbcfe8;
+    }
+    .hero-act-btn-rx:hover {
+      background: #fce7f3;
+      border-color: #f472b6;
+    }
+    .hero-act-btn-cat {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+    .hero-act-btn-cat:hover {
+      background: #dcfce7;
+      border-color: #86efac;
+    }
+    .hero-act-icon-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .hero-act-desc {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    /* ZEPTO PRODUCT CARDS GRID */
+    .zepto-section-header {
+      margin: 22px 0 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .zepto-sec-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .zepto-sec-sub {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    .zepto-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 480px) {
+      .zepto-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+    .zepto-card {
+      background: #ffffff;
+      border: 1px solid #f1f5f9;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .zepto-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+    .zepto-img-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      height: 125px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px;
+      overflow: hidden;
+    }
+    .zepto-discount-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: #4c1d95;
+      color: #ffffff;
+      font-size: 9.5px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+      z-index: 2;
+    }
+    .zepto-med-art {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+    }
+    .zepto-box-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      z-index: 2;
+    }
+    .zepto-pack-txt {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .zepto-add-btn {
+      background: #ffffff;
+      border: 1.5px solid var(--zepto-pink);
+      color: var(--zepto-pink);
+      font-size: 11.5px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .zepto-add-btn:hover {
+      background: var(--zepto-pink);
+      color: #ffffff;
+    }
+    .zepto-stepper {
+      display: inline-flex;
+      align-items: center;
+      background: var(--zepto-pink);
+      border-radius: 8px;
+      color: #ffffff;
+      font-weight: 900;
+      overflow: hidden;
+    }
+    .zepto-step-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 2px 7px;
+      cursor: pointer;
+    }
+    .zepto-step-val {
+      font-size: 12px;
+      font-weight: 900;
+      padding: 0 4px;
+    }
+    .zepto-card-body {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .zepto-form-pill {
+      display: inline-block;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+      margin-bottom: 4px;
+    }
+    .zepto-rx-req {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #be185d;
+      margin-bottom: 4px;
+    }
+    .zepto-card-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 32px;
+    }
+    .zepto-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: auto;
+    }
+    .zepto-price-main {
+      font-size: 14.5px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .zepto-price-strike {
+      font-size: 11px;
+      color: #94a3b8;
+      text-decoration: line-through;
+      font-weight: 600;
+    }
+    .zepto-offer-pill {
+      display: inline-block;
+      background: #ecfeff;
+      border: 1px solid #a5f3fc;
+      color: #0891b2;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      width: fit-content;
+    }
+
+    /* FLOATING STICKY CART BAR (SWIGGY STYLE) */
+    .swiggy-floating-cart {
+      position: fixed;
+      bottom: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 540px;
+      background: #059669;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+      z-index: 99;
+      cursor: pointer;
+      animation: slideUpCart 0.25s ease;
+    }
+    @keyframes slideUpCart {
+      from { transform: translate(-50%, 40px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+
+    /* ZOMATO STYLE LIVE TRACKER (PINNED ON HOME) */
+    .zomato-live-tracker {
+      position: fixed;
+      bottom: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 540px;
+      background: #1e1b4b;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(30, 27, 75, 0.4);
+      z-index: 98;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      animation: slideUpCart 0.25s ease;
+    }
+    .live-tracker-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .live-pulse-ring {
+      position: relative;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .live-pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulseRadar 1.5s infinite;
+    }
+    @keyframes pulseRadar {
+      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .live-tracker-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .live-tracker-sub {
+      font-size: 11px;
+      color: #a7f3d0;
+      font-weight: 600;
+    }
+    .live-tracker-cta {
+      background: #10b981;
+      color: #ffffff;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* BOTTOM NAVIGATION BAR (FIXED) */
+    .zepto-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+    }
+    .zepto-nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex: 1;
+      height: 100%;
+      cursor: pointer;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 10.5px;
+      font-weight: 700;
+      transition: color 0.15s;
+      position: relative;
+    }
+    .zepto-nav-tab.active {
+      color: #240a5e;
+    }
+    .zepto-nav-tab.active svg {
+      color: #240a5e;
+      transform: scale(1.08);
+    }
+    .zepto-badge-dot {
+      position: absolute;
+      top: 8px;
+      right: calc(50% - 16px);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 1.5px solid #ffffff;
+    }
+
+    /* PROFILE SCREEN (ZEPTO / SWIGGY STYLE) */
+    .zepto-profile-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 10px 16px 80px 16px;
+    }
+    .zepto-profile-header-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #f1f5f9;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    }
+    .zepto-profile-name {
+      font-size: 19px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .zepto-profile-phone {
+      font-size: 13.5px;
+      color: #64748b;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+    .zepto-profile-edit {
+      color: #e11d48;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .zepto-info-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #f1f5f9;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    }
+    .zepto-info-card-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      padding: 16px 18px 8px 18px;
+    }
+    .zepto-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-top: 1px solid #f8fafc;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .zepto-info-row:hover { background: #f8fafc; }
+    .zepto-info-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .zepto-info-left svg { color: #64748b; }
+    .zepto-info-logout { color: #ef4444 !important; }
+    .zepto-info-logout svg { color: #ef4444 !important; }
   </style>
 </head>
 <body>
@@ -1658,38 +2369,93 @@
 
 
     <!-- ==============================================================
-         2. SEPARATE CUSTOMER INTERFACE
+         2. SEPARATE CUSTOMER INTERFACE (ZEPTO / SWIGGY / APOLLO STYLE)
     =============================================================== -->
-    <div id="customerInterface" style="display:none;">
-      <!-- Hero Header -->
-      <div class="hero-banner">
-        <h1 class="hero-title">Your health,<br><span>our priority.</span></h1>
-        <p class="hero-sub">Order medicines and get competitive local pharmacy quotes delivered to your doorstep.</p>
-      </div>
+    <div id="customerInterface" style="display:none; padding-bottom:70px;">
 
-      <!-- Customer Top Navigation Tabs (Home / Rx / Orders) -->
-      <div class="cust-nav-bar" id="custNavBar">
-        <button id="custTabHome" class="cust-nav-btn active" onclick="switchCustomerTab('HOME')">
-          <span>🏠</span> <span>Browse Medicines</span>
-        </button>
-        <button id="custTabRx" class="cust-nav-btn" onclick="switchCustomerTab('RX')">
-          <span>📸</span> <span>Upload Prescription (OCR)</span>
-        </button>
-        <button id="custTabOrders" class="cust-nav-btn" onclick="switchCustomerTab('ORDERS')">
-          <span>📋</span> <span>My Orders & Live Quotes</span>
-          <span id="custActiveOrdersBadge" class="cust-active-pill" style="display:none;">LIVE</span>
-        </button>
-      </div>
-
-      <!-- Customer Quick Action Bar (Welcome & Orders Shortcut) -->
-      <div id="customerQuickActionBar" style="display:none; justify-content:space-between; align-items:center; margin-bottom:16px; background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:10px 16px;">
-        <div style="font-size:13px; color:var(--text); font-weight:700;">
-          👋 Welcome, <span id="customerBarName" style="color:#065f46; font-weight:800;">Customer</span>!
+      <!-- ================= ZEPTO / APOLLO TOP HEADER ================= -->
+      <div class="zepto-header-wrap" id="zeptoHeaderWrap">
+        <div class="zepto-top-row">
+          <div class="zepto-location-box" onclick="toggleZoneModal()">
+            <div class="zepto-loc-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            </div>
+            <div>
+              <div class="zepto-loc-text-main">
+                <span id="zeptoZoneLabel">Warangal</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="zepto-loc-text-sub" id="zeptoZoneSub">National Institute of Tech, Warangal</div>
+            </div>
+          </div>
+          
+          <div class="zepto-header-actions">
+            <!-- Notification Bell -->
+            <button class="zepto-icon-btn" onclick="toggleNotificationDrawer()" title="Notifications">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span class="notif-count-badge" id="zeptoNotifBadge" style="display:none;">0</span>
+            </button>
+            
+            <!-- User Profile Avatar Button -->
+            <button class="zepto-icon-btn" id="zeptoProfileBtn" onclick="switchCustomerTab('PROFILE')" title="Profile">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </button>
+          </div>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn-logout" style="padding:6px 14px; font-size:12px; font-weight:800; color:#0369a1; border-color:#bae6fd; background:#f0f9ff; display:flex; align-items:center; gap:6px;" onclick="switchCustomerTab('ORDERS')">
-            📋 My Orders Page (<span id="custOrderHistoryCount">0</span>)
-          </button>
+
+        <!-- Search Bar with Live Autocomplete -->
+        <div class="zepto-search-box" id="searchBarWrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="zepto-search-input" id="catalogueSearchInput" autocomplete="off" placeholder='Search "dolo 650", "cough syrup" or brand...' oninput="onCatalogueSearchInput(this.value)" onfocus="onCatalogueSearchFocus()" onkeydown="onCatalogueSearchKeyDown(event)">
+          <button id="searchClearBtn" class="search-clear-btn" style="display:none;" onclick="clearSearchInput()">✕</button>
+
+          <!-- Apollo / PharmEasy Live Autocomplete Dropdown -->
+          <div class="autocomplete-dropdown" id="searchAutocompleteDropdown" style="display:none;">
+            <div id="autocompleteResultsList"></div>
+            <div class="autocomplete-footer" id="autocompleteFooter" onclick="applyFullSearchFromFooter()">
+              View all matching results in catalogue &rarr;
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Horizontal Strip (with Real SVG Icons) -->
+        <div class="zepto-cat-row">
+          <div class="zepto-cat-item active" id="cat-all" onclick="filterCategory('')">
+            <div class="zepto-cat-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="10" height="13" rx="2"/><path d="M6 5h4v3H6z"/><path d="M8 12v5m-2.5-2.5h5"/><rect x="15" y="10" width="6" height="11" rx="3" transform="rotate(45 18 15.5)"/></svg>
+            </div>
+            <div class="zepto-cat-title">Pharmacy</div>
+          </div>
+          <div class="zepto-cat-item" id="cat-diabetic" onclick="filterCategory('Antidiabetic')">
+            <div class="zepto-cat-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 11v6m-3-3h6"/></svg>
+            </div>
+            <div class="zepto-cat-title">Diabetic care</div>
+          </div>
+          <div class="zepto-cat-item" id="cat-selfcare" onclick="filterCategory('Analgesic')">
+            <div class="zepto-cat-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <div class="zepto-cat-title">Self care</div>
+          </div>
+          <div class="zepto-cat-item" id="cat-ayurveda" onclick="filterCategory('Ayurveda')">
+            <div class="zepto-cat-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+            </div>
+            <div class="zepto-cat-title">Ayurveda</div>
+          </div>
+          <div class="zepto-cat-item" id="cat-antibiotic" onclick="filterCategory('Antibiotic')">
+            <div class="zepto-cat-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="zepto-cat-title">Antibiotics</div>
+          </div>
+          <div class="zepto-cat-item" id="cat-cardio" onclick="filterCategory('Cardiovascular')">
+            <div class="zepto-cat-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="zepto-cat-title">Heart Care</div>
+          </div>
         </div>
       </div>
 
@@ -1697,66 +2463,182 @@
            PAGE 1: HOME / MEDICINES CATALOGUE & ORDERING
       =============================================================== -->
       <div id="custPageHome">
-        <!-- Guest Notice Banner (shown strictly when not authenticated) -->
-        <div id="guestNoticeBanner" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:12px 18px; margin-bottom:16px; justify-content:space-between; align-items:center; gap:12px;">
+        <!-- Guest Notice Banner -->
+        <div id="guestNoticeBanner" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:12px 18px; margin:16px 0; justify-content:space-between; align-items:center; gap:12px;">
           <div style="font-size:13px; color:#1e40af; font-weight:700;">
-            🔒 <b>Guest Mode:</b> You can search 2,750+ medicines & check reference prices. To place an order, please log in or create an account (same as Swiggy/Zomato).
+            <b>Guest Mode:</b> You can search 2,750+ medicines & check reference prices. To place an order, please log in or create an account.
           </div>
           <button class="btn-auth-submit" style="width:auto; padding:6px 14px; font-size:12px; margin:0; background:#2563eb; white-space:nowrap;" onclick="showAuthScreen()">
             Login / Register
           </button>
         </div>
 
-        <!-- Search Input with Apollo 24/7 Autocomplete -->
-        <div class="search-bar" id="searchBarWrapper">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="search-input" id="catalogueSearchInput" autocomplete="off" placeholder="Search medicines by name, brand, salt composition (e.g. Dolo, Augmentin, Paracetamol)..." oninput="onCatalogueSearchInput(this.value)" onfocus="onCatalogueSearchFocus()" onkeydown="onCatalogueSearchKeyDown(event)">
-          <button id="searchClearBtn" class="search-clear-btn" style="display:none;" onclick="clearSearchInput()">✕</button>
+        <!-- Zepto Promotional Banner -->
+        <div class="zepto-promo-banner">
+          <div class="zepto-promo-tag">LOWEST PRICE GUARANTEE</div>
+          <div class="zepto-promo-main">— FLAT 25% OFF —</div>
+          <div class="zepto-promo-sub">NO MINIMUM ORDER</div>
+          <div>
+            <span class="zepto-promo-strip">⚡ FREE 15-MIN EXPRESS DELIVERY 🛵</span>
+          </div>
+          <div class="zepto-trust-pills">
+            <div class="zepto-trust-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
+              <span>35,000+ Medicines</span>
+            </div>
+            <div class="zepto-trust-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>Delivered in minutes</span>
+            </div>
+            <div class="zepto-trust-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>Licensed pharmacy</span>
+            </div>
+          </div>
+          <div class="zepto-consult-bar" onclick="openPrescriptionUploadModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>No prescription? Get free instant doctor consultation & Rx verification</span>
+          </div>
+        </div>
 
-          <!-- Apollo / PharmEasy Live Autocomplete Dropdown -->
-          <div class="autocomplete-dropdown" id="searchAutocompleteDropdown" style="display:none;">
-            <div id="autocompleteResultsList"></div>
-            <div class="autocomplete-footer" id="autocompleteFooter" onclick="applyFullSearchFromFooter()">
-              🔍 View all matching results in catalogue &rarr;
+        <!-- HERO QUICK ACTION CARD (CREATE ORDER - OPTION A) -->
+        <div class="hero-create-order-card">
+          <div class="hero-create-title-row">
+            <div class="hero-create-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#240a5e" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Create New Order</span>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:#059669; background:#ecfdf5; padding:3px 8px; border-radius:12px;">Real-Time Quotes</span>
+          </div>
+          <div class="hero-create-actions">
+            <!-- Action 1: Upload Prescription -->
+            <div class="hero-act-btn hero-act-btn-rx" onclick="openPrescriptionUploadModal()">
+              <div class="hero-act-icon-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#be185d" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span style="color:#9d174d;">Upload Prescription</span>
+              </div>
+              <div class="hero-act-desc">Upload Rx image & let pharmacies scan and quote competitive prices.</div>
+            </div>
+
+            <!-- Action 2: Search & Add from Catalog -->
+            <div class="hero-act-btn hero-act-btn-cat" onclick="scrollToCatalogueSearch()">
+              <div class="hero-act-icon-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span style="color:#065f46;">Search & Add Tablets</span>
+              </div>
+              <div class="hero-act-desc">Browse 2,750+ medicines, select quantities, and request quotes below.</div>
             </div>
           </div>
         </div>
 
-        <!-- Categories Navigation -->
-        <div class="category-scroll">
-          <div class="category-card active" onclick="filterCategory('')">
-            <span class="cat-icon">💊</span>
-            <span class="cat-name">All</span>
+        <!-- Curated Sections & Dynamic Cards List -->
+        <div id="zeptoCuratedSections">
+          <!-- Curated Section 1: Cold & Flu -->
+          <div class="zepto-section-header">
+            <div>
+              <div class="zepto-sec-title">
+                <span>Stay ahead of the season</span>
+                <span style="font-size:14px;">🍃</span>
+              </div>
+              <div class="zepto-sec-sub">COLD & FLU ESSENTIALS</div>
+            </div>
+            <button class="btn-logout" style="font-size:11.5px; padding:4px 10px; border-radius:8px;" onclick="filterCategory('Analgesic')">See all &rarr;</button>
           </div>
-          <div class="category-card" onclick="filterCategory('Antibiotic')">
-            <span class="cat-icon">🩺</span>
-            <span class="cat-name">Antibiotics</span>
+          <div class="zepto-cards-grid" id="curatedSectionCold">Loading...</div>
+
+          <!-- Curated Section 2: Pain Relief -->
+          <div class="zepto-section-header">
+            <div>
+              <div class="zepto-sec-title">
+                <span>Quick fix for every pain</span>
+                <span style="font-size:14px;">⚡</span>
+              </div>
+              <div class="zepto-sec-sub">FROM HEADACHE TO MUSCLE PAIN</div>
+            </div>
+            <button class="btn-logout" style="font-size:11.5px; padding:4px 10px; border-radius:8px;" onclick="filterCategory('Analgesic')">See all &rarr;</button>
           </div>
-          <div class="category-card" onclick="filterCategory('Analgesic')">
-            <span class="cat-icon">❤️</span>
-            <span class="cat-name">Pain Relief</span>
+          <div class="zepto-cards-grid" id="curatedSectionPain">Loading...</div>
+
+          <!-- Curated Section 3: Hydration -->
+          <div class="zepto-section-header">
+            <div>
+              <div class="zepto-sec-title">
+                <span>Power up with fluids</span>
+                <span style="font-size:14px;">🍊</span>
+              </div>
+              <div class="zepto-sec-sub">QUICK HYDRATION SUPPORT</div>
+            </div>
+            <button class="btn-logout" style="font-size:11.5px; padding:4px 10px; border-radius:8px;" onclick="filterCategory('Antidiabetic')">See all &rarr;</button>
           </div>
-          <div class="category-card" onclick="filterCategory('Antidiabetic')">
-            <span class="cat-icon">🌡️</span>
-            <span class="cat-name">Diabetes</span>
+          <div class="zepto-cards-grid" id="curatedSectionFluids">Loading...</div>
+
+          <!-- Curated Section 4: Daily Boost -->
+          <div class="zepto-section-header">
+            <div>
+              <div class="zepto-sec-title">
+                <span>Your daily boost</span>
+                <span style="font-size:14px;">💪</span>
+              </div>
+              <div class="zepto-sec-sub">ESSENTIAL VITAMINS, EVERYDAY</div>
+            </div>
+            <button class="btn-logout" style="font-size:11.5px; padding:4px 10px; border-radius:8px;" onclick="filterCategory('')">See all &rarr;</button>
           </div>
-          <div class="category-card" onclick="filterCategory('Cardiovascular')">
-            <span class="cat-icon">🫀</span>
-            <span class="cat-name">Heart Care</span>
-          </div>
+          <div class="zepto-cards-grid" id="curatedSectionVitamins">Loading...</div>
         </div>
 
-        <!-- Medicine Catalogue & Order Building -->
-        <div class="card">
+        <!-- Complete Catalogue / Search Results Container -->
+        <div id="fullCatalogueSection" style="display:none; margin-top:20px;">
+          <div class="zepto-section-header">
+            <div>
+              <div class="zepto-sec-title" id="fullCatalogueTitle">Search Results</div>
+              <div class="zepto-sec-sub" id="fullCatalogueSub">Reference MRP • Real-time quotes from local pharmacies</div>
+            </div>
+            <button class="btn-logout" style="font-size:11px; padding:4px 8px;" onclick="resetSearchToCurated()">Back to Home</button>
+          </div>
+          <div class="zepto-cards-grid" id="catalogueMedicinesList">Loading catalogue...</div>
+        </div>
+
+        <!-- Checkout / Broadcast Order Drawer (When ready to order) -->
+        <div class="card" id="customerCheckoutCard" style="margin-top:20px; border-radius:16px;">
           <div class="section-title">
-            <span>Catalogue Medicines</span>
-            <span style="font-size:12px; color:var(--text-muted);">Standard Reference MRP</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+              Delivery & Broadcast Details
+            </span>
           </div>
 
-          <div id="catalogueMedicinesList">Loading catalogue...</div>
+          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom:14px;">
+            <div>
+              <label style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">
+                Delivery Zone
+              </label>
+              <select id="custOrderZoneSelect" class="search-input" style="padding:10px 12px; background:#fff; font-weight:700; color:#065f46; cursor:pointer;" onchange="onCustomerOrderZoneChange(this.value)">
+                <option value="Warangal" selected>Warangal</option>
+                <option value="Hanamkonda">Hanamkonda</option>
+                <option value="Kazipet">Kazipet</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">
+                Delivery Street Address
+              </label>
+              <input type="text" class="search-input" id="custOrderAddressInput" value="Plot 12, Demo Market Road, Warangal" style="padding:10px 14px;" oninput="onCustomerAddressInput(this.value)">
+            </div>
+          </div>
 
           <!-- Cart Summary & Order Placement -->
-          <div class="cart-checkout-box">
+          <div class="cart-checkout-box" style="margin-bottom:14px;">
+            <div>
+              <div style="font-weight:800; font-size:13.5px;" id="cartCountLabel">0 item(s) selected</div>
+              <div style="font-size:11.5px; color:var(--text-muted);">Standard Reference MRP (Pharmacies will bid competitive discounted prices)</div>
+            </div>
+            <div class="cart-total-val" id="cartTotalVal">₹0.00</div>
+          </div>
+
+          <button class="btn-auth-submit" id="custBroadcastSubmitBtn" style="padding:14px; font-size:14px; border-radius:12px;" onclick="startCustomerBroadcast()">
+            Broadcast Order to Local Warangal Pharmacies
+          </button>
+        </div>
             <div>
               <div style="font-weight:800; font-size:13.5px;" id="cartCountLabel">0 item(s) selected</div>
               <div style="font-size:11.5px; color:var(--text-muted);">Standard Reference MRP (Selling price quoted by pharmacy)</div>
@@ -1906,144 +2788,288 @@
            PAGE 3: DEDICATED ORDERS & LIVE TRACKING PAGE
       =============================================================== -->
       <div id="custPageOrders" style="display:none;">
-        <!-- Orders Page Top Action Header -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:#ffffff; border:1px solid var(--border); border-radius:12px; padding:14px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-          <div>
-            <div style="font-size:17px; font-weight:900; color:var(--text); display:flex; align-items:center; gap:8px;">
-              <span>📋</span> My Orders & Live Reverse-Auction Tracking
-            </div>
-            <div style="font-size:12.5px; color:var(--text-muted); margin-top:3px;">
-              Track live quotes from nearby pharmacies, real-time discounts, and order fulfillment.
-            </div>
-          </div>
-          <button class="btn-logout" style="padding:8px 16px; font-size:12.5px; font-weight:800; color:#0284c7; border-color:#bae6fd; background:#f0f9ff; display:flex; align-items:center; gap:6px;" onclick="switchCustomerTab('HOME')">
-            ➕ Browse & Order More
+        <!-- Orders Page Segmented Nav: Live & In-Progress vs Delivered & Past -->
+        <div style="display:flex; gap:8px; margin-bottom:16px; background:#f1f5f9; padding:4px; border-radius:12px;">
+          <button id="orderSubTabLive" class="cust-nav-btn active" onclick="switchOrdersSubTab('LIVE')" style="flex:1; padding:10px 14px; border-radius:10px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:#ffffff; color:#0f172a; box-shadow:0 1px 4px rgba(0,0,0,0.06); display:flex; align-items:center; justify-content:center; gap:6px;">
+            <span class="live-pulse-dot" style="position:static; display:inline-block; width:8px; height:8px;"></span>
+            <span>Live & In-Progress (<span id="ordersLiveCount">0</span>)</span>
+          </button>
+          <button id="orderSubTabPast" class="cust-nav-btn" onclick="switchOrdersSubTab('PAST')" style="flex:1; padding:10px 14px; border-radius:10px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:transparent; color:#64748b; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+            <span>Delivered & Past (<span id="ordersPastCount">0</span>)</span>
           </button>
         </div>
 
-        <!-- No Active Orders Placeholder (Shown if no order is active) -->
-        <div id="custNoActiveOrderBanner" style="display:none; text-align:center; padding:32px 16px; background:#ffffff; border:1px dashed #cbd5e1; border-radius:12px; margin-bottom:20px;">
-          <div style="font-size:36px; margin-bottom:8px;">📦</div>
-          <div style="font-size:15px; font-weight:800; color:var(--text);">No In-Progress Active Orders</div>
-          <div style="font-size:12.5px; color:var(--text-muted); margin-top:4px; max-width:440px; margin-left:auto; margin-right:auto;">
-            You don't have an order waiting for quotes right now. Browse our 2,750+ medicines or upload a prescription to request quotes from local pharmacies.
+        <!-- SECTION A: LIVE & IN-PROGRESS ORDERS CONTAINER -->
+        <div id="custOrdersLiveSection">
+          <!-- No Active Orders Placeholder -->
+          <div id="custNoActiveOrderBanner" style="display:none; text-align:center; padding:32px 16px; background:#ffffff; border:1px dashed #cbd5e1; border-radius:12px; margin-bottom:20px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin:0 auto 10px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div style="font-size:15px; font-weight:800; color:var(--text);">No In-Progress Active Orders</div>
+            <div style="font-size:12.5px; color:var(--text-muted); margin-top:4px; max-width:440px; margin-left:auto; margin-right:auto;">
+              You don't have an order waiting for quotes right now. Browse our 2,750+ medicines or upload a prescription to request quotes from local pharmacies.
+            </div>
+            <div style="display:flex; justify-content:center; gap:10px; margin-top:16px;">
+              <button class="btn-auth-submit" style="width:auto; padding:8px 18px; font-size:12.5px;" onclick="switchCustomerTab('HOME')">
+                Browse Medicines
+              </button>
+              <button class="btn-logout" style="padding:8px 18px; font-size:12.5px; font-weight:700; color:#059669; border-color:#86efac; background:#f0fdf4;" onclick="openPrescriptionUploadModal()">
+                Upload Prescription
+              </button>
+            </div>
           </div>
-          <div style="display:flex; justify-content:center; gap:10px; margin-top:16px;">
-            <button class="btn-auth-submit" style="width:auto; padding:8px 18px; font-size:12.5px;" onclick="switchCustomerTab('HOME')">
-              💊 Browse Medicines
-            </button>
-            <button class="btn-logout" style="padding:8px 18px; font-size:12.5px; font-weight:700; color:#059669; border-color:#86efac; background:#f0fdf4;" onclick="switchCustomerTab('RX')">
-              📸 Upload Prescription
-            </button>
+
+          <!-- Active Order Tracking Card (When active order exists) -->
+          <div class="card" id="customerActiveOrderCard" style="display:none; border-radius:16px;">
+            <div class="section-title">
+              <span id="custOrderTrackingTitle">Live Pharmacy Quotes & Order Tracking</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-logout" style="padding:4px 11px; font-size:11.5px; font-weight:800; color:#0284c7; border-color:#bae6fd; background:#f0f9ff;" onclick="startNewOrderSession()">
+                  New Order
+                </button>
+                <span class="role-pill role-pill-customer" id="custOrderStatusBadge">WAITING FOR QUOTES</span>
+              </div>
+            </div>
+
+            <!-- Clean Live Status Banner with Real-time Delivery Stepper -->
+            <div class="cust-live-status-card" id="custLiveStatusCard">
+              <div class="status-pulse-wrapper">
+                <span class="status-pulse-dot" id="custLivePulseDot"></span>
+                <div style="font-size:14px; font-weight:800; color:#065f46;" id="custLiveStatusHeading">
+                  Order Request Broadcasted to Local Pharmacies
+                </div>
+              </div>
+              <div style="font-size:12.5px; color:var(--text-muted); margin-top:5px;" id="custLiveStatusDesc">
+                Nearby pharmacies are currently calculating prices and availability. Please compare quotes below and pick the best offer.
+              </div>
+
+              <!-- Prescription Info Card (if order has prescription) -->
+              <div id="custLivePrescriptionBadge" style="display:none; margin-top:12px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; align-items:center; gap:12px;">
+                <img id="custLivePrescriptionThumb" src="" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #86efac; cursor:pointer;" onclick="viewFullPrescription(this.src)" title="Click to view full prescription">
+                <div style="flex:1;">
+                  <div style="font-size:12.5px; font-weight:800; color:#15803d; display:flex; align-items:center; gap:6px;">
+                    <span>Uploaded Doctor Prescription</span>
+                  </div>
+                  <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;" id="custLivePrescriptionNotes">
+                    Pharmacies are scanning your prescription using OCR to calculate prices and availability.
+                  </div>
+                </div>
+                <button type="button" class="btn-logout" style="padding:4px 10px; font-size:11px; font-weight:700; color:#15803d; border-color:#86efac; background:#f0fdf4;" onclick="viewFullPrescription(document.getElementById('custLivePrescriptionThumb').src)">
+                  View Rx
+                </button>
+              </div>
+
+              <!-- Real-Time Delivery Stepper (Swiggy / Zomato style) -->
+              <div id="custFulfillmentStepperContainer" style="display:none; margin-top:16px; padding-top:14px; border-top:1px solid #d1fae5;">
+                <div style="font-size:11px; font-weight:800; color:#065f46; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px;">
+                  Live Order Fulfillment Progress:
+                </div>
+                <div class="order-stepper">
+                  <div class="order-step" id="stepConfirmed">
+                    <div class="step-circle">1</div>
+                    <div class="step-title">Confirmed</div>
+                  </div>
+                  <div class="order-step" id="stepPreparing">
+                    <div class="step-circle">2</div>
+                    <div class="step-title">Packing</div>
+                  </div>
+                  <div class="order-step" id="stepDispatched">
+                    <div class="step-circle">3</div>
+                    <div class="step-title">Out for Delivery</div>
+                  </div>
+                  <div class="order-step" id="stepDelivered">
+                    <div class="step-circle">4</div>
+                    <div class="step-title">Delivered</div>
+                  </div>
+                </div>
+                <!-- Live update message from pharmacy -->
+                <div id="custLivePharmacyMessage" style="background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 12px; font-size:12px; color:#065f46; font-weight:600; margin-top:6px; display:flex; align-items:center; gap:6px;">
+                  <span id="custLivePharmacyMessageText">Waiting for pharmacy fulfillment updates.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Received Pharmacy Quotes -->
+            <div style="margin-top:16px;">
+              <h3 style="font-size:15px; font-weight:800; margin-bottom:10px;">
+                Received Pharmacy Offers (<span id="custQuotesCount">0</span>):
+              </h3>
+              <div id="custQuotesList">
+                <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">
+                  Waiting for quotes from local pharmacies...
+                </div>
+              </div>
+            </div>
+
+            <!-- Mock Payment Section -->
+            <div id="custPaymentSection" style="display:none; margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">
+              <div style="background:#fef3c7; border:1px solid #fde68a; padding:10px 14px; border-radius:8px; font-size:11.5px; color:#92400e; font-weight:800; margin-bottom:10px;">
+                SIMULATED TEST PAYMENT (MOCK) — NO REAL MONEY WILL BE CHARGED
+              </div>
+              <button class="btn-auth-submit" style="background:#059669; padding:12px; border-radius:10px;" onclick="executeMockPayment()">
+                Complete Simulated Payment (<span id="custPayAmountText">₹0.00</span>)
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Active Order Tracking Card (When active order exists) -->
-        <div class="card" id="customerActiveOrderCard" style="display:none;">
-          <div class="section-title">
-            <span id="custOrderTrackingTitle">Live Pharmacy Quotes & Order Tracking</span>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <button class="btn-logout" style="padding:4px 11px; font-size:11.5px; font-weight:800; color:#0284c7; border-color:#bae6fd; background:#f0f9ff;" onclick="startNewOrderSession()">
-                ➕ Place New Order
-              </button>
-              <span class="role-pill role-pill-customer" id="custOrderStatusBadge">WAITING FOR ACCEPTANCE</span>
+        <!-- SECTION B: DELIVERED & PAST ORDERS CONTAINER -->
+        <div id="custOrdersPastSection" style="display:none;">
+          <div class="card" style="border-radius:16px;">
+            <div class="section-title">
+              <span>Delivered & Past Orders History</span>
+              <span style="font-size:12px; color:var(--text-muted);" id="ordersPageHistoryCount">0 Orders</span>
             </div>
-          </div>
-
-          <!-- Clean Live Status Banner with Real-time Delivery Stepper -->
-          <div class="cust-live-status-card" id="custLiveStatusCard">
-            <div class="status-pulse-wrapper">
-              <span class="status-pulse-dot" id="custLivePulseDot"></span>
-              <div style="font-size:14px; font-weight:800; color:#065f46;" id="custLiveStatusHeading">
-                Order Request Placed Successfully
-              </div>
+            <div id="custOrdersPageHistoryContainer">
+              <div style="text-align:center; padding:24px 10px; color:var(--text-muted); font-size:13px;">Loading orders...</div>
             </div>
-            <div style="font-size:12.5px; color:var(--text-muted); margin-top:5px;" id="custLiveStatusDesc">
-              Your request has been processed successfully. Please wait until nearby pharmacies accept your request.
-            </div>
-
-            <!-- Prescription Info Card (if order has prescription) -->
-            <div id="custLivePrescriptionBadge" style="display:none; margin-top:12px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; align-items:center; gap:12px;">
-              <img id="custLivePrescriptionThumb" src="" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #86efac; cursor:pointer;" onclick="viewFullPrescription(this.src)" title="Click to view full prescription">
-              <div style="flex:1;">
-                <div style="font-size:12.5px; font-weight:800; color:#15803d; display:flex; align-items:center; gap:6px;">
-                  <span>📄</span> Uploaded Doctor Prescription
-                </div>
-                <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;" id="custLivePrescriptionNotes">
-                  Pharmacies are scanning your prescription using OCR to calculate prices and availability.
-                </div>
-              </div>
-              <button type="button" class="btn-logout" style="padding:4px 10px; font-size:11px; font-weight:700; color:#15803d; border-color:#86efac; background:#f0fdf4;" onclick="viewFullPrescription(document.getElementById('custLivePrescriptionThumb').src)">
-                🔍 View Rx
-              </button>
-            </div>
-
-            <!-- Real-Time Delivery Stepper (Swiggy / Zomato style) -->
-            <div id="custFulfillmentStepperContainer" style="display:none; margin-top:16px; padding-top:14px; border-top:1px solid #d1fae5;">
-              <div style="font-size:11px; font-weight:800; color:#065f46; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px;">
-                🚚 Live Order Fulfillment Progress:
-              </div>
-              <div class="order-stepper">
-                <div class="order-step" id="stepConfirmed">
-                  <div class="step-circle">1</div>
-                  <div class="step-title">Confirmed</div>
-                </div>
-                <div class="order-step" id="stepPreparing">
-                  <div class="step-circle">2</div>
-                  <div class="step-title">Packing 💊</div>
-                </div>
-                <div class="order-step" id="stepDispatched">
-                  <div class="step-circle">3</div>
-                  <div class="step-title">Out for Delivery 🚚</div>
-                </div>
-                <div class="order-step" id="stepDelivered">
-                  <div class="step-circle">4</div>
-                  <div class="step-title">Delivered 🎉</div>
-                </div>
-              </div>
-              <!-- Live update message from pharmacy -->
-              <div id="custLivePharmacyMessage" style="background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 12px; font-size:12px; color:#065f46; font-weight:600; margin-top:6px; display:flex; align-items:center; gap:6px;">
-                <span>ℹ️</span> <span id="custLivePharmacyMessageText">Waiting for pharmacy fulfillment updates.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Received Pharmacy Quotes -->
-          <div style="margin-top:16px;">
-            <h3 style="font-size:15px; font-weight:800; margin-bottom:10px;">
-              Received Pharmacy Offers (<span id="custQuotesCount">0</span>):
-            </h3>
-            <div id="custQuotesList">
-              <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">
-                Waiting for quotes from local pharmacies...
-              </div>
-            </div>
-          </div>
-
-          <!-- Mock Payment Section -->
-          <div id="custPaymentSection" style="display:none; margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">
-            <div style="background:#fef3c7; border:1px solid #fde68a; padding:10px 14px; border-radius:8px; font-size:11.5px; color:#92400e; font-weight:800; margin-bottom:10px;">
-              ⚠️ SIMULATED TEST PAYMENT (MOCK) — NO REAL MONEY WILL BE CHARGED
-            </div>
-            <button class="btn-auth-submit" style="background:#059669; padding:12px;" onclick="executeMockPayment()">
-              💳 Complete Simulated Test Payment (<span id="custPayAmountText">₹0.00</span>)
-            </button>
-          </div>
-        </div>
-
-        <!-- Embedded Orders History Section -->
-        <div class="card" style="margin-top:20px;">
-          <div class="section-title">
-            <span style="display:flex; align-items:center; gap:8px;">
-              <span>📜</span> Past Order History
-            </span>
-            <span style="font-size:12px; color:var(--text-muted);" id="ordersPageHistoryCount">0 Orders</span>
-          </div>
-          <div id="custOrdersPageHistoryContainer">
-            <div style="text-align:center; padding:24px 10px; color:var(--text-muted); font-size:13px;">Loading orders...</div>
           </div>
         </div>
       </div> <!-- /#custPageOrders -->
+
+      <!-- ==============================================================
+           PAGE 4: PROFILE & ACCOUNT (MATCHING SCREENSHOT 2)
+      =============================================================== -->
+      <div id="custPageProfile" style="display:none;">
+        <div class="zepto-profile-wrapper">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <button class="zepto-icon-btn" style="background:#f1f5f9; color:#0f172a;" onclick="switchCustomerTab('HOME')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <h2 style="font-size:20px; font-weight:900; color:#0f172a;">Profile</h2>
+          </div>
+
+          <!-- User Details Card -->
+          <div class="zepto-profile-header-card">
+            <div class="zepto-profile-name" id="profileCardName">Customer Account</div>
+            <div class="zepto-profile-phone" id="profileCardPhone">+91 9490994729</div>
+            <div style="font-size:12px; color:#64748b; margin-top:2px;" id="profileCardEmail">customer@example.com</div>
+            <div class="zepto-profile-edit" onclick="editProfileModal()">Edit profile</div>
+          </div>
+
+          <!-- Your Information -->
+          <div class="zepto-info-card">
+            <div class="zepto-info-card-title">Your information</div>
+            <div class="zepto-info-row" onclick="alert('Operating Area: Warangal, Hanamkonda & Kazipet Tri-City')">
+              <div class="zepto-info-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span>Address book</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+
+          <!-- Other Information -->
+          <div class="zepto-info-card">
+            <div class="zepto-info-card-title">Other information</div>
+            <div class="zepto-info-row" onclick="alert('Notification & Sound alerts are active.')">
+              <div class="zepto-info-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Settings</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="zepto-info-row" onclick="alert('Medicines can be returned or cancelled within 2 hours of delivery if packaging is sealed.')">
+              <div class="zepto-info-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                <span>Cancellation & return policy</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="zepto-info-row" onclick="alert('Tapza connects customers with licensed local pharmacies for reverse-auction quotes.')">
+              <div class="zepto-info-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <span>Terms & conditions</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="zepto-info-row" onclick="alert('Your health and prescription data is encrypted and strictly HIPAA/DISHA compliant.')">
+              <div class="zepto-info-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Privacy policy</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="zepto-info-row zepto-info-logout" onclick="logoutSession()">
+              <div class="zepto-info-left zepto-info-logout">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span style="color:#ef4444; font-weight:700;">Log out</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+
+          <!-- Switch to Pharmacy / Admin (Dev Convenience) -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; text-align:center; margin-top:20px;">
+            <div style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:8px;">Switch Testing Consoles:</div>
+            <div style="display:flex; justify-content:center; gap:10px;">
+              <button class="btn-logout" style="font-size:11.5px; font-weight:800; color:#059669; border-color:#86efac; background:#ecfdf5;" onclick="switchAuthTab('PHARMACY'); showAuthScreen();">
+                Pharmacy Console
+              </button>
+              <button class="btn-logout" style="font-size:11.5px; font-weight:800; color:#b45309; border-color:#fde68a; background:#fef3c7;" onclick="switchAuthTab('ADMIN'); showAuthScreen();">
+                Admin Console
+              </button>
+            </div>
+          </div>
+
+          <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:20px;">
+            Tapza Mobile v1.0.2 (Build 415 - Zepto Engine)
+          </div>
+        </div>
+      </div> <!-- /#custPageProfile -->
+
+      <!-- FIXED BOTTOM NAVIGATION BAR (ZEPTO / SWIGGY STYLE) -->
+      <nav class="zepto-bottom-nav" id="zeptoBottomNav">
+        <div class="zepto-nav-tab active" id="navTabHome" onclick="switchCustomerTab('HOME')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </div>
+        <div class="zepto-nav-tab" id="navTabOrders" onclick="switchCustomerTab('ORDERS')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span>My orders</span>
+          <span class="zepto-badge-dot" id="navTabOrdersDot" style="display:none;"></span>
+        </div>
+        <div class="zepto-nav-tab" id="navTabProfile" onclick="switchCustomerTab('PROFILE')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </div>
+      </nav>
+
+      <!-- SWIGGY FLOATING CART BAR -->
+      <div id="swiggyFloatingCart" class="swiggy-floating-cart" style="display:none;" onclick="scrollToCheckoutDrawer()">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="background:rgba(255,255,255,0.2); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          </div>
+          <div>
+            <div style="font-size:13.5px; font-weight:800;" id="floatingCartCount">0 Items Added</div>
+            <div style="font-size:11px; opacity:0.9;" id="floatingCartTotal">₹0.00 Total MRP</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:8px;">
+          <span>Request Quotes</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <!-- ZOMATO FLOATING LIVE TRACKER (PINNED ON HOME) -->
+      <div id="zomatoLiveTrackerBar" class="zomato-live-tracker" style="display:none;" onclick="switchCustomerTab('ORDERS')">
+        <div class="live-tracker-left">
+          <div class="live-pulse-ring">
+            <div class="live-pulse-dot"></div>
+          </div>
+          <div>
+            <div class="live-tracker-title" id="zomatoTrackerTitle">Live Order Active</div>
+            <div class="live-tracker-sub" id="zomatoTrackerSub">Pharmacies Quoting Live...</div>
+          </div>
+        </div>
+        <button class="live-tracker-cta">
+          <span>View Quotes</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
     </div> <!-- /#customerInterface -->
 
 
@@ -2703,32 +3729,137 @@
     // CUSTOMER VIEW TAB SWITCHING & ORDERS PAGE
     // =============================================================
     function switchCustomerTab(tabName) {
-      const homeTab = document.getElementById("custTabHome");
-      const rxTab = document.getElementById("custTabRx");
-      const ordersTab = document.getElementById("custTabOrders");
-
       const homePage = document.getElementById("custPageHome");
       const rxPage = document.getElementById("custPageRx");
       const ordersPage = document.getElementById("custPageOrders");
+      const profilePage = document.getElementById("custPageProfile");
 
-      if (homeTab) homeTab.className = (tabName === 'HOME') ? "cust-nav-btn active" : "cust-nav-btn";
-      if (rxTab) rxTab.className = (tabName === 'RX') ? "cust-nav-btn active" : "cust-nav-btn";
-      if (ordersTab) ordersTab.className = (tabName === 'ORDERS') ? "cust-nav-btn active" : "cust-nav-btn";
+      const navHome = document.getElementById("navTabHome");
+      const navOrders = document.getElementById("navTabOrders");
+      const navProfile = document.getElementById("navTabProfile");
 
       if (homePage) homePage.style.display = (tabName === 'HOME') ? "block" : "none";
       if (rxPage) rxPage.style.display = (tabName === 'RX') ? "block" : "none";
       if (ordersPage) ordersPage.style.display = (tabName === 'ORDERS') ? "block" : "none";
+      if (profilePage) profilePage.style.display = (tabName === 'PROFILE') ? "block" : "none";
+
+      if (navHome) navHome.className = (tabName === 'HOME') ? "zepto-nav-tab active" : "zepto-nav-tab";
+      if (navOrders) navOrders.className = (tabName === 'ORDERS') ? "zepto-nav-tab active" : "zepto-nav-tab";
+      if (navProfile) navProfile.className = (tabName === 'PROFILE') ? "zepto-nav-tab active" : "zepto-nav-tab";
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
 
       if (tabName === 'ORDERS') {
         loadCustomerOrdersPage();
+      } else if (tabName === 'PROFILE') {
+        renderProfileScreen();
       }
+    }
+
+    function switchOrdersSubTab(mode) {
+      const tabLive = document.getElementById("orderSubTabLive");
+      const tabPast = document.getElementById("orderSubTabPast");
+      const secLive = document.getElementById("custOrdersLiveSection");
+      const secPast = document.getElementById("custOrdersPastSection");
+
+      if (mode === "LIVE") {
+        if (tabLive) {
+          tabLive.className = "cust-nav-btn active";
+          tabLive.style.background = "#ffffff";
+          tabLive.style.color = "#0f172a";
+          tabLive.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
+        }
+        if (tabPast) {
+          tabPast.className = "cust-nav-btn";
+          tabPast.style.background = "transparent";
+          tabPast.style.color = "#64748b";
+          tabPast.style.boxShadow = "none";
+        }
+        if (secLive) secLive.style.display = "block";
+        if (secPast) secPast.style.display = "none";
+      } else {
+        if (tabPast) {
+          tabPast.className = "cust-nav-btn active";
+          tabPast.style.background = "#ffffff";
+          tabPast.style.color = "#0f172a";
+          tabPast.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
+        }
+        if (tabLive) {
+          tabLive.className = "cust-nav-btn";
+          tabLive.style.background = "transparent";
+          tabLive.style.color = "#64748b";
+          tabLive.style.boxShadow = "none";
+        }
+        if (secLive) secLive.style.display = "none";
+        if (secPast) secPast.style.display = "block";
+      }
+    }
+
+    function renderProfileScreen() {
+      const nameEl = document.getElementById("profileCardName");
+      const phoneEl = document.getElementById("profileCardPhone");
+      const emailEl = document.getElementById("profileCardEmail");
+      if (currentUser) {
+        if (nameEl) nameEl.innerText = currentUser.name || "Customer Account";
+        if (phoneEl) phoneEl.innerText = currentUser.phone || "+91 9490994729";
+        if (emailEl) emailEl.innerText = currentUser.email || "customer@tapza.com";
+      }
+    }
+
+    function scrollToCatalogueSearch() {
+      const el = document.getElementById("catalogueSearchInput");
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function scrollToCheckoutDrawer() {
+      const el = document.getElementById("customerCheckoutCard");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function resetSearchToCurated() {
+      const searchInput = document.getElementById("catalogueSearchInput");
+      if (searchInput) searchInput.value = "";
+      const clearBtn = document.getElementById("searchClearBtn");
+      if (clearBtn) clearBtn.style.display = "none";
+      const fullSec = document.getElementById("fullCatalogueSection");
+      const curatedSec = document.getElementById("zeptoCuratedSections");
+      if (fullSec) fullSec.style.display = "none";
+      if (curatedSec) curatedSec.style.display = "block";
     }
 
     function setCustomerOrderMode(mode) {
       if (mode === "PRESCRIPTION") {
-        switchCustomerTab("RX");
+        openPrescriptionUploadModal();
       } else {
         switchCustomerTab("HOME");
+      }
+    }
+
+    function openPrescriptionUploadModal() {
+      switchCustomerTab('RX');
+    }
+
+    function toggleZoneModal() {
+      const current = currentUser?.zone || 'Warangal';
+      const newZone = prompt("Select Delivery Zone (Warangal / Hanamkonda / Kazipet):", current);
+      if (newZone && ['warangal', 'hanamkonda', 'kazipet'].includes(newZone.trim().toLowerCase())) {
+        const formatted = newZone.trim().charAt(0).toUpperCase() + newZone.trim().slice(1).toLowerCase();
+        onCustomerOrderZoneChange(formatted);
+      }
+    }
+
+    function editProfileModal() {
+      const newName = prompt("Enter your Name:", currentUser?.name || "Customer Account");
+      if (newName !== null && newName.trim()) {
+        if (!currentUser) currentUser = {};
+        currentUser.name = newName.trim();
+        localStorage.setItem("tapza_user", JSON.stringify(currentUser));
+        renderProfileScreen();
       }
     }
 
@@ -2738,6 +3869,8 @@
       const noActiveBanner = document.getElementById("custNoActiveOrderBanner");
       const activeCard = document.getElementById("customerActiveOrderCard");
       const badge = document.getElementById("custActiveOrdersBadge");
+      const dot = document.getElementById("navTabOrdersDot");
+      const zomatoBar = document.getElementById("zomatoLiveTrackerBar");
 
       try {
         const res = await fetch(`${API}/orders/my-orders`, {
@@ -2746,29 +3879,53 @@
         if (res.ok) {
           const d = await res.json();
           const orders = d.orders || [];
-          if (historyBadge) historyBadge.innerText = `${orders.length} Orders`;
+
+          // Separate into LIVE vs DELIVERED/PAST
+          const liveOrders = orders.filter(o => ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
+          const pastOrders = orders.filter(o => !["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
+
+          const liveCountEl = document.getElementById("ordersLiveCount");
+          if (liveCountEl) liveCountEl.innerText = liveOrders.length;
+
+          const pastCountEl = document.getElementById("ordersPastCount");
+          if (pastCountEl) pastCountEl.innerText = pastOrders.length;
+
+          if (historyBadge) historyBadge.innerText = `${pastOrders.length} Orders`;
           const countBtn = document.getElementById("custOrderHistoryCount");
           if (countBtn) countBtn.innerText = orders.length;
 
-          const active = orders.find(o => ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
+          const active = liveOrders[0] || null;
 
           if (active) {
             activeOrderId = active.id;
             if (activeCard) activeCard.style.display = "block";
             if (noActiveBanner) noActiveBanner.style.display = "none";
             if (badge) badge.style.display = "inline-block";
+            if (dot) dot.style.display = "block";
             document.getElementById("custOrderTrackingTitle").innerText = `Order #${active.id} Live Tracking`;
             updateCustomerStatusUI(active);
             renderCustomerPaymentUI(active);
             fetchCustomerOrderDetails(active.id);
+
+            // Zomato Floating Tracker on Home
+            if (zomatoBar) {
+              zomatoBar.style.display = "flex";
+              document.getElementById("zomatoTrackerTitle").innerText = `Live Order #${active.id}`;
+              document.getElementById("zomatoTrackerSub").innerText = (active.status === "BROADCASTING") 
+                ? "Pharmacies Quoting Live • Best Prices" 
+                : `Status: ${active.status.replace(/_/g, ' ')}`;
+            }
           } else {
             activeOrderId = null;
             if (activeCard) activeCard.style.display = "none";
             if (noActiveBanner) noActiveBanner.style.display = "block";
             if (badge) badge.style.display = "none";
+            if (dot) dot.style.display = "none";
+            // Disappear from Home when no active order or when delivered
+            if (zomatoBar) zomatoBar.style.display = "none";
           }
 
-          renderCustomerOrdersPageHistory(orders);
+          renderCustomerOrdersPageHistory(pastOrders);
         }
       } catch (e) {
         console.error("loadCustomerOrdersPage error:", e);
@@ -2941,9 +4098,13 @@
         const zoneSelect = document.getElementById("custOrderZoneSelect");
         const activeZone = currentUser.zone || "Warangal";
         if (zoneSelect) zoneSelect.value = activeZone;
+        const zeptoLabel = document.getElementById("zeptoZoneLabel");
+        if (zeptoLabel) zeptoLabel.innerText = activeZone;
+        const zeptoSub = document.getElementById("zeptoZoneSub");
+        if (zeptoSub) zeptoSub.innerText = `Fast Delivery Area, ${activeZone}`;
         document.getElementById("custOrderAddressInput").value = `Plot 12, Demo Market Road, ${activeZone}`;
         const btn = document.getElementById("custBroadcastSubmitBtn");
-        if (btn) btn.innerText = `🚀 Request Quotes from ${activeZone} Pharmacies`;
+        if (btn) btn.innerText = `Request Quotes from ${activeZone} Pharmacies`;
         fetchCustomerOrders();
       } else if (currentUser.role === "PHARMACY") {
         document.getElementById("pharmacyInterface").style.display = "block";
@@ -3123,42 +4284,142 @@
       }
     }
 
+    function renderSingleZeptoCard(m) {
+      allMedicinesMap[m.id] = m;
+      const q = cart[m.id] || 0;
+
+      // Realistic reverse-auction discount estimate
+      const discPct = Math.min(38, Math.max(1, Math.round(((m.id * 7) % 25) + 5)));
+      const sellingPrice = m.mrp * (1 - discPct / 100);
+
+      // Artwork SVG
+      let artSvg = `<svg width="64" height="64" viewBox="0 0 100 100" fill="none"><rect x="15" y="25" width="70" height="50" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2.5"/><circle cx="35" cy="42" r="8" fill="#6366f1"/><circle cx="65" cy="42" r="8" fill="#6366f1"/><circle cx="35" cy="62" r="8" fill="#6366f1"/><circle cx="65" cy="62" r="8" fill="#6366f1"/></svg>`;
+      let formLabel = 'Tablet';
+      const nameLow = (m.name + ' ' + (m.category || '')).toLowerCase();
+      if (nameLow.includes('syrup') || nameLow.includes('liquid') || nameLow.includes('suspension')) {
+        artSvg = `<svg width="64" height="64" viewBox="0 0 100 100" fill="none"><rect x="42" y="10" width="16" height="12" rx="2" fill="#be185d"/><path d="M34 25h32a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6H34a6 6 0 0 1-6-6V31a6 6 0 0 1 6-6Z" fill="#fce7f3" stroke="#db2777" stroke-width="2.5"/><rect x="34" y="45" width="32" height="26" rx="3" fill="#ffffff" stroke="#f472b6" stroke-width="1.5"/></svg>`;
+        formLabel = 'Liquid';
+      } else if (nameLow.includes('powder') || nameLow.includes('ors') || nameLow.includes('salt') || nameLow.includes('sachet')) {
+        artSvg = `<svg width="64" height="64" viewBox="0 0 100 100" fill="none"><path d="M25 22h50l-8 66H33l-8-66Z" fill="#fef3c7" stroke="#d97706" stroke-width="2.5"/><rect x="32" y="14" width="36" height="10" rx="3" fill="#b45309"/><rect x="33" y="42" width="34" height="24" rx="2" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5"/></svg>`;
+        formLabel = 'Powder';
+      } else if (nameLow.includes('lozenge')) {
+        formLabel = 'Lozenges';
+      } else if (nameLow.includes('capsule')) {
+        formLabel = 'Capsule';
+      }
+
+      return `
+      <div class="zepto-card" onclick="openMedProfileModal(${m.id})">
+        <div class="zepto-img-box">
+          <div class="zepto-discount-badge">${discPct}% OFF</div>
+          <div class="zepto-med-art">
+            ${artSvg}
+          </div>
+          <div class="zepto-box-bottom">
+            <span class="zepto-pack-txt">${escapeHtml(m.pack_size || '10 tabs')}</span>
+            <div onclick="event.stopPropagation()">
+              ${q > 0 ? `
+                <div class="zepto-stepper">
+                  <button class="zepto-step-btn" onclick="modifyCart(${m.id}, -1)">−</button>
+                  <span class="zepto-step-val">${q}</span>
+                  <button class="zepto-step-btn" onclick="modifyCart(${m.id}, 1)">+</button>
+                </div>
+              ` : `
+                <button class="zepto-add-btn" onclick="modifyCart(${m.id}, 1)">ADD</button>
+              `}
+            </div>
+          </div>
+        </div>
+        <div class="zepto-card-body">
+          <div class="zepto-form-pill">${formLabel}</div>
+          ${m.requires_prescription ? `
+            <div class="zepto-rx-req">
+              <span style="background:#be185d; color:#fff; font-size:8px; font-weight:900; padding:1px 4px; border-radius:3px;">Rx</span>
+              <span>Prescription Required</span>
+            </div>
+          ` : ''}
+          <div class="zepto-card-title">${escapeHtml(m.name)}</div>
+          <div class="zepto-price-row">
+            <span class="zepto-price-main">₹${sellingPrice.toFixed(0)}</span>
+            <span class="zepto-price-strike">₹${m.mrp.toFixed(2)}</span>
+          </div>
+          <div class="zepto-offer-pill">Best offer applied</div>
+        </div>
+      </div>
+      `;
+    }
+
     function renderCatalogueList(list) {
-      const el = document.getElementById("catalogueMedicinesList");
-      if (!list.length) {
-        el.innerHTML = `<div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:13.5px;">No medicines match your search. Try another brand name or salt composition.</div>`;
+      const searchInput = document.getElementById("catalogueSearchInput");
+      const query = (searchInput ? searchInput.value : "").trim();
+      const curatedSec = document.getElementById("zeptoCuratedSections");
+      const fullSec = document.getElementById("fullCatalogueSection");
+      const fullListEl = document.getElementById("catalogueMedicinesList");
+
+      // 1. If actively searching with text, display search results grid
+      if (query) {
+        if (curatedSec) curatedSec.style.display = "none";
+        if (fullSec) fullSec.style.display = "block";
+        document.getElementById("fullCatalogueTitle").innerText = `Results for "${escapeHtml(query)}" (${list.length})`;
+        
+        if (!list.length) {
+          fullListEl.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px 10px; color:var(--text-muted); font-size:13.5px;">No medicines match "${escapeHtml(query)}". Try another medicine or brand name.</div>`;
+        } else {
+          fullListEl.innerHTML = list.map(m => renderSingleZeptoCard(m)).join("");
+        }
+        updateCartSummaryUI();
         return;
       }
 
-      el.innerHTML = list.map(m => {
-        allMedicinesMap[m.id] = m;
-        const q = cart[m.id] || 0;
-        return `
-        <div class="med-row" onclick="openMedProfileModal(${m.id})" style="cursor:pointer; padding:12px 14px; border-radius:10px; transition:background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-          <div style="flex:1; padding-right:14px;">
-            <div class="med-name">${m.name}</div>
-            <div style="font-size:11.5px; color:#0369a1; font-weight:700; margin-top:2px;">
-              🧪 ${m.composition || m.generic_name} • ${m.strength || 'Standard'}
-            </div>
-            <div class="med-meta" style="margin-top:2px;">
-              ${m.category} • ${m.pack_size || '1 Unit'} ${m.requires_prescription ? '• <span style="color:var(--danger);font-weight:800;">Rx</span>' : '• <span style="color:#059669;font-weight:700;">OTC</span>'}
-            </div>
-          </div>
-          <div class="med-right" style="display:flex; align-items:center; gap:14px;" onclick="event.stopPropagation()">
-            <div class="med-mrp">MRP ₹${m.mrp.toFixed(2)}</div>
-            ${q > 0 ? `
-              <div class="stepper">
-                <button class="step-btn" onclick="modifyCart(${m.id}, -1)">−</button>
-                <div class="step-val" id="qty-val-${m.id}">${q}</div>
-                <button class="step-btn" onclick="modifyCart(${m.id}, 1)">+</button>
-              </div>
-            ` : `
-              <button class="btn-add-quick" onclick="modifyCart(${m.id}, 1)">+ ADD</button>
-            `}
-          </div>
-        </div>
-      `;
-      }).join("");
+      // 2. Default Curated Home Showcase
+      if (curatedSec) curatedSec.style.display = "block";
+      if (fullSec) fullSec.style.display = "none";
+
+      // Group into curated Zepto sections
+      const coldMeds = list.filter(m => {
+        const txt = (m.name + ' ' + (m.composition || '')).toLowerCase();
+        return txt.includes('dolo') || txt.includes('sinarest') || txt.includes('cofsils') || txt.includes('cold') || txt.includes('cough') || txt.includes('benadryl') || txt.includes('azithral') || txt.includes('cetirizine');
+      });
+
+      const painMeds = list.filter(m => {
+        const txt = (m.name + ' ' + (m.composition || '')).toLowerCase();
+        return txt.includes('combiflam') || txt.includes('saridon') || txt.includes('disprin') || txt.includes('paracetamol') || txt.includes('meftal') || txt.includes('pain') || txt.includes('diclofenac');
+      });
+
+      const fluidMeds = list.filter(m => {
+        const txt = (m.name + ' ' + (m.composition || '')).toLowerCase();
+        return txt.includes('electral') || txt.includes('ors') || txt.includes('enerzal') || txt.includes('prolyte') || txt.includes('limcee') || txt.includes('vitamin c') || txt.includes('glucose');
+      });
+
+      const vitaminMeds = list.filter(m => {
+        const txt = (m.name + ' ' + (m.composition || '')).toLowerCase();
+        return txt.includes('zinc') || txt.includes('rise') || txt.includes('supradyn') || txt.includes('becosules') || txt.includes('vitamin') || txt.includes('calcium') || txt.includes('multivitamin');
+      });
+
+      // Populate sections (fallback to slice if category filter was clicked)
+      const elCold = document.getElementById("curatedSectionCold");
+      if (elCold) {
+        const items = coldMeds.length ? coldMeds.slice(0, 4) : list.slice(0, 4);
+        elCold.innerHTML = items.map(m => renderSingleZeptoCard(m)).join("");
+      }
+
+      const elPain = document.getElementById("curatedSectionPain");
+      if (elPain) {
+        const items = painMeds.length ? painMeds.slice(0, 4) : list.slice(4, 8);
+        elPain.innerHTML = items.map(m => renderSingleZeptoCard(m)).join("");
+      }
+
+      const elFluids = document.getElementById("curatedSectionFluids");
+      if (elFluids) {
+        const items = fluidMeds.length ? fluidMeds.slice(0, 4) : list.slice(8, 12);
+        elFluids.innerHTML = items.map(m => renderSingleZeptoCard(m)).join("");
+      }
+
+      const elVitamins = document.getElementById("curatedSectionVitamins");
+      if (elVitamins) {
+        const items = vitaminMeds.length ? vitaminMeds.slice(0, 4) : list.slice(12, 16);
+        elVitamins.innerHTML = items.map(m => renderSingleZeptoCard(m)).join("");
+      }
 
       updateCartSummaryUI();
     }
@@ -3201,15 +4462,17 @@
       const inlineTotal = document.getElementById("cartTotalVal");
       if (inlineTotal) inlineTotal.innerText = `₹${total.toFixed(2)}`;
 
-      // 2. Swiggy / Zomato Floating Bottom Cart Bar
-      const floatingBar = document.getElementById("floatingCartBar");
-      if (floatingBar) {
+      // 2. Swiggy Floating Bottom Cart Bar
+      const swiggyBar = document.getElementById("swiggyFloatingCart");
+      if (swiggyBar) {
         if (count > 0) {
-          floatingBar.style.display = "flex";
-          document.getElementById("floatingCartCount").innerText = count;
-          document.getElementById("floatingCartTotal").innerText = `₹${total.toFixed(2)}`;
+          swiggyBar.style.display = "flex";
+          const countTxt = document.getElementById("floatingCartCount");
+          if (countTxt) countTxt.innerText = `${count} ${count === 1 ? 'Item' : 'Items'} Added`;
+          const totalTxt = document.getElementById("floatingCartTotal");
+          if (totalTxt) totalTxt.innerText = `₹${total.toFixed(2)} Total Reference MRP`;
         } else {
-          floatingBar.style.display = "none";
+          swiggyBar.style.display = "none";
         }
       }
 
@@ -3553,17 +4816,26 @@
     }
 
     function onCustomerOrderZoneChange(newZone) {
+      if (currentUser) {
+        currentUser.zone = newZone;
+        localStorage.setItem("tapza_user", JSON.stringify(currentUser));
+      }
+      const zeptoLabel = document.getElementById("zeptoZoneLabel");
+      if (zeptoLabel) zeptoLabel.innerText = newZone;
+      const zeptoSub = document.getElementById("zeptoZoneSub");
+      if (zeptoSub) zeptoSub.innerText = `Fast Delivery Area, ${newZone}`;
+
       const addrInput = document.getElementById("custOrderAddressInput");
       if (addrInput) {
         addrInput.value = `Plot 12, Demo Market Road, ${newZone}`;
       }
       const btn = document.getElementById("custBroadcastSubmitBtn");
       if (btn) {
-        btn.innerText = `🚀 Request Quotes from ${newZone} Pharmacies`;
+        btn.innerText = `Request Quotes from ${newZone} Pharmacies`;
       }
       const headerZone = document.getElementById("headerZoneBadge");
       if (headerZone) {
-        headerZone.innerText = `📍 ${newZone}`;
+        headerZone.innerText = newZone;
       }
       const cartZoneSelect = document.getElementById("cartModalZoneSelect");
       if (cartZoneSelect) cartZoneSelect.value = newZone;
@@ -3572,7 +4844,7 @@
       const cartAddr = document.getElementById("cartModalAddressInput");
       if (cartAddr && addrInput) cartAddr.value = addrInput.value;
       const cartBtn = document.getElementById("cartModalCheckoutBtn");
-      if (cartBtn) cartBtn.innerText = `🚀 Request Quotes from ${newZone} Pharmacies`;
+      if (cartBtn) cartBtn.innerText = `Request Quotes from ${newZone} Pharmacies`;
     }
 
     function onCustomerAddressInput(val) {

@@ -37,6 +37,7 @@ def create_app(config_class=Config):
         return app.send_static_file("index.html")
 
     # System Health check
+    @app.route("/health", methods=["GET"])
     @app.route("/api/health", methods=["GET"])
     def health():
         return jsonify({

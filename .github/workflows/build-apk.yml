@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.2
-          name: "Tapza Android App v1.0.2 (Live Render Connected)"
-          body: "Official Android APK connected to live backend at https://tapza.onrender.com"
+          tag_name: v1.0.3
+          name: "Tapza Android App v1.0.3 (Zepto & Apollo UI Redesign)"
+          body: "Official Android APK featuring Zepto/Apollo UI redesign, SVG crisp vector line icons, Option A Create Order hero, and dual live order tracking."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
