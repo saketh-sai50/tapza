@@ -2193,6 +2193,78 @@
     }
 
     /* PROFILE SCREEN (ZEPTO / SWIGGY STYLE) */
+    
+    /* DEDICATED SEARCH PAGE (ZEPTO MEDICINE SEARCH SCREEN) */
+    .zepto-dedicated-search-header {
+      position: sticky;
+      top: 0;
+      z-index: 120;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .zepto-dedicated-search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 10px 14px;
+      flex: 1;
+      border: 1.5px solid transparent;
+      transition: all 0.2s;
+    }
+    .zepto-dedicated-search-box:focus-within {
+      background: #ffffff;
+      border-color: #240a5e;
+      box-shadow: 0 0 0 3px rgba(36, 10, 94, 0.08);
+    }
+    .zepto-dedicated-search-input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #0f172a;
+      width: 100%;
+    }
+    .zepto-dedicated-search-input::placeholder {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .zepto-search-clear-cross {
+      background: #cbd5e1;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #334155;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .zepto-guest-continue-btn {
+      width: 100%;
+      border: 1.5px solid #ff3269;
+      background: #ffffff;
+      color: #ff3269;
+      font-weight: 800;
+      font-size: 14.5px;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 14px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .zepto-guest-continue-btn:hover, .zepto-guest-continue-btn:active {
+      background: #fff1f5;
+    }
+
     .zepto-profile-wrapper {
       max-width: 600px;
       margin: 0 auto;
@@ -2844,12 +2916,12 @@
 
           <!-- Row 2: SEARCH BAR CONTAINER (100% Full Width on Mobile, Always Visible on Home!) -->
           <div class="zepto-search-container" id="zeptoSearchContainer" style="margin-top:10px;">
-            <div class="zepto-search-box" id="searchBarWrapper">
+            <div class="zepto-search-box" id="searchBarWrapper" onclick="openDedicatedSearchPage()" style="cursor:pointer;">
               <button id="searchBackBtn" class="search-back-btn" style="display:none; background:transparent; border:none; padding:0; margin-right:8px; cursor:pointer; color:#0f172a;" onclick="resetSearchToCurated()" title="Back to Home">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               </button>
               <svg id="searchIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" class="zepto-search-input" id="catalogueSearchInput" autocomplete="off" placeholder='Search "dolo 650", "cough syrup" or brand...' oninput="onCatalogueSearchInput(this.value)" onfocus="onCatalogueSearchFocus()" onkeydown="onCatalogueSearchKeyDown(event)">
+              <input type="text" class="zepto-search-input" id="catalogueSearchInput" autocomplete="off" placeholder='Search "dolo 650", "cough syrup" or brand...' onclick="openDedicatedSearchPage()" onfocus="openDedicatedSearchPage()" readonly style="cursor:pointer;">
               <button id="searchClearBtn" class="search-clear-btn" style="display:none;" onclick="clearSearchInput()">✕</button>
 
               <!-- Apollo / PharmEasy Live Autocomplete Dropdown -->
@@ -3374,8 +3446,52 @@
       <!-- ==============================================================
            PAGE 4: PROFILE & ACCOUNT (MATCHING SCREENSHOT 2)
       =============================================================== -->
+      
+      <!-- ==============================================================
+           PAGE: DEDICATED SEARCH PAGE (EXACTLY MATCHING SCREENSHOT 1)
+           - Header: Back arrow + input "Search for medicines and more..."
+           - Default: "Frequently bought" 2-column grid
+           - Typing: Real-time 0ms instant search results grid
+      =============================================================== -->
+      <div id="custPageSearch" style="display:none; background:#ffffff; min-height:100vh;">
+        <!-- Clean Sticky Search Header (Zepto style) -->
+        <div class="zepto-dedicated-search-header">
+          <div style="display:flex; align-items:center; gap:10px; width:100%; max-width:800px; margin:0 auto;">
+            <button class="zepto-icon-btn" style="background:#f1f5f9; color:#0f172a; flex-shrink:0;" onclick="closeDedicatedSearchPage()" title="Back to Home">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="zepto-dedicated-search-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="dedicatedSearchInput" class="zepto-dedicated-search-input" placeholder="Search for medicines and more..." autocomplete="off" oninput="onDedicatedSearchInput(this.value)">
+              <button id="dedicatedSearchClearBtn" class="zepto-search-clear-cross" style="display:none;" onclick="clearDedicatedSearch()">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Page Content Body -->
+        <div class="zepto-search-page-body" style="max-width:800px; margin:0 auto; padding:16px 12px 100px 12px;">
+          <!-- 1. Frequently Bought (Default State when search input is empty) -->
+          <div id="dedicatedSearchDefaultState">
+            <div style="font-size:16px; font-weight:900; color:#0f172a; margin-bottom:14px; padding-left:4px;">Frequently bought</div>
+            <div class="zepto-cards-grid" id="dedicatedFrequentlyBoughtGrid"></div>
+          </div>
+
+          <!-- 2. Live Search Results (State when user types) -->
+          <div id="dedicatedSearchResultsState" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:0 4px;">
+              <div style="font-size:16px; font-weight:900; color:#0f172a;" id="dedicatedSearchHeading">
+                Showing results for ""
+              </div>
+              <span style="font-size:12px; font-weight:700; color:#64748b;" id="dedicatedSearchResultsCount"></span>
+            </div>
+            <div class="zepto-cards-grid" id="dedicatedSearchResultsGrid"></div>
+          </div>
+        </div>
+      </div> <!-- /#custPageSearch -->
+
       <div id="custPageProfile" style="display:none;">
         <div class="zepto-profile-wrapper">
+          <!-- Top Profile Header Row -->
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
             <button class="zepto-icon-btn" style="background:#f1f5f9; color:#0f172a;" onclick="switchCustomerTab('HOME')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -3383,81 +3499,164 @@
             <h2 style="font-size:20px; font-weight:900; color:#0f172a;">Profile</h2>
           </div>
 
-          <!-- User Details Card -->
-          <div class="zepto-profile-header-card">
-            <div class="zepto-profile-name" id="profileCardName">Customer Account</div>
-            <div class="zepto-profile-phone" id="profileCardPhone">+91 9490994729</div>
-            <div style="font-size:12px; color:#64748b; margin-top:2px;" id="profileCardEmail">customer@example.com</div>
-            <div class="zepto-profile-edit" onclick="editProfileModal()">Edit profile</div>
-          </div>
+          <!-- ==============================================================
+               1. GUEST VIEW (EXACTLY MATCHING SCREENSHOT 2)
+               When customer is logged out or unauthenticated:
+               - No personal details
+               - Outlined 'Continue' button
+               - No logout button
+          =============================================================== -->
+          <div id="profileGuestView" style="display:block;">
+            <!-- Card 1: Your account -->
+            <div class="zepto-profile-header-card" style="padding:20px 18px;">
+              <div style="font-size:16px; font-weight:900; color:#0f172a;">Your account</div>
+              <div style="font-size:13px; color:#64748b; margin-top:4px; font-weight:500;">Log in to view your complete profile</div>
+              <button onclick="showAuthScreen()" class="zepto-guest-continue-btn">Continue</button>
+            </div>
 
-          <!-- Your Information -->
-          <div class="zepto-info-card">
-            <div class="zepto-info-card-title">Your information</div>
-            <div class="zepto-info-row" onclick="alert('Operating Area: Warangal, Hanamkonda & Kazipet Tri-City')">
-              <div class="zepto-info-left">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                <span>Address book</span>
+            <!-- Card 2: Your information -->
+            <div class="zepto-info-card">
+              <div class="zepto-info-card-title">Your information</div>
+              <div class="zepto-info-row" onclick="alert('Please log in to manage your saved delivery addresses.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                  <span>Address book</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
-          </div>
 
-          <!-- Other Information -->
-          <div class="zepto-info-card">
-            <div class="zepto-info-card-title">Other information</div>
-            <div class="zepto-info-row" onclick="alert('Notification & Sound alerts are active.')">
-              <div class="zepto-info-left">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span>Settings</span>
+            <!-- Card 3: Other information -->
+            <div class="zepto-info-card">
+              <div class="zepto-info-card-title">Other information</div>
+              <div class="zepto-info-row" onclick="alert('Medicines can be returned or cancelled within 2 hours of delivery if packaging is sealed.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  <span>Cancellation & return policy</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-            <div class="zepto-info-row" onclick="alert('Medicines can be returned or cancelled within 2 hours of delivery if packaging is sealed.')">
-              <div class="zepto-info-left">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                <span>Cancellation & return policy</span>
+              <div class="zepto-info-row" onclick="alert('Tapza connects customers with licensed local pharmacies for reverse-auction quotes.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  <span>Terms & conditions</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-            <div class="zepto-info-row" onclick="alert('Tapza connects customers with licensed local pharmacies for reverse-auction quotes.')">
-              <div class="zepto-info-left">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                <span>Terms & conditions</span>
+              <div class="zepto-info-row" onclick="alert('Your health and prescription data is encrypted and strictly HIPAA/DISHA compliant.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Privacy policy</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-            <div class="zepto-info-row" onclick="alert('Your health and prescription data is encrypted and strictly HIPAA/DISHA compliant.')">
-              <div class="zepto-info-left">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Privacy policy</span>
+              <div class="zepto-info-row" onclick="handleShareApp()">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  <span>Share app</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
-            <div class="zepto-info-row zepto-info-logout" onclick="openLogoutConfirmModal()">
-              <div class="zepto-info-left zepto-info-logout">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <span style="color:#ef4444; font-weight:700;">Log out</span>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-          </div>
 
-          <!-- Switch to Pharmacy / Admin (Dev Convenience) -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; text-align:center; margin-top:20px;">
-            <div style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:8px;">Switch Testing Consoles:</div>
-            <div style="display:flex; justify-content:center; gap:10px;">
-              <button class="btn-logout" style="font-size:11.5px; font-weight:800; color:#059669; border-color:#86efac; background:#ecfdf5;" onclick="switchAuthTab('PHARMACY'); showAuthScreen();">
-                Pharmacy Console
-              </button>
-              <button class="btn-logout" style="font-size:11.5px; font-weight:800; color:#b45309; border-color:#fde68a; background:#fef3c7;" onclick="switchAuthTab('ADMIN'); showAuthScreen();">
-                Admin Console
-              </button>
+            <!-- Version tag matching screenshot 2 -->
+            <div style="text-align:center; color:#94a3b8; font-size:11.5px; margin-top:24px; font-weight:600;">
+              V 8.2.2 (415 - 1.4.0)
             </div>
           </div>
 
-          <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:20px;">
-            Tapza Mobile v1.0.2 (Build 415 - Zepto Engine)
+          <!-- ==============================================================
+               2. LOGGED-IN CUSTOMER VIEW
+               When customer is logged in:
+               - Name, Phone, Email, Edit Profile
+               - Information Cards
+               - Log out button at bottom with confirmation modal
+          =============================================================== -->
+          <div id="profileUserView" style="display:none;">
+            <!-- User Details Card -->
+            <div class="zepto-profile-header-card">
+              <div class="zepto-profile-name" id="profileCardName">Customer Account</div>
+              <div class="zepto-profile-phone" id="profileCardPhone">+91 9490994729</div>
+              <div style="font-size:12px; color:#64748b; margin-top:2px;" id="profileCardEmail">customer@example.com</div>
+              <div class="zepto-profile-edit" onclick="editProfileModal()">Edit profile</div>
+            </div>
+
+            <!-- Your Information -->
+            <div class="zepto-info-card">
+              <div class="zepto-info-card-title">Your information</div>
+              <div class="zepto-info-row" onclick="openLocationZoneModal()">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                  <span>Address book</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </div>
+
+            <!-- Other Information -->
+            <div class="zepto-info-card">
+              <div class="zepto-info-card-title">Other information</div>
+              <div class="zepto-info-row" onclick="alert('Notification & Sound alerts are active.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  <span>Settings</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <div class="zepto-info-row" onclick="alert('Medicines can be returned or cancelled within 2 hours of delivery if packaging is sealed.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  <span>Cancellation & return policy</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <div class="zepto-info-row" onclick="alert('Tapza connects customers with licensed local pharmacies for reverse-auction quotes.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  <span>Terms & conditions</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <div class="zepto-info-row" onclick="alert('Your health and prescription data is encrypted and strictly HIPAA/DISHA compliant.')">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Privacy policy</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <div class="zepto-info-row" onclick="handleShareApp()">
+                <div class="zepto-info-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  <span>Share app</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <!-- Log out row (Opens confirmation modal) -->
+              <div class="zepto-info-row zepto-info-logout" onclick="openLogoutConfirmModal()">
+                <div class="zepto-info-left zepto-info-logout">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <span style="color:#ef4444; font-weight:700;">Log out</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </div>
+
+            <!-- Switch to Pharmacy / Admin (Dev Testing Consoles) -->
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; text-align:center; margin-top:20px;">
+              <div style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:8px;">Switch Testing Consoles:</div>
+              <div style="display:flex; justify-content:center; gap:10px;">
+                <button class="btn-logout" style="font-size:11.5px; font-weight:800; color:#059669; border-color:#86efac; background:#ecfdf5;" onclick="switchAuthTab('PHARMACY'); showAuthScreen();">
+                  Pharmacy Console
+                </button>
+                <button class="btn-logout" style="font-size:11.5px; font-weight:800; color:#b45309; border-color:#fde68a; background:#fef3c7;" onclick="switchAuthTab('ADMIN'); showAuthScreen();">
+                  Admin Console
+                </button>
+              </div>
+            </div>
+
+            <div style="text-align:center; color:#94a3b8; font-size:11.5px; margin-top:24px; font-weight:600;">
+              V 8.2.2 (415 - 1.4.0)
+            </div>
           </div>
         </div>
       </div> <!-- /#custPageProfile -->
@@ -3952,6 +4151,55 @@
     let authRoleTab = "CUSTOMER";
     let isRegisterMode = false;
     let medicines = [];
+
+    // -------------------------------------------------------------
+    // EMBEDDED MASTER MEDICINES CATALOGUE (0ms INSTANT CLIENT-SIDE SEARCH)
+    // Ensures search for Dolo, Electral, Limcee, Azithral, etc. NEVER fails!
+    // -------------------------------------------------------------
+    const EMBEDDED_MASTER_MEDICINES = [
+      { id: 1001, name: "Dolo 650 Tablet", generic_name: "Paracetamol", composition: "Paracetamol 650mg", manufacturer: "Micro Labs Ltd", category: "Analgesic", dosage_form: "Tablet", strength: "650mg", pack_size: "strip of 15 tablets", mrp: 34.00, requires_prescription: 0 },
+      { id: 1002, name: "Electral Powder", generic_name: "Oral Rehydration Salts", composition: "Oral Rehydration Salts IP (WHO formula)", manufacturer: "FDC Ltd", category: "Hydration", dosage_form: "Powder", strength: "21.8g Sachet", pack_size: "sachet of 21.8 gm", mrp: 22.00, requires_prescription: 0 },
+      { id: 1003, name: "Limcee Chewable Tablet", generic_name: "Vitamin C + Zinc", composition: "Ascorbic Acid 500mg + Sodium Ascorbate", manufacturer: "Abbott", category: "Immunity", dosage_form: "Tablet", strength: "500mg", pack_size: "strip of 15 tablets", mrp: 25.00, requires_prescription: 0 },
+      { id: 1004, name: "Prolyte ORS Ready Drink", generic_name: "ORS Drink Apple Flavor", composition: "Electrolytes + Dextrose", manufacturer: "Cipla Health Ltd", category: "Hydration", dosage_form: "Liquid", strength: "200ml", pack_size: "tetrapack of 200 ml", mrp: 32.00, requires_prescription: 0 },
+      { id: 1005, name: "Combiflam Tablet", generic_name: "Ibuprofen + Paracetamol", composition: "Ibuprofen 400mg + Paracetamol 325mg", manufacturer: "Sanofi India", category: "Pain Relief", dosage_form: "Tablet", strength: "Combo", pack_size: "strip of 20 tablets", mrp: 45.00, requires_prescription: 0 },
+      { id: 1006, name: "Azithral 500 Tablet", generic_name: "Azithromycin", composition: "Azithromycin 500mg", manufacturer: "Alembic Pharma", category: "Antibiotic", dosage_form: "Tablet", strength: "500mg", pack_size: "strip of 5 tablets", mrp: 119.50, requires_prescription: 1 },
+      { id: 1007, name: "Pan 40 Tablet", generic_name: "Pantoprazole", composition: "Pantoprazole Sodium 40mg", manufacturer: "Alkem Laboratories", category: "Gastro", dosage_form: "Tablet", strength: "40mg", pack_size: "strip of 15 tablets", mrp: 155.00, requires_prescription: 0 },
+      { id: 1008, name: "Cetirizine 10mg Tablet", generic_name: "Cetirizine Hydrochloride", composition: "Cetirizine HCl 10mg", manufacturer: "Cipla Ltd", category: "Allergy", dosage_form: "Tablet", strength: "10mg", pack_size: "strip of 10 tablets", mrp: 18.00, requires_prescription: 0 },
+      { id: 1009, name: "Crocin 650 Advance", generic_name: "Paracetamol", composition: "Fast-acting Paracetamol 650mg", manufacturer: "GSK", category: "Analgesic", dosage_form: "Tablet", strength: "650mg", pack_size: "strip of 15 tablets", mrp: 32.50, requires_prescription: 0 },
+      { id: 1010, name: "Calpol 650 Tablet", generic_name: "Paracetamol", composition: "Paracetamol 650mg", manufacturer: "GlaxoSmithKline", category: "Analgesic", dosage_form: "Tablet", strength: "650mg", pack_size: "strip of 15 tablets", mrp: 31.00, requires_prescription: 0 },
+      { id: 1011, name: "Becosules Z Capsules", generic_name: "B-Complex + Zinc", composition: "Vitamin B-Complex with Zinc & Vitamin C", manufacturer: "Pfizer", category: "Vitamins", dosage_form: "Capsule", strength: "Standard", pack_size: "strip of 20 capsules", mrp: 52.00, requires_prescription: 0 },
+      { id: 1012, name: "Supradyn Daily Multivitamin", generic_name: "Multivitamin + Minerals", composition: "Multivitamins with Minerals and Trace Elements", manufacturer: "Bayer", category: "Vitamins", dosage_form: "Tablet", strength: "Daily", pack_size: "strip of 15 tablets", mrp: 65.00, requires_prescription: 0 },
+      { id: 1013, name: "Zincovit Tablet", generic_name: "Multivitamin + Zinc + Grape Seed", composition: "Nutritional Health Supplement", manufacturer: "Apex Laboratories", category: "Vitamins", dosage_form: "Tablet", strength: "Standard", pack_size: "strip of 15 tablets", mrp: 110.00, requires_prescription: 0 },
+      { id: 1014, name: "Augmentin 625 Duo Tablet", generic_name: "Amoxicillin + Clavulanic Acid", composition: "Amoxicillin 500mg + Clavulanate 125mg", manufacturer: "GSK", category: "Antibiotic", dosage_form: "Tablet", strength: "625mg", pack_size: "strip of 10 tablets", mrp: 223.00, requires_prescription: 1 },
+      { id: 1015, name: "Pantocid 40 Tablet", generic_name: "Pantoprazole", composition: "Pantoprazole 40mg", manufacturer: "Sun Pharma", category: "Gastro", dosage_form: "Tablet", strength: "40mg", pack_size: "strip of 15 tablets", mrp: 160.00, requires_prescription: 0 },
+      { id: 1016, name: "Omez 20 Capsule", generic_name: "Omeprazole", composition: "Omeprazole 20mg", manufacturer: "Dr. Reddy's", category: "Gastro", dosage_form: "Capsule", strength: "20mg", pack_size: "strip of 20 capsules", mrp: 68.00, requires_prescription: 0 },
+      { id: 1017, name: "Gelusil MPS Antacid Liquid", generic_name: "Aluminium + Magnesium + Dimethicone", composition: "Acidity & Gas Relief Mint Flavor", manufacturer: "Pfizer", category: "Gastro", dosage_form: "Liquid", strength: "200ml", pack_size: "bottle of 200 ml", mrp: 128.00, requires_prescription: 0 },
+      { id: 1018, name: "Digene Acidity Relief Liquid", generic_name: "Antacid & Antigas", composition: "Aluminium Hydroxide + Magnesium Hydroxide", manufacturer: "Abbott", category: "Gastro", dosage_form: "Liquid", strength: "200ml", pack_size: "bottle of 200 ml", mrp: 135.00, requires_prescription: 0 },
+      { id: 1019, name: "Allegra 120mg Tablet", generic_name: "Fexofenadine HCl", composition: "Fexofenadine Hydrochloride 120mg", manufacturer: "Sanofi India", category: "Allergy", dosage_form: "Tablet", strength: "120mg", pack_size: "strip of 10 tablets", mrp: 215.00, requires_prescription: 0 },
+      { id: 1020, name: "Montair LC Tablet", generic_name: "Montelukast + Levocetirizine", composition: "Montelukast 10mg + Levocetirizine 5mg", manufacturer: "Cipla", category: "Allergy", dosage_form: "Tablet", strength: "Combo", pack_size: "strip of 10 tablets", mrp: 220.00, requires_prescription: 1 },
+      { id: 1021, name: "Sinarest New Tablet", generic_name: "Cold Relief", composition: "Paracetamol 500mg + Phenylephrine 10mg + CPM 2mg", manufacturer: "Centaur Pharma", category: "Cold & Flu", dosage_form: "Tablet", strength: "Standard", pack_size: "strip of 10 tablets", mrp: 64.00, requires_prescription: 0 },
+      { id: 1022, name: "Benadryl Cough Syrup", generic_name: "Diphenhydramine HCl", composition: "Diphenhydramine + Ammonium Chloride", manufacturer: "Johnson & Johnson", category: "Cough", dosage_form: "Liquid", strength: "100ml", pack_size: "bottle of 100 ml", mrp: 125.00, requires_prescription: 0 },
+      { id: 1023, name: "Ascoril D Plus Syrup", generic_name: "Cough Relief", composition: "Dextromethorphan + Phenylephrine + CPM", manufacturer: "Glenmark", category: "Cough", dosage_form: "Liquid", strength: "100ml", pack_size: "bottle of 100 ml", mrp: 132.00, requires_prescription: 0 },
+      { id: 1024, name: "Cofsils Lozenges Ginger Lemon", generic_name: "Throat Lozenge", composition: "Amylmetacresol 0.6mg + Dichlorobenzyl Alcohol 1.2mg", manufacturer: "Cipla Health", category: "Throat", dosage_form: "Lozenges", strength: "Standard", pack_size: "strip of 10 lozenges", mrp: 35.00, requires_prescription: 0 },
+      { id: 1025, name: "Vicks VapoRub", generic_name: "Cold Balm", composition: "Menthol + Camphor + Eucalyptus Oil", manufacturer: "Procter & Gamble", category: "Cold Relief", dosage_form: "Ointment", strength: "50g", pack_size: "jar of 50 gm", mrp: 165.00, requires_prescription: 0 },
+      { id: 1026, name: "Meftal Spas Tablet", generic_name: "Mefenamic Acid + Dicyclomine", composition: "Mefenamic Acid 250mg + Dicyclomine HCl 10mg", manufacturer: "Blue Cross Labs", category: "Pain Relief", dosage_form: "Tablet", strength: "Combo", pack_size: "strip of 10 tablets", mrp: 53.00, requires_prescription: 0 },
+      { id: 1027, name: "Volini Pain Relief Gel", generic_name: "Diclofenac Gel", composition: "Diclofenac Diethylamine 1.16% w/w", manufacturer: "Sun Pharma", category: "Pain Relief", dosage_form: "Gel", strength: "50g", pack_size: "tube of 50 gm", mrp: 170.00, requires_prescription: 0 },
+      { id: 1028, name: "Shelcal 500 Tablet", generic_name: "Calcium + Vitamin D3", composition: "Calcium Carbonate 1250mg + Vitamin D3 250 IU", manufacturer: "Torrent Pharma", category: "Bone Health", dosage_form: "Tablet", strength: "500mg", pack_size: "strip of 15 tablets", mrp: 131.00, requires_prescription: 0 },
+      { id: 1029, name: "Saridon Headache Tablet", generic_name: "Paracetamol + Propyphenazone", composition: "Paracetamol 250mg + Propyphenazone 150mg + Caffeine 50mg", manufacturer: "Piramal Healthcare", category: "Pain Relief", dosage_form: "Tablet", strength: "Standard", pack_size: "strip of 10 tablets", mrp: 46.00, requires_prescription: 0 },
+      { id: 1030, name: "Disprin Regular Tablet", generic_name: "Aspirin", composition: "Acetylsalicylic Acid 350mg", manufacturer: "Reckitt Benckiser", category: "Pain Relief", dosage_form: "Tablet", strength: "350mg", pack_size: "strip of 10 tablets", mrp: 14.00, requires_prescription: 0 },
+      { id: 1031, name: "Telma 40 Tablet", generic_name: "Telmisartan", composition: "Telmisartan 40mg", manufacturer: "Glenmark Pharma", category: "Cardiac", dosage_form: "Tablet", strength: "40mg", pack_size: "strip of 15 tablets", mrp: 225.00, requires_prescription: 1 },
+      { id: 1032, name: "Glycomet 500 SR Tablet", generic_name: "Metformin", composition: "Metformin Hydrochloride 500mg", manufacturer: "USV Ltd", category: "Diabetes", dosage_form: "Tablet", strength: "500mg", pack_size: "strip of 20 tablets", mrp: 48.00, requires_prescription: 1 },
+      { id: 1033, name: "Betadine 10% Ointment", generic_name: "Povidone Iodine", composition: "Povidone-Iodine 10% w/w", manufacturer: "Win-Medicare", category: "Antiseptic", dosage_form: "Ointment", strength: "20g", pack_size: "tube of 20 gm", mrp: 85.00, requires_prescription: 0 },
+      { id: 1034, name: "Revital H Daily Health", generic_name: "Ginseng + Minerals", composition: "Ginseng Extract with 10 Vitamins & 9 Minerals", manufacturer: "Sun Pharma", category: "Vitamins", dosage_form: "Capsule", strength: "Daily", pack_size: "strip of 10 capsules", mrp: 115.00, requires_prescription: 0 },
+      { id: 1035, name: "Moov Pain Relief Cream", generic_name: "Ayurvedic Pain Balm", composition: "Nilgiri Oil + Wintergreen Oil + Mint", manufacturer: "Reckitt Benckiser", category: "Pain Relief", dosage_form: "Cream", strength: "50g", pack_size: "tube of 50 gm", mrp: 180.00, requires_prescription: 0 }
+    ];
+
+    // Pre-populate allMedicinesMap and medicines with embedded catalogue
+    EMBEDDED_MASTER_MEDICINES.forEach(m => {
+      allMedicinesMap[m.id] = m;
+    });
+    medicines = [...EMBEDDED_MASTER_MEDICINES];
+
     let allMedicinesMap = {};
     let cart = {};
     let activeOrderId = null;
@@ -4170,11 +4418,204 @@
     // =============================================================
     // CUSTOMER VIEW TAB SWITCHING & ORDERS PAGE
     // =============================================================
+    
+    // =============================================================
+    // DEDICATED SEARCH SCREEN CONTROLLER (MATCHING SCREENSHOT 1)
+    // =============================================================
+    function openDedicatedSearchPage(initialQuery = "") {
+      const homePage = document.getElementById("custPageHome");
+      const rxPage = document.getElementById("custPageRx");
+      const ordersPage = document.getElementById("custPageOrders");
+      const profilePage = document.getElementById("custPageProfile");
+      const searchPage = document.getElementById("custPageSearch");
+      const topHdr = document.getElementById("zeptoTopHeader");
+      const botNav = document.getElementById("zeptoBottomNav");
+
+      if (homePage) homePage.style.display = "none";
+      if (rxPage) rxPage.style.display = "none";
+      if (ordersPage) ordersPage.style.display = "none";
+      if (profilePage) profilePage.style.display = "none";
+      if (topHdr) topHdr.style.display = "none";
+      if (searchPage) searchPage.style.display = "block";
+
+      renderDedicatedFrequentlyBought();
+
+      const input = document.getElementById("dedicatedSearchInput");
+      if (input) {
+        input.value = initialQuery;
+        if (initialQuery) {
+          onDedicatedSearchInput(initialQuery);
+        } else {
+          const defState = document.getElementById("dedicatedSearchDefaultState");
+          const resState = document.getElementById("dedicatedSearchResultsState");
+          const clearBtn = document.getElementById("dedicatedSearchClearBtn");
+          if (defState) defState.style.display = "block";
+          if (resState) resState.style.display = "none";
+          if (clearBtn) clearBtn.style.display = "none";
+        }
+        setTimeout(() => {
+          input.focus();
+        }, 100);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function closeDedicatedSearchPage() {
+      const searchPage = document.getElementById("custPageSearch");
+      const topHdr = document.getElementById("zeptoTopHeader");
+      if (searchPage) searchPage.style.display = "none";
+      if (topHdr) topHdr.style.display = "block";
+      switchCustomerTab("HOME");
+    }
+
+    function clearDedicatedSearch() {
+      const input = document.getElementById("dedicatedSearchInput");
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+      const defState = document.getElementById("dedicatedSearchDefaultState");
+      const resState = document.getElementById("dedicatedSearchResultsState");
+      const clearBtn = document.getElementById("dedicatedSearchClearBtn");
+      if (defState) defState.style.display = "block";
+      if (resState) resState.style.display = "none";
+      if (clearBtn) clearBtn.style.display = "none";
+      renderDedicatedFrequentlyBought();
+    }
+
+    function renderDedicatedFrequentlyBought() {
+      const grid = document.getElementById("dedicatedFrequentlyBoughtGrid");
+      if (!grid) return;
+      // Popular quick-buy medicines matching Zepto / Blinkit
+      const freqItems = EMBEDDED_MASTER_MEDICINES.slice(0, 8);
+      freqItems.forEach(m => { allMedicinesMap[m.id] = m; });
+      grid.innerHTML = freqItems.map(m => renderSingleZeptoCard(m)).join("");
+    }
+
+    function onDedicatedSearchInput(val) {
+      const query = (val || "").trim();
+      const defState = document.getElementById("dedicatedSearchDefaultState");
+      const resState = document.getElementById("dedicatedSearchResultsState");
+      const clearBtn = document.getElementById("dedicatedSearchClearBtn");
+      const titleEl = document.getElementById("dedicatedSearchHeading");
+      const countEl = document.getElementById("dedicatedSearchResultsCount");
+      const grid = document.getElementById("dedicatedSearchResultsGrid");
+
+      if (!query) {
+        if (clearBtn) clearBtn.style.display = "none";
+        if (defState) defState.style.display = "block";
+        if (resState) resState.style.display = "none";
+        renderDedicatedFrequentlyBought();
+        return;
+      }
+
+      if (clearBtn) clearBtn.style.display = "flex";
+      if (defState) defState.style.display = "none";
+      if (resState) resState.style.display = "block";
+      if (titleEl) titleEl.innerHTML = 'Showing results for "<b>' + escapeHtml(query) + '</b>"';
+
+      const qLow = query.toLowerCase();
+
+      // Instant 0ms Match from memory map (embedded + cached)
+      const pool = Object.values(allMedicinesMap);
+      const matches = pool.filter(m => {
+        const txt = ((m.name || '') + ' ' + (m.generic_name || '') + ' ' + (m.composition || '') + ' ' + (m.category || '')).toLowerCase();
+        return txt.includes(qLow);
+      });
+
+      // Sort matches: items starting with query appear first
+      matches.sort((a, b) => {
+        const aStarts = (a.name || '').toLowerCase().startsWith(qLow);
+        const bStarts = (b.name || '').toLowerCase().startsWith(qLow);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return 0;
+      });
+
+      if (countEl) countEl.innerText = matches.length + " found";
+
+      if (grid) {
+        if (matches.length > 0) {
+          grid.innerHTML = matches.map(m => renderSingleZeptoCard(m)).join("");
+        } else {
+          grid.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; padding:36px 14px; background:#f8fafc; border-radius:14px; border:1px dashed #cbd5e1; margin-top:10px;">
+              <div style="font-size:32px; margin-bottom:8px;">🔍</div>
+              <div style="font-size:15px; font-weight:800; color:#0f172a;">No exact match for "${escapeHtml(query)}"</div>
+              <div style="font-size:12.5px; color:#64748b; margin:6px 0 16px 0; max-width:320px; margin-left:auto; margin-right:auto;">
+                Local pharmacies can still dispense this if you upload your prescription or search by salt name.
+              </div>
+              <button class="hero-act-btn" style="display:inline-flex; width:auto; padding:10px 22px; font-weight:800; border-radius:10px; background:#240a5e; color:#fff;" onclick="openPrescriptionUploadModal()">
+                Upload Prescription Instead
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      // Concurrently query backend database to merge extra results
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`${API}/medicines?search=${encodeURIComponent(query)}&limit=30`);
+          if (!res.ok) return;
+          const d = await res.json();
+          const serverItems = d.medicines || [];
+          if (serverItems.length > 0) {
+            serverItems.forEach(m => { allMedicinesMap[m.id] = m; });
+            const updatedPool = Object.values(allMedicinesMap);
+            const updatedMatches = updatedPool.filter(m => {
+              const txt = ((m.name || '') + ' ' + (m.generic_name || '') + ' ' + (m.composition || '') + ' ' + (m.category || '')).toLowerCase();
+              return txt.includes(qLow);
+            });
+            updatedMatches.sort((a, b) => {
+              const aStarts = (a.name || '').toLowerCase().startsWith(qLow);
+              const bStarts = (b.name || '').toLowerCase().startsWith(qLow);
+              if (aStarts && !bStarts) return -1;
+              if (!aStarts && bStarts) return 1;
+              return 0;
+            });
+            if (countEl) countEl.innerText = updatedMatches.length + " found";
+            if (grid) {
+              grid.innerHTML = updatedMatches.map(m => renderSingleZeptoCard(m)).join("");
+            }
+          }
+        } catch(e) {
+          // Keep instant offline matches
+        }
+      }, 150);
+    }
+
+    function handleShareApp() {
+      const shareData = {
+        title: "Tapza - Fast Medicine Delivery",
+        text: "Compare real-time bids from local licensed pharmacies with 2-hour doorstep delivery!",
+        url: (window.location.origin && !window.location.origin.startsWith("file")) ? window.location.origin : "https://tapza.onrender.com"
+      };
+      if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareData.url).then(() => {
+          showToast("Tapza link copied to clipboard!", "success");
+        }).catch(() => {
+          alert("Tapza link: " + shareData.url);
+        });
+      } else {
+        alert("Tapza link: " + shareData.url);
+      }
+    }
+
     function switchCustomerTab(tabName) {
       const homePage = document.getElementById("custPageHome");
       const rxPage = document.getElementById("custPageRx");
       const ordersPage = document.getElementById("custPageOrders");
       const profilePage = document.getElementById("custPageProfile");
+      const searchPage = document.getElementById("custPageSearch");
+      const topHdr = document.getElementById("zeptoTopHeader");
+
+      // Restore header and hide dedicated search page when switching bottom tabs
+      if (topHdr) topHdr.style.display = "block";
+      if (searchPage) searchPage.style.display = "none";
 
       // Hide search bar & category strip on Profile and Orders tabs
       const searchCont = document.getElementById("zeptoSearchContainer");
@@ -4244,13 +4685,22 @@
     }
 
     function renderProfileScreen() {
-      const nameEl = document.getElementById("profileCardName");
-      const phoneEl = document.getElementById("profileCardPhone");
-      const emailEl = document.getElementById("profileCardEmail");
-      if (currentUser) {
-        if (nameEl) nameEl.innerText = currentUser.name || "Customer Account";
+      const isAuth = !!(token && currentUser && currentUser.role === "CUSTOMER");
+      const guestView = document.getElementById("profileGuestView");
+      const userView = document.getElementById("profileUserView");
+
+      if (isAuth) {
+        if (guestView) guestView.style.display = "none";
+        if (userView) userView.style.display = "block";
+        const nameEl = document.getElementById("profileCardName");
+        const phoneEl = document.getElementById("profileCardPhone");
+        const emailEl = document.getElementById("profileCardEmail");
+        if (nameEl) nameEl.innerText = currentUser.full_name || currentUser.name || "Customer Account";
         if (phoneEl) phoneEl.innerText = currentUser.phone || "+91 9490994729";
         if (emailEl) emailEl.innerText = currentUser.email || "customer@tapza.com";
+      } else {
+        if (guestView) guestView.style.display = "block";
+        if (userView) userView.style.display = "none";
       }
     }
 
@@ -4271,19 +4721,11 @@
 
 
     function handleZeptoProfileClick() {
-      if (!token) {
-        showAuthScreen();
-      } else {
-        switchCustomerTab('PROFILE');
-      }
+      switchCustomerTab('PROFILE');
     }
 
     function selectSearchSuggestion(name) {
-      const input = document.getElementById("catalogueSearchInput");
-      if (input) input.value = name;
-      onCatalogueSearchInput(name);
-      const suggBox = document.getElementById("zeptoSearchSuggestionsList");
-      if (suggBox) suggBox.style.display = "none";
+      openDedicatedSearchPage(name);
     }
 
     function resetSearchToCurated() {
@@ -4709,8 +5151,9 @@
 
       // Reset to Guest Mode
       renderUnauthenticatedState();
-      switchCustomerTab("HOME");
-      showToast("Logged out successfully. Switched to Guest mode.", "info");
+      renderProfileScreen();
+      switchCustomerTab("PROFILE");
+      showToast("Logged out successfully.", "info");
     }
 
     function logoutSession() {
@@ -4826,17 +5269,24 @@
     // 4. CUSTOMER CATALOGUE, APOLLO LIVE SEARCH, MEDICINE PROFILE & CART LOGIC
     async function fetchMedicinesList(query = "", category = "") {
       try {
-        let url = `${API}/medicines?limit=40`;
+        let url = `${API}/medicines?limit=50`;
         if (query) url += `&search=${encodeURIComponent(query)}`;
         if (category) url += `&category=${encodeURIComponent(category)}`;
 
         const res = await fetch(url);
-        const d = await res.json();
-        medicines = d.medicines || [];
-        medicines.forEach(m => { allMedicinesMap[m.id] = m; });
+        if (res.ok) {
+          const d = await res.json();
+          const fetched = d.medicines || [];
+          fetched.forEach(m => { allMedicinesMap[m.id] = m; });
+          const mapByName = {};
+          EMBEDDED_MASTER_MEDICINES.forEach(m => { mapByName[m.name.toLowerCase()] = m; });
+          fetched.forEach(m => { mapByName[m.name.toLowerCase()] = m; });
+          medicines = Object.values(mapByName);
+        }
         renderCatalogueList(medicines);
       } catch (e) {
-        console.error("Error fetching medicines:", e);
+        console.warn("Using offline master catalogue:", e);
+        renderCatalogueList(medicines);
       }
     }
 
@@ -4982,11 +5432,6 @@
     }
 
     function modifyCart(mid, delta) {
-      if (!currentUser || currentUser.role !== "CUSTOMER") {
-        alert("🔒 Please log in or create an account to add medicines to cart and place an order (same as Swiggy / Zomato).");
-        showAuthScreen();
-        return;
-      }
       const cur = cart[mid] || 0;
       const next = Math.max(0, cur + delta);
       if (next === 0) {
@@ -4995,6 +5440,19 @@
         cart[mid] = next;
       }
       renderCatalogueList(medicines);
+
+      // Refresh dedicated search grids if open
+      const searchPage = document.getElementById("custPageSearch");
+      if (searchPage && searchPage.style.display !== "none") {
+        const input = document.getElementById("dedicatedSearchInput");
+        const val = input ? input.value.trim() : "";
+        if (val) {
+          onDedicatedSearchInput(val);
+        } else {
+          renderDedicatedFrequentlyBought();
+        }
+      }
+
       updateCartSummaryUI();
     }
 

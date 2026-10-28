@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.6
-          name: "Tapza Android App v1.0.6 (Category Toggles, Dedicated Search Bar, Logout Confirmation & Status Bar Fix)"
-          body: "Official Android APK featuring interactive toggleable category icons, prominent full-width search bar, logout confirmation modal with fresh guest mode reset, and native royal purple status bar."
+          tag_name: v1.0.7
+          name: "Tapza Android App v1.0.7 (Dedicated Zepto Search Screen and Dual Guest-User Profile)"
+          body: "Official Android APK featuring dedicated Zepto search screen with frequently bought quick-add cards, instant 0ms search catalogue, and dual guest-user profile with Continue auth button."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
