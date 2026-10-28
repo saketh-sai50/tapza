@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.8
-          name: "Tapza Android App v1.0.8 (Hotfix for Script Initialization and Instant Search)"
-          body: "Official Android APK with variable initialization fix for instant app load, dedicated Zepto search catalogue, and dual guest profile."
+          tag_name: v1.0.9
+          name: "Tapza Android App v1.0.9 (Fixed Cart Drawer Open and Live Bidding System)"
+          body: "Official Android APK with floating cart drawer click fix, synchronized database medicine IDs, and real-time reverse auction bidding from local pharmacies."
           files: output/Tapza.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

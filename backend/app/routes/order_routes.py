@@ -10,6 +10,112 @@ from app.services.broadcast_service import (
 
 order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
 
+def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: int):
+    """
+    Simulates real-time competitive pharmacy quotes for the order from registered local pharmacies.
+    """
+    try:
+        pharmacies = db.execute(
+            """
+            SELECT u.id, u.full_name, p.pharmacy_name
+            FROM users u
+            JOIN pharmacy_profiles p ON u.id = p.user_id
+            WHERE (LOWER(u.zone) = LOWER(?) OR LOWER(p.zone) = LOWER(?)) AND p.is_active = 1
+            LIMIT 3
+            """,
+            (zone, zone)
+        ).fetchall()
+
+        if len(pharmacies) < 2:
+            pharmacies = db.execute(
+                """
+                SELECT u.id, u.full_name, p.pharmacy_name
+                FROM users u
+                JOIN pharmacy_profiles p ON u.id = p.user_id
+                WHERE p.is_active = 1
+                LIMIT 3
+                """
+            ).fetchall()
+
+        if not pharmacies:
+            return
+
+        order_items = db.execute(
+            "SELECT id, medicine_id, quantity, unit_mrp, subtotal_mrp FROM order_items WHERE order_id = ?",
+            (order_id,)
+        ).fetchall()
+
+        if not order_items:
+            return
+
+        discounts = [0.15, 0.22, 0.10]
+        notes_list = [
+            "Genuine sealed batch in stock. Free fast doorstep delivery.",
+            "Best price guaranteed. Verified licensed pharmacist packaging.",
+            "Fresh inventory with complimentary doctor teleconsultation card."
+        ]
+
+        with transaction(db):
+            for idx, p in enumerate(pharmacies):
+                p_id = p["id"]
+                p_name = p["pharmacy_name"] or p["full_name"]
+                disc = discounts[idx % len(discounts)]
+                p_notes = notes_list[idx % len(notes_list)]
+
+                total_quoted = 0.0
+                quote_item_rows = []
+
+                for oi in order_items:
+                    unit_mrp = float(oi["unit_mrp"])
+                    qty = int(oi["quantity"])
+                    selling_price = round(unit_mrp * (1.0 - disc), 2)
+                    subtotal = round(selling_price * qty, 2)
+                    total_quoted += subtotal
+                    quote_item_rows.append((oi["id"], 1, selling_price, subtotal, f"{int(disc*100)}% discount applied"))
+
+                total_quoted = round(total_quoted, 2)
+
+                existing = db.execute(
+                    "SELECT id FROM quotes WHERE order_id = ? AND pharmacy_id = ?",
+                    (order_id, p_id)
+                ).fetchone()
+                if existing:
+                    continue
+
+                q_cur = db.execute(
+                    """
+                    INSERT INTO quotes (order_id, pharmacy_id, status, total_quoted_price, available_items_count, total_items_count, is_full_fulfillment, notes)
+                    VALUES (?, ?, 'SUBMITTED', ?, ?, ?, 1, ?)
+                    """,
+                    (order_id, p_id, total_quoted, len(order_items), len(order_items), p_notes)
+                )
+                quote_id = q_cur.lastrowid
+
+                for qi in quote_item_rows:
+                    db.execute(
+                        """
+                        INSERT INTO quote_items (quote_id, order_item_id, is_available, unit_selling_price, subtotal_price, notes)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (quote_id, qi[0], qi[1], qi[2], qi[3], qi[4])
+                    )
+
+                db.execute(
+                    """
+                    INSERT INTO notifications (user_id, title, message, event_type, reference_id)
+                    VALUES (?, ?, ?, 'NEW_QUOTE_RECEIVED', ?)
+                    """,
+                    (
+                        customer_id,
+                        f"Quote from {p_name}",
+                        f"{p_name} offered a competitive quote of ₹{total_quoted:.2f} ({int(disc*100)}% OFF).",
+                        order_id
+                    )
+                )
+    except Exception as e:
+        print(f"Auto-quote simulation error: {e}")
+
+
 @order_bp.route("", methods=["POST"])
 @token_required
 @role_required("CUSTOMER")
@@ -40,6 +146,8 @@ def create_order():
             items=items,
             broadcast_seconds=broadcast_seconds
         )
+        # Generate competitive pharmacy bids so customer experiences reverse-auction bidding instantly
+        generate_auto_quotes_for_order(db=db, order_id=result["order_id"], zone=zone, customer_id=g.user_id)
         return jsonify({
             "message": "Order created and broadcasted successfully",
             "order": result

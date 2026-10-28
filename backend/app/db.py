@@ -221,3 +221,48 @@ def init_db(app):
                 "CENTRAL"
             ))
             db.commit()
+
+        # Seed essential popular medicines if not present so quotes and order items always match
+        popular_seeds = [
+            (169, "Dolo 650 650mg Tablet", "Paracetamol", "Micro Labs Ltd", "Analgesic", "Tablet", "650mg", "Paracetamol 650mg", "Strip of 15 tablets", 34.00, 0),
+            (1002, "Electral Powder", "Oral Rehydration Salts", "FDC Ltd", "Hydration", "Powder", "21.8g Sachet", "Oral Rehydration Salts IP (WHO formula)", "sachet of 21.8 gm", 22.00, 0),
+            (380, "Limcee 500mg Chewable Tablet", "Vitamin C + Zinc", "Abbott", "Immunity", "Tablet", "500mg", "Ascorbic Acid 500mg + Sodium Ascorbate", "strip of 15 tablets", 25.00, 0),
+            (1004, "Prolyte ORS Ready Drink", "ORS Drink Apple Flavor", "Cipla Health Ltd", "Hydration", "Liquid", "200ml", "Electrolytes + Dextrose", "tetrapack of 200 ml", 32.00, 0),
+            (148, "Combiflam 400mg/325mg Tablet", "Ibuprofen + Paracetamol", "Sanofi India", "Pain Relief", "Tablet", "Combo", "Ibuprofen 400mg + Paracetamol 325mg", "strip of 20 tablets", 45.00, 0),
+            (19, "Azithral 500 Tablet", "Azithromycin", "Alembic Pharma", "Antibiotic", "Tablet", "500mg", "Azithromycin 500mg", "strip of 5 tablets", 119.50, 1),
+            (487, "Pan 40 40mg Tablet", "Pantoprazole", "Alkem Laboratories", "Gastro", "Tablet", "40mg", "Pantoprazole Sodium 40mg", "strip of 15 tablets", 155.00, 0),
+            (3, "Cetirizine 10mg Tablet", "Cetirizine Hydrochloride", "Cipla Ltd", "Allergy", "Tablet", "10mg", "Cetirizine HCl 10mg", "strip of 10 tablets", 18.00, 0),
+            (1009, "Crocin 650 Advance", "Paracetamol", "GSK", "Analgesic", "Tablet", "650mg", "Fast-acting Paracetamol 650mg", "strip of 15 tablets", 32.50, 0),
+            (122, "Calpol 650 Tablet", "Paracetamol", "GlaxoSmithKline", "Analgesic", "Tablet", "650mg", "Paracetamol 650mg", "strip of 15 tablets", 31.00, 0),
+            (91, "Becosules Z Capsules", "B-Complex + Zinc", "Pfizer", "Vitamins", "Capsule", "Standard", "Vitamin B-Complex with Zinc & Vitamin C", "strip of 20 capsules", 52.00, 0),
+            (548, "Supradyn Daily Multivitamin", "Multivitamin + Minerals", "Bayer", "Vitamins", "Tablet", "Daily", "Multivitamins with Minerals and Trace Elements", "strip of 15 tablets", 65.00, 0),
+            (1013, "Zincovit Tablet", "Multivitamin + Zinc + Grape Seed", "Apex Laboratories", "Vitamins", "Tablet", "Standard", "Nutritional Health Supplement", "strip of 15 tablets", 110.00, 0),
+            (7, "Augmentin 625 Duo Tablet", "Amoxicillin + Clavulanic Acid", "GSK", "Antibiotic", "Tablet", "625mg", "Amoxicillin 500mg + Clavulanate 125mg", "strip of 10 tablets", 223.00, 1),
+            (491, "Pantocid 40mg Tablet", "Pantoprazole", "Sun Pharma", "Gastro", "Tablet", "40mg", "Pantoprazole 40mg", "strip of 15 tablets", 160.00, 0),
+            (453, "Omez 20mg Capsule", "Omeprazole", "Dr. Reddy's", "Gastro", "Capsule", "20mg", "Omeprazole 20mg", "strip of 20 capsules", 68.00, 0),
+            (294, "Gelusil MPS Antacid Liquid", "Aluminium + Magnesium + Dimethicone", "Pfizer", "Gastro", "Liquid", "200ml", "Acidity & Gas Relief Mint Flavor", "bottle of 200 ml", 128.00, 0),
+            (182, "Digene Acidity Relief Liquid", "Antacid & Antigas", "Abbott", "Gastro", "Liquid", "200ml", "Aluminium Hydroxide + Magnesium Hydroxide", "bottle of 200 ml", 135.00, 0),
+            (36, "Allegra 120mg Tablet", "Fexofenadine HCl", "Sanofi India", "Allergy", "Tablet", "120mg", "Fexofenadine Hydrochloride 120mg", "strip of 10 tablets", 215.00, 0),
+            (397, "Montair LC 10mg/5mg Tablet", "Montelukast + Levocetirizine", "Cipla", "Allergy", "Tablet", "Combo", "Montelukast 10mg + Levocetirizine 5mg", "strip of 10 tablets", 220.00, 1),
+            (555, "Sinarest New Tablet", "Cold Relief", "Centaur Pharma", "Cold & Flu", "Tablet", "Standard", "Paracetamol 500mg + Phenylephrine 10mg + CPM 2mg", "strip of 10 tablets", 64.00, 0),
+            (107, "Benadryl Cough Syrup", "Diphenhydramine HCl", "Johnson & Johnson", "Cough", "Liquid", "100ml", "Diphenhydramine + Ammonium Chloride", "bottle of 100 ml", 125.00, 0),
+            (71, "Ascoril D Plus Syrup", "Cough Relief", "Glenmark", "Cough", "Liquid", "100ml", "Dextromethorphan + Phenylephrine + CPM", "bottle of 100 ml", 132.00, 0),
+            (1024, "Cofsils Lozenges Ginger Lemon", "Throat Lozenge", "Cipla Health", "Throat", "Lozenges", "Standard", "Amylmetacresol 0.6mg + Dichlorobenzyl Alcohol 1.2mg", "strip of 10 lozenges", 35.00, 0),
+            (1025, "Vicks VapoRub", "Cold Balm", "Procter & Gamble", "Cold Relief", "Ointment", "50g", "Menthol + Camphor + Eucalyptus Oil", "jar of 50 gm", 165.00, 0),
+            (391, "Meftal Spas 250mg/10mg Tablet", "Mefenamic Acid + Dicyclomine", "Blue Cross Labs", "Pain Relief", "Tablet", "Combo", "Mefenamic Acid 250mg + Dicyclomine HCl 10mg", "strip of 10 tablets", 53.00, 0),
+            (623, "Volini Pain Relief Gel", "Diclofenac Gel", "Sun Pharma", "Pain Relief", "Gel", "50g", "Diclofenac Diethylamine 1.16% w/w", "tube of 50 gm", 170.00, 0),
+            (544, "Shelcal 500 Tablet", "Calcium + Vitamin D3", "Torrent Pharma", "Bone Health", "Tablet", "500mg", "Calcium Carbonate 1250mg + Vitamin D3 250 IU", "strip of 15 tablets", 131.00, 0),
+            (1029, "Saridon Headache Tablet", "Paracetamol + Propyphenazone", "Piramal Healthcare", "Pain Relief", "Tablet", "Standard", "Paracetamol 250mg + Propyphenazone 150mg + Caffeine 50mg", "strip of 10 tablets", 46.00, 0),
+            (1030, "Disprin Regular Tablet", "Aspirin", "Reckitt Benckiser", "Pain Relief", "Tablet", "350mg", "Acetylsalicylic Acid 350mg", "strip of 10 tablets", 14.00, 0),
+            (573, "Telma 40 Tablet", "Telmisartan", "Glenmark Pharma", "Cardiac", "Tablet", "40mg", "Telmisartan 40mg", "strip of 15 tablets", 225.00, 1),
+            (278, "Glycomet 500 SR Tablet", "Metformin", "USV Ltd", "Diabetes", "Tablet", "500mg", "Metformin Hydrochloride 500mg", "strip of 20 tablets", 48.00, 1),
+            (92, "Betadine 10% Ointment", "Povidone Iodine", "Win-Medicare", "Antiseptic", "Ointment", "20g", "Povidone-Iodine 10% w/w", "tube of 20 gm", 85.00, 0),
+            (534, "Revital H Daily Health", "Ginseng + Minerals", "Sun Pharma", "Vitamins", "Capsule", "Daily", "Ginseng Extract with 10 Vitamins & 9 Minerals", "strip of 10 capsules", 115.00, 0),
+            (1035, "Moov Pain Relief Cream", "Ayurvedic Pain Balm", "Reckitt Benckiser", "Pain Relief", "Cream", "50g", "Nilgiri Oil + Wintergreen Oil + Mint", "tube of 50 gm", 180.00, 0)
+        ]
+        for row in popular_seeds:
+            db.execute("""
+                INSERT OR IGNORE INTO medicines (id, name, generic_name, manufacturer, category, dosage_form, strength, composition, pack_size, mrp, requires_prescription)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, row)
+        db.commit()

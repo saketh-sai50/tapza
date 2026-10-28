@@ -13,7 +13,7 @@ def select_quote(order_id: int):
     Selects exactly one winning pharmacy quote with database transaction protection.
     Prevents race conditions, double-selection, and locks the order to the winner.
     """
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     quote_id = data.get("quote_id")
 
     if not quote_id:
@@ -50,7 +50,7 @@ def pay_mock(order_id: int):
     Simulated mock payment endpoint.
     Explicitly labelled as simulated test payment.
     """
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     payment_method = data.get("payment_method", "SIMULATED_MOCK_CARD")
 
     db = get_db()
