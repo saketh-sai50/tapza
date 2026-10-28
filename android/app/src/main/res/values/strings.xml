@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">Tapza</string>
-    <!-- Change this URL once your Render / Railway deployment is created -->
-    <string name="web_url">https://tapza-app.onrender.com</string>
+    <string name="web_url">https://tapza.onrender.com</string>
 </resources>
