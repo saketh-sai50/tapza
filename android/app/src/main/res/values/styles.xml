@@ -1,9 +1,9 @@
 <resources>
     <style name="Theme.Tapza" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#059669</item>
-        <item name="colorPrimaryVariant">#047857</item>
+        <item name="colorPrimary">#240a5e</item>
+        <item name="colorPrimaryVariant">#1b0647</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="android:statusBarColor">#059669</item>
+        <item name="android:statusBarColor">#240a5e</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
