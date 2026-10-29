@@ -91,6 +91,32 @@ def create_broadcast_order(
         initial_radius = 10.0
         nearby_pharmacies = find_pharmacies_in_radius(db, c_lat, c_lon, 0.0, initial_radius)
 
+    # ALWAYS include testpharm001 so tester can verify orders under testpharm001 anytime
+    p001_row = db.execute(
+        """
+        SELECT u.id, p.pharmacy_name, p.address, p.phone, p.latitude, p.longitude
+        FROM users u
+        JOIN pharmacy_profiles p ON u.id = p.user_id
+        WHERE u.username = 'testpharm001' AND p.is_active = 1
+        """
+    ).fetchone()
+    if p001_row:
+        p001_id = p001_row["id"]
+        if not any(p["pharmacy_id"] == p001_id for p in nearby_pharmacies):
+            p001_lat = float(p001_row["latitude"]) if p001_row["latitude"] is not None else 18.002476
+            p001_lon = float(p001_row["longitude"]) if p001_row["longitude"] is not None else 79.556723
+            dist = haversine_distance(c_lat, c_lon, p001_lat, p001_lon)
+            nearby_pharmacies.append({
+                "pharmacy_id": p001_id,
+                "pharmacy_name": p001_row["pharmacy_name"],
+                "address": p001_row["address"],
+                "phone": p001_row["phone"],
+                "latitude": p001_lat,
+                "longitude": p001_lon,
+                "distance_km": dist
+            })
+            nearby_pharmacies.sort(key=lambda x: x["distance_km"])
+
     # 3. Persist order, line items, and broadcast targets atomically
     with transaction(db):
         cursor = db.execute(

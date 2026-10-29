@@ -58,24 +58,13 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
             return
 
         discounts = [0.15, 0.22, 0.10]
-        med_notes_list = [
-            "Original sealed strip from licensed batch. Expiry: 2027.",
-            "Genuine manufacturer packaging with verifiable hologram. Take after food.",
-            "Full course available in fresh inventory. 100% authentic medicine."
-        ]
-        notes_list = [
-            "Genuine sealed batch in stock. Free fast doorstep delivery.",
-            "Best price guaranteed. Verified licensed pharmacist packaging.",
-            "Fresh inventory with complimentary doctor teleconsultation card."
-        ]
-
         with transaction(db):
             for idx, p in enumerate(pharmacies):
                 p_id = p["id"]
                 p_name = p["pharmacy_name"] or p["full_name"]
                 disc = discounts[idx % len(discounts)]
-                p_notes = notes_list[idx % len(notes_list)]
-                med_note = med_notes_list[idx % len(med_notes_list)]
+                p_notes = None  # Notes only appear if typed by a real pharmacy
+                med_note = None # Medicine notes only appear if typed by a real pharmacy
 
                 total_quoted = 0.0
                 quote_item_rows = []
