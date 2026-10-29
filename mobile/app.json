@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Tapza",
+    "slug": "tapza",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1e1b4b"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tapza.app"
+    },
+    "android": {
+      "package": "com.tapza.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1e1b4b",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
