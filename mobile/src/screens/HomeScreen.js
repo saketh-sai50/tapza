@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ export const HomeScreen = ({ onOpenAuth }) => {
   const [category, setCategory] = useState("");
   const [medicines, setMedicines] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const searchInputRef = useRef(null);
 
   const fetchMedicines = async (q = "", cat = "") => {
     setIsLoading(true);
@@ -42,15 +43,116 @@ export const HomeScreen = ({ onOpenAuth }) => {
     fetchMedicines(query, category);
   };
 
+  const renderHeader = () => (
+    <View>
+      {/* Category Horizontal Row */}
+      <CategoryBar
+        selected={category}
+        onSelect={(catId) => setCategory(catId)}
+      />
+
+      {/* Zepto Style Promotional Banner */}
+      <View style={styles.promoBanner}>
+        <Text style={styles.promoTag}>LOWEST PRICE GUARANTEE</Text>
+        <Text style={styles.promoMain}>— FLAT 25% OFF —</Text>
+        <Text style={styles.promoSub}>NO MINIMUM ORDER</Text>
+        <View style={styles.promoStripWrap}>
+          <Text style={styles.promoStrip}>⚡ FREE 15-MIN EXPRESS DELIVERY 🛵</Text>
+        </View>
+
+        {/* Trust Pills */}
+        <View style={styles.trustRow}>
+          <View style={styles.trustPill}>
+            <Ionicons name="medkit" size={12} color="#475569" />
+            <Text style={styles.trustText}>35,000+ Meds</Text>
+          </View>
+          <View style={styles.trustPill}>
+            <Ionicons name="time" size={12} color="#475569" />
+            <Text style={styles.trustText}>In Minutes</Text>
+          </View>
+          <View style={styles.trustPill}>
+            <Ionicons name="shield-checkmark" size={12} color="#475569" />
+            <Text style={styles.trustText}>Licensed Shops</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* HERO QUICK ACTION CARD (CREATE ORDER - OPTION A) */}
+      <View style={styles.heroCard}>
+        <View style={styles.heroTitleRow}>
+          <View style={styles.heroTitleLeft}>
+            <Ionicons name="flash" size={18} color="#2e1065" />
+            <Text style={styles.heroTitleText}>Create New Order</Text>
+          </View>
+          <View style={styles.heroQuoteBadge}>
+            <Text style={styles.heroQuoteText}>Real-Time Quotes</Text>
+          </View>
+        </View>
+
+        <View style={styles.heroActionsRow}>
+          {/* Action 1: Upload Prescription */}
+          <TouchableOpacity
+            style={styles.heroActionRx}
+            activeOpacity={0.85}
+            onPress={() => {
+              Alert.alert(
+                "Upload Prescription",
+                "Take a photo or upload doctor prescription. Licensed pharmacies in " + zone + " will read and quote best prices!",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Proceed to Cart", onPress: () => setCartModalVisible(true) }
+                ]
+              );
+            }}
+          >
+            <View style={styles.heroActionHead}>
+              <Ionicons name="camera" size={18} color="#be185d" />
+              <Text style={styles.heroActionRxTitle}>Upload Rx</Text>
+            </View>
+            <Text style={styles.heroActionDesc}>
+              Let pharmacies scan & quote prices.
+            </Text>
+          </TouchableOpacity>
+
+          {/* Action 2: Search & Add from Catalog */}
+          <TouchableOpacity
+            style={styles.heroActionCat}
+            activeOpacity={0.85}
+            onPress={() => searchInputRef.current?.focus()}
+          >
+            <View style={styles.heroActionHead}>
+              <Ionicons name="search" size={18} color="#059669" />
+              <Text style={styles.heroActionCatTitle}>Search Meds</Text>
+            </View>
+            <Text style={styles.heroActionDesc}>
+              Browse 2,750+ medicines & select qty.
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Catalogue Section Header */}
+      <View style={styles.catalogHeadingRow}>
+        <Text style={styles.catalogTitle}>
+          {category ? `${category} Medicines` : "Popular Medicines in " + zone}
+        </Text>
+        <Text style={styles.catalogSub}>
+          {medicines.length} {medicines.length === 1 ? "medicine" : "medicines"} available
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      {/* Search Bar */}
+      {/* Top Search Bar */}
       <View style={styles.searchSection}>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={17} color="#64748b" />
           <TextInput
+            ref={searchInputRef}
             style={styles.searchInput}
-            placeholder="Search medicines, salts, syrups, healthcare..."
+            placeholder='Search "dolo 650", "cough syrup" or brand...'
             placeholderTextColor="#94a3b8"
             value={query}
             onChangeText={setQuery}
@@ -65,45 +167,8 @@ export const HomeScreen = ({ onOpenAuth }) => {
         </View>
       </View>
 
-      {/* Category Pills Bar */}
-      <CategoryBar
-        selected={category}
-        onSelect={(catId) => {
-          setCategory(catId);
-        }}
-      />
-
-      {/* Prescription Upload Quick Banner */}
-      <View style={styles.rxBannerWrap}>
-        <TouchableOpacity
-          style={styles.rxBanner}
-          activeOpacity={0.85}
-          onPress={() => {
-            Alert.alert(
-              "Prescription Order",
-              "You can upload a physical prescription and licensed pharmacies in " + zone + " will digitize and bid on it!",
-              [
-                { text: "Cancel", style: "cancel" },
-                { text: "Proceed to Cart", onPress: () => setCartModalVisible(true) }
-              ]
-            );
-          }}
-        >
-          <View style={styles.rxIconCircle}>
-            <Ionicons name="camera" size={18} color="#059669" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rxTitle}>Have a Doctor's Prescription?</Text>
-            <Text style={styles.rxSub}>
-              Upload doctor prescription & get direct competitive quotes
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color="#059669" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Medicines List */}
-      {isLoading ? (
+      {/* Medicines List with Integrated Header */}
+      {isLoading && medicines.length === 0 ? (
         <View style={styles.centerLoading}>
           <ActivityIndicator size="large" color="#16a34a" />
           <Text style={styles.loadingText}>Loading catalogue in {zone}...</Text>
@@ -113,6 +178,7 @@ export const HomeScreen = ({ onOpenAuth }) => {
           data={medicines}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => <MedicineCard medicine={item} />}
+          ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
@@ -138,64 +204,199 @@ const styles = StyleSheet.create({
   searchSection: {
     paddingHorizontal: 14,
     paddingTop: 10,
-    paddingBottom: 4
+    paddingBottom: 4,
+    backgroundColor: "#ffffff"
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#e2e8f0",
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 9,
     gap: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 4,
-    elevation: 1
+    elevation: 2
   },
   searchInput: {
     flex: 1,
-    fontSize: 12.5,
+    fontSize: 13,
     color: "#0f172a"
   },
-  rxBannerWrap: {
-    paddingHorizontal: 14,
-    marginBottom: 6
-  },
-  rxBanner: {
-    flexDirection: "row",
+  promoBanner: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: "center",
+    marginHorizontal: 14,
+    marginTop: 6,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1
+  },
+  promoTag: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#059669",
+    letterSpacing: 1,
+    marginBottom: 2
+  },
+  promoMain: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#2e1065",
+    letterSpacing: -0.5,
+    marginVertical: 2
+  },
+  promoSub: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#64748b",
+    letterSpacing: 0.5,
+    marginBottom: 8
+  },
+  promoStripWrap: {
     backgroundColor: "#ecfdf5",
     borderWidth: 1,
     borderColor: "#a7f3d0",
-    padding: 10,
-    borderRadius: 12,
-    gap: 10
+    borderRadius: 20,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginBottom: 10
   },
-  rxIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  rxTitle: {
-    fontSize: 12.5,
+  promoStrip: {
+    fontSize: 10.5,
     fontWeight: "800",
     color: "#065f46"
   },
-  rxSub: {
+  trustRow: {
+    flexDirection: "row",
+    gap: 6
+  },
+  trustPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12
+  },
+  trustText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#475569"
+  },
+  heroCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    padding: 14,
+    marginHorizontal: 14,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2
+  },
+  heroTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12
+  },
+  heroTitleLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6
+  },
+  heroTitleText: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#1e1b4b"
+  },
+  heroQuoteBadge: {
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12
+  },
+  heroQuoteText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#059669"
+  },
+  heroActionsRow: {
+    flexDirection: "row",
+    gap: 10
+  },
+  heroActionRx: {
+    flex: 1,
+    backgroundColor: "#fdf2f8",
+    borderWidth: 1.5,
+    borderColor: "#fbcfe8",
+    borderRadius: 12,
+    padding: 12
+  },
+  heroActionCat: {
+    flex: 1,
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1.5,
+    borderColor: "#a7f3d0",
+    borderRadius: 12,
+    padding: 12
+  },
+  heroActionHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4
+  },
+  heroActionRxTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#9d174d"
+  },
+  heroActionCatTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#065f46"
+  },
+  heroActionDesc: {
     fontSize: 10.5,
-    color: "#047857",
-    marginTop: 1
+    color: "#64748b",
+    lineHeight: 14
+  },
+  catalogHeadingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    paddingHorizontal: 14,
+    marginBottom: 8
+  },
+  catalogTitle: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#0f172a"
+  },
+  catalogSub: {
+    fontSize: 11,
+    color: "#64748b"
   },
   listContent: {
-    paddingHorizontal: 14,
-    paddingBottom: 110,
-    paddingTop: 4
+    paddingBottom: 110
   },
   centerLoading: {
     flex: 1,
