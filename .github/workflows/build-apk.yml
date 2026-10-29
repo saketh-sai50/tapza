@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.12-radar
-          name: "Tapza Radar v1.0.12 (Geoapify 5km Spatial Radius & Live Map Radar)"
-          body: "Official standalone Tapza Radar Android APK (com.tapza.radar). Features SQLite R*Tree spatial matching, Geoapify address autocomplete, dynamic 5km to 10km radius auto-expansion, and real-time interactive map radar with pharmacy pins. Installs side-by-side with Tapza Classic without replacing it."
+          tag_name: v1.0.13-radar
+          name: "Tapza Radar v1.0.13 (Request Order & Choose Live Location GPS)"
+          body: "Official standalone Tapza Radar Android APK (com.tapza.radar). Completely removed legacy zone selects from Cart, Home, and Prescription screens. Added Choose Live Location GPS auto-detection, Geoapify address autocomplete, and clean 'Request Order' CTA matching nearby pharmacies within 5 km via SQLite R*Tree (expanding +5km if pending for 4 mins). Installs side-by-side with Tapza Classic."
           files: output/Tapza-Radar.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

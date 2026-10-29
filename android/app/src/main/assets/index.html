@@ -3153,23 +3153,21 @@
             </span>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom:14px;">
-            <div>
-              <label style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">
-                Delivery Zone
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+              <label style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:0; display:block;">
+                📍 Delivery Address
               </label>
-              <select id="custOrderZoneSelect" class="search-input" style="padding:10px 12px; background:#fff; font-weight:700; color:#065f46; cursor:pointer;" onchange="onCustomerOrderZoneChange(this.value)">
-                <option value="Warangal" selected>Warangal</option>
-                <option value="Hanamkonda">Hanamkonda</option>
-                <option value="Kazipet">Kazipet</option>
-              </select>
+              <button type="button" onclick="detectLiveGPSLocation('custOrderAddressInput', 'custLiveGpsStatus')" style="background:#ecfdf5; border:1px solid #10b981; color:#059669; font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                🎯 Choose Live Location
+              </button>
             </div>
             <div style="position:relative;">
-              <label style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">
-                Delivery Street Address (with Geoapify)
-              </label>
-              <input type="text" class="search-input" id="custOrderAddressInput" value="1-8-569, Nakkalagutta Main Road, Warangal" style="padding:10px 14px;" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'custAddrSuggestions')">
+              <input type="text" class="search-input" id="custOrderAddressInput" placeholder="Enter delivery street address (Geoapify auto-suggest)..." style="padding:10px 14px;" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'custAddrSuggestions')">
               <div id="custAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
+            </div>
+            <div id="custLiveGpsStatus" style="font-size:11.5px; color:#059669; font-weight:600; margin-top:6px;">
+              📡 R*Tree Spatial Match: Order will broadcast to pharmacies within 5 km.
             </div>
           </div>
 
@@ -3183,7 +3181,7 @@
           </div>
 
           <button class="btn-auth-submit" id="custBroadcastSubmitBtn" style="padding:14px; font-size:14px; border-radius:12px;" onclick="startCustomerBroadcast()">
-            Broadcast Order to Local Warangal Pharmacies
+            🚀 Request Order
           </button>
         </div>
 
@@ -3262,24 +3260,22 @@
             </div>
           </div>
 
-          <!-- Delivery & Zone Details -->
-          <div style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-top:16px;">
-            <div>
-              <label style="font-size:11.5px; font-weight:800; color:var(--text); text-transform:uppercase; margin-bottom:4px; display:block;">
-                📍 Delivery Zone
+          <!-- Delivery Details -->
+          <div style="margin-top:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+              <label style="font-size:11.5px; font-weight:800; color:var(--text); text-transform:uppercase; margin-bottom:0; display:block;">
+                🏠 Delivery Address
               </label>
-              <select id="rxOrderZoneSelect" class="search-input" style="padding:10px 12px; background:#fff; font-size:13px; font-weight:700;">
-                <option value="Warangal">Warangal</option>
-                <option value="Hanamkonda">Hanamkonda</option>
-                <option value="Kazipet">Kazipet</option>
-              </select>
+              <button type="button" onclick="detectLiveGPSLocation('rxOrderAddressInput', 'rxLiveGpsStatus')" style="background:#ecfdf5; border:1px solid #10b981; color:#059669; font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                🎯 Choose Live Location
+              </button>
             </div>
             <div style="position:relative;">
-              <label style="font-size:11.5px; font-weight:800; color:var(--text); text-transform:uppercase; margin-bottom:4px; display:block;">
-                🏠 Delivery Address (with Geoapify)
-              </label>
-              <input type="text" id="rxOrderAddressInput" class="search-input" placeholder="House no, Street name, Landmark..." style="padding:10px 12px; background:#fff; font-size:13px;" value="1-8-569, Nakkalagutta Main Road, Warangal" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'rxAddrSuggestions')">
+              <input type="text" id="rxOrderAddressInput" class="search-input" placeholder="House no, Street name, Landmark (Geoapify auto-suggest)..." style="padding:10px 12px; background:#fff; font-size:13px;" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'rxAddrSuggestions')">
               <div id="rxAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
+            </div>
+            <div id="rxLiveGpsStatus" style="font-size:11.5px; color:#059669; font-weight:600; margin-top:6px;">
+              📡 R*Tree Spatial Match: Order will broadcast to pharmacies within 5 km.
             </div>
           </div>
 
@@ -3294,7 +3290,7 @@
           <!-- Submit Prescription Button -->
           <div style="margin-top:16px;">
             <button class="btn-auth-submit" id="rxSubmitBtn" style="width:100%; padding:13px; font-size:14px; font-weight:800; background:#059669; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="submitPrescriptionOrder()">
-              <span>🚀</span> Request Order via Prescription (Broadcast to Pharmacies)
+              <span>🚀</span> Request Order
             </button>
           </div>
         </div>
@@ -4101,28 +4097,22 @@
           </button>
         </div>
 
-        <!-- Delivery Location & Zone -->
+        <!-- Delivery Address (5 km Spatial Radar) -->
         <div class="cart-delivery-box">
-          <div style="font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-            📍 Delivery Location & Pharmacy Zone
-          </div>
-          <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px; margin-bottom:10px;">
-            <div>
-              <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Delivery Zone</label>
-              <select id="cartModalZoneSelect" class="search-input" style="padding:9px 10px; font-weight:700; color:#065f46; cursor:pointer;" onchange="onCartZoneSelectChange(this.value)">
-                <option value="Warangal">Warangal</option>
-                <option value="Hanamkonda">Hanamkonda</option>
-                <option value="Kazipet">Kazipet</option>
-              </select>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+            <div style="font-size:13px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:6px;">
+              📍 Delivery Address
             </div>
-            <div style="position:relative;">
-              <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Delivery Street Address (with Geoapify)</label>
-              <input type="text" id="cartModalAddressInput" class="search-input" style="padding:9px 12px; font-size:13px;" value="1-8-569, Nakkalagutta Main Road, Warangal" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'cartAddrSuggestions')">
-              <div id="cartAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
-            </div>
+            <button type="button" onclick="detectLiveGPSLocation('cartModalAddressInput', 'cartLiveGpsStatus')" style="background:#ecfdf5; border:1px solid #10b981; color:#059669; font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+              🎯 Choose Live Location
+            </button>
           </div>
-          <div style="font-size:11.5px; color:#059669; font-weight:600;">
-            ✓ Licensed pharmacies in <span id="cartModalZoneName" style="font-weight:800;">Warangal</span> will receive your order quote request.
+          <div style="position:relative; margin-bottom:6px;">
+            <input type="text" id="cartModalAddressInput" class="search-input" style="padding:10px 12px; font-size:13px;" placeholder="Enter delivery street address (Geoapify auto-suggest)..." autocomplete="off" oninput="onGeoapifyAddressInput(this, 'cartAddrSuggestions')">
+            <div id="cartAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
+          </div>
+          <div id="cartLiveGpsStatus" style="font-size:11.5px; color:#059669; font-weight:600; line-height:1.4;">
+            📡 R*Tree Spatial Match: Order will broadcast to pharmacies within 5 km.
           </div>
         </div>
 
@@ -4152,7 +4142,7 @@
           <div style="font-size:18px; font-weight:900; color:#059669;" id="cartModalFooterTotal">₹0.00</div>
         </div>
         <button class="btn-auth-submit" id="cartModalCheckoutBtn" style="margin-top:0; width:auto; padding:12px 22px;" onclick="startOrderBroadcastFromCart()">
-          🚀 Request Quotes from Warangal Pharmacies
+          🚀 Request Order
         </button>
       </div>
     </div>
@@ -5103,9 +5093,10 @@
         if (zeptoLabel) zeptoLabel.innerText = activeZone;
         const zeptoSub = document.getElementById("zeptoZoneSub");
         if (zeptoSub) zeptoSub.innerText = `Fast Delivery Area, ${activeZone}`;
-        document.getElementById("custOrderAddressInput").value = `Plot 12, Demo Market Road, ${activeZone}`;
+        const savedAddr = localStorage.getItem("tapza_customer_address");
+        document.getElementById("custOrderAddressInput").value = savedAddr || `Plot 12, Demo Market Road, ${activeZone}`;
         const btn = document.getElementById("custBroadcastSubmitBtn");
-        if (btn) btn.innerText = `Request Quotes from ${activeZone} Pharmacies`;
+        if (btn) btn.innerText = `🚀 Request Order`;
         fetchCustomerOrders();
       } else if (currentUser.role === "PHARMACY") {
         document.getElementById("pharmacyInterface").style.display = "block";
@@ -6027,7 +6018,8 @@
         return;
       }
       const activeZone = localStorage.getItem("tapza_user_zone") || currentUser?.zone || "Warangal";
-      const activeAddr = localStorage.getItem("tapza_user_zone_sub") || "Plot 12, Demo Market Road, " + activeZone;
+      const savedAddr = localStorage.getItem("tapza_customer_address");
+      const activeAddr = savedAddr || localStorage.getItem("tapza_user_zone_sub") || "1-8-569, Nakkalagutta Main Road, " + activeZone;
 
       const cartZoneSelect = document.getElementById("cartModalZoneSelect");
       if (cartZoneSelect) cartZoneSelect.value = activeZone;
@@ -6039,7 +6031,7 @@
       if (cartAddr) cartAddr.value = activeAddr;
 
       const checkoutBtn = document.getElementById("cartModalCheckoutBtn");
-      if (checkoutBtn) checkoutBtn.innerText = `🚀 Request Quotes from ${activeZone} Pharmacies`;
+      if (checkoutBtn) checkoutBtn.innerText = `🚀 Request Order`;
 
       renderCartModalItems();
       const backdrop = document.getElementById("cartModalBackdrop");
@@ -6103,7 +6095,7 @@
       if (cartAddr && custAddr) cartAddr.value = custAddr.value;
 
       const checkoutBtn = document.getElementById("cartModalCheckoutBtn");
-      if (checkoutBtn) checkoutBtn.innerText = `🚀 Request Quotes from ${zone} Pharmacies`;
+      if (checkoutBtn) checkoutBtn.innerText = `🚀 Request Order`;
     }
 
     function onCartAddressInput(val) {
@@ -6135,7 +6127,7 @@
       }
       const btn = document.getElementById("custBroadcastSubmitBtn");
       if (btn) {
-        btn.innerText = `Request Quotes from ${newZone} Pharmacies`;
+        btn.innerText = `🚀 Request Order`;
       }
       const headerZone = document.getElementById("headerZoneBadge");
       if (headerZone) {
@@ -6148,15 +6140,94 @@
       const cartAddr = document.getElementById("cartModalAddressInput");
       if (cartAddr && addrInput) cartAddr.value = addrInput.value;
       const cartBtn = document.getElementById("cartModalCheckoutBtn");
-      if (cartBtn) cartBtn.innerText = `Request Quotes from ${newZone} Pharmacies`;
+      if (cartBtn) cartBtn.innerText = `🚀 Request Order`;
     }
 
     // --- GEOAPIFY AUTOCOMPLETE & LIVE SPATIAL RADAR ---
-    let selectedCustomerLat = 18.002476;
-    let selectedCustomerLon = 79.556723;
+    let selectedCustomerLat = parseFloat(localStorage.getItem("tapza_customer_lat")) || 18.002476;
+    let selectedCustomerLon = parseFloat(localStorage.getItem("tapza_customer_lon")) || 79.556723;
     const GEOAPIFY_API_KEY = "0bd3f31be0ee48fea21d7f2abb2e2987";
     let geoapifyDebounceTimer = null;
     let currentRadarData = null;
+
+    async function detectLiveGPSLocation(inputElId, statusElId) {
+      const statusEl = statusElId ? document.getElementById(statusElId) : null;
+      if (statusEl) {
+        statusEl.innerHTML = `<span>⏳ Acquiring high-precision GPS coordinates...</span>`;
+        statusEl.style.color = "#0284c7";
+      }
+
+      if (!navigator.geolocation) {
+        if (statusEl) {
+          statusEl.innerHTML = `<span>⚠️ Geolocation is not supported by your device. Please type your address.</span>`;
+          statusEl.style.color = "#dc2626";
+        }
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          selectedCustomerLat = lat;
+          selectedCustomerLon = lon;
+          localStorage.setItem("tapza_customer_lat", String(lat));
+          localStorage.setItem("tapza_customer_lon", String(lon));
+
+          if (statusEl) {
+            statusEl.innerHTML = `<span>📍 Reverse-geocoding coordinates (${lat.toFixed(4)}, ${lon.toFixed(4)})...</span>`;
+          }
+
+          try {
+            const url = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_API_KEY}`;
+            const res = await fetch(url);
+            let addressText = `Live GPS (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+            if (res.ok) {
+              const data = await res.json();
+              if (data.features && data.features.length > 0) {
+                const props = data.features[0].properties;
+                addressText = props.formatted || addressText;
+              }
+            }
+
+            ["cartModalAddressInput", "custOrderAddressInput", "rxOrderAddressInput"].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = addressText;
+            });
+            localStorage.setItem("tapza_customer_address", addressText);
+
+            const zeptoLabel = document.getElementById("zeptoZoneLabel");
+            if (zeptoLabel) zeptoLabel.innerText = "Live Location Locked";
+            const zeptoSub = document.getElementById("zeptoZoneSub");
+            if (zeptoSub) zeptoSub.innerText = addressText.substring(0, 35) + "...";
+
+            if (statusEl) {
+              statusEl.innerHTML = `<span>✅ Live GPS Location Locked: <b>${addressText}</b> (5 km R*Tree spatial broadcast ready)</span>`;
+              statusEl.style.color = "#059669";
+            }
+          } catch (err) {
+            console.error("Reverse geocoding error:", err);
+            const fallbackAddr = `Live GPS (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+            ["cartModalAddressInput", "custOrderAddressInput", "rxOrderAddressInput"].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = fallbackAddr;
+            });
+            if (statusEl) {
+              statusEl.innerHTML = `<span>✅ Coordinates locked (${lat.toFixed(4)}, ${lon.toFixed(4)}). Ready for 5 km spatial broadcast.</span>`;
+              statusEl.style.color = "#059669";
+            }
+          }
+        },
+        (err) => {
+          console.warn("GPS error:", err);
+          if (statusEl) {
+            statusEl.innerHTML = `<span>⚠️ Could not get GPS location (${err.message || 'Permission denied'}). Please enter address manually.</span>`;
+            statusEl.style.color = "#dc2626";
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
 
     function onGeoapifyAddressInput(inputEl, suggestionsBoxId) {
       const query = (inputEl.value || "").trim();
