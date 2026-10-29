@@ -58,7 +58,7 @@ def run_tests():
     assert notif_res.status_code == 200
     notifs = notif_res.get_json()["notifications"]
     assert len(notifs) >= 1
-    recent_notif = notifs[0]
+    recent_notif = next((n for n in notifs if n["reference_id"] == order_id and n["event_type"] == "ORDER_BROADCAST_STARTED"), notifs[0])
     assert recent_notif["event_type"] == "ORDER_BROADCAST_STARTED"
     assert recent_notif["reference_id"] == order_id
     print(f"[OK] Persisted customer notification verified: '{recent_notif['title']}'.")

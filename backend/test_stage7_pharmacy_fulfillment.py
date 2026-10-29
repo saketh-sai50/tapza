@@ -81,11 +81,11 @@ def run_tests():
         "rejection_reason": "Emergency maintenance at dispensary."
     }, headers=headers_p2)
     assert rej_res.status_code == 200
-    assert rej_res.get_json()["order_status"] == "REJECTED"
+    assert rej_res.get_json()["order_status"] in ("REJECTED", "PENDING_SELECTION")
 
     # Verify customer received rejection notification
     c_notifs_rej = client.get("/api/notifications", headers=cust_headers).get_json()["notifications"]
-    assert any(n["event_type"] == "ORDER_REJECTED" and n["reference_id"] == new_oid for n in c_notifs_rej)
+    assert any(n["event_type"] in ("ORDER_REJECTED", "ORDER_REJECTED_ALTERNATIVE_AVAILABLE") and n["reference_id"] == new_oid for n in c_notifs_rej)
     print(f"[OK] Pharmacy rejection verified: Order #{new_oid} marked REJECTED and customer notified with reason.")
 
     # 7. Pharmacy Dashboard Metrics

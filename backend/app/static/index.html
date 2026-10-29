@@ -3164,11 +3164,12 @@
                 <option value="Kazipet">Kazipet</option>
               </select>
             </div>
-            <div>
+            <div style="position:relative;">
               <label style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px; display:block;">
-                Delivery Street Address
+                Delivery Street Address (with Geoapify)
               </label>
-              <input type="text" class="search-input" id="custOrderAddressInput" value="Plot 12, Demo Market Road, Warangal" style="padding:10px 14px;" oninput="onCustomerAddressInput(this.value)">
+              <input type="text" class="search-input" id="custOrderAddressInput" value="1-8-569, Nakkalagutta Main Road, Warangal" style="padding:10px 14px;" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'custAddrSuggestions')">
+              <div id="custAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
             </div>
           </div>
 
@@ -3273,11 +3274,12 @@
                 <option value="Kazipet">Kazipet</option>
               </select>
             </div>
-            <div>
+            <div style="position:relative;">
               <label style="font-size:11.5px; font-weight:800; color:var(--text); text-transform:uppercase; margin-bottom:4px; display:block;">
-                🏠 Delivery Address
+                🏠 Delivery Address (with Geoapify)
               </label>
-              <input type="text" id="rxOrderAddressInput" class="search-input" placeholder="House no, Street name, Landmark..." style="padding:10px 12px; background:#fff; font-size:13px;" value="Plot 12, Demo Market Road, Warangal">
+              <input type="text" id="rxOrderAddressInput" class="search-input" placeholder="House no, Street name, Landmark..." style="padding:10px 12px; background:#fff; font-size:13px;" value="1-8-569, Nakkalagutta Main Road, Warangal" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'rxAddrSuggestions')">
+              <div id="rxAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
             </div>
           </div>
 
@@ -3357,6 +3359,64 @@
               </div>
               <div style="font-size:12.5px; color:var(--text-muted); margin-top:5px;" id="custLiveStatusDesc">
                 Nearby pharmacies are currently calculating prices and availability. Please compare quotes below and pick the best offer.
+              </div>
+
+              <!-- LIVE GEOAPIFY BROADCAST RADAR & SPATIAL MAP -->
+              <div class="radar-map-card" id="custRadarMapCard" style="margin-top:14px; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.06);">
+                <!-- Header Strip -->
+                <div style="background:#1e1b4b; color:#ffffff; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">📡</span>
+                    <div>
+                      <div style="font-size:12.5px; font-weight:900; letter-spacing:0.3px;">LIVE PHARMACY RADAR</div>
+                      <div id="custRadarRadiusLabel" style="font-size:10.5px; color:#cbd5e1; font-weight:600;">Searching within 5.0 km radius</div>
+                    </div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span id="custRadarTimerBadge" style="background:#059669; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums;">
+                      ⏱️ 04:00
+                    </span>
+                    <span id="custRadarContactedBadge" style="background:#2563eb; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800;">
+                      📍 0 Pinged
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Dynamic Map View Container -->
+                <div style="position:relative; width:100%; min-height:220px; max-height:300px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                  <img id="custRadarMapImg" src="" style="width:100%; height:100%; max-height:300px; object-fit:cover; display:none;" alt="Live Pharmacy Radar Map">
+                  <div id="custRadarMapLoading" style="padding:30px; text-align:center; color:#64748b; font-size:12px; font-weight:700;">
+                    <div style="font-size:24px; margin-bottom:6px;">📡</div>
+                    Connecting to Geoapify Radar & scanning nearby pharmacies...
+                  </div>
+
+                  <!-- Accepted Pharmacy Popup Alert Overlay -->
+                  <div id="custRadarAcceptedBanner" style="display:none; position:absolute; bottom:10px; left:10px; right:10px; background:rgba(22, 163, 74, 0.95); backdrop-filter:blur(6px); color:#ffffff; padding:10px 14px; border-radius:10px; font-size:12px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,0.25); align-items:center; gap:10px;">
+                    <div style="width:28px; height:28px; border-radius:50%; background:#ffffff; color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900;">✓</div>
+                    <div style="flex:1;">
+                      <div id="custRadarAcceptedText">Sri Lasya Pharmacy accepted your request!</div>
+                      <div style="font-size:10px; opacity:0.9; font-weight:600;">Offer ready to review and confirm below</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Legend & Status Strip -->
+                <div style="padding:9px 14px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; font-size:11px; color:#475569;">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
+                      <span style="width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block;"></span> Red: You
+                    </span>
+                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
+                      <span style="width:10px; height:10px; border-radius:50%; background:#2563eb; display:inline-block;"></span> Blue: Pinged
+                    </span>
+                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
+                      <span style="width:10px; height:10px; border-radius:50%; background:#16a34a; display:inline-block;"></span> Green: Accepted
+                    </span>
+                  </div>
+                  <div id="custRadarExpandedPill" style="display:none; background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-weight:800; border:1px solid #fde68a;">
+                    ⚡ 4-Min Timeout: Search Expanded to 10 km
+                  </div>
+                </div>
               </div>
 
               <!-- Prescription Info Card (if order has prescription) -->
@@ -3706,10 +3766,15 @@
             <div class="live-tracker-sub" id="zomatoTrackerSub">Pharmacies Quoting Live...</div>
           </div>
         </div>
-        <button class="live-tracker-cta">
-          <span>View Quotes</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="live-tracker-cta" style="background:#059669; color:#fff;" onclick="event.stopPropagation(); switchCustomerTab('ORDERS');">
+            <span>🗺️ Live Radar</span>
+          </button>
+          <button class="live-tracker-cta">
+            <span>View Quotes</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
       </div>
     </div> <!-- /#customerInterface -->
 
@@ -4050,9 +4115,10 @@
                 <option value="Kazipet">Kazipet</option>
               </select>
             </div>
-            <div>
-              <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Delivery Street Address</label>
-              <input type="text" id="cartModalAddressInput" class="search-input" style="padding:9px 12px; font-size:13px;" value="Plot 12, Demo Market Road, Warangal" oninput="onCartAddressInput(this.value)">
+            <div style="position:relative;">
+              <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Delivery Street Address (with Geoapify)</label>
+              <input type="text" id="cartModalAddressInput" class="search-input" style="padding:9px 12px; font-size:13px;" value="1-8-569, Nakkalagutta Main Road, Warangal" autocomplete="off" oninput="onGeoapifyAddressInput(this, 'cartAddrSuggestions')">
+              <div id="cartAddrSuggestions" class="geoapify-autocomplete-box" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:9999; background:#ffffff; border:1.5px solid #059669; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); max-height:220px; overflow-y:auto; margin-top:4px;"></div>
             </div>
           </div>
           <div style="font-size:11.5px; color:#059669; font-weight:600;">
@@ -6085,6 +6151,181 @@
       if (cartBtn) cartBtn.innerText = `Request Quotes from ${newZone} Pharmacies`;
     }
 
+    // --- GEOAPIFY AUTOCOMPLETE & LIVE SPATIAL RADAR ---
+    let selectedCustomerLat = 18.002476;
+    let selectedCustomerLon = 79.556723;
+    const GEOAPIFY_API_KEY = "0bd3f31be0ee48fea21d7f2abb2e2987";
+    let geoapifyDebounceTimer = null;
+    let currentRadarData = null;
+
+    function onGeoapifyAddressInput(inputEl, suggestionsBoxId) {
+      const query = (inputEl.value || "").trim();
+      const box = document.getElementById(suggestionsBoxId);
+      if (!box) return;
+
+      if (query.length < 3) {
+        box.innerHTML = "";
+        box.style.display = "none";
+        return;
+      }
+
+      clearTimeout(geoapifyDebounceTimer);
+      geoapifyDebounceTimer = setTimeout(async () => {
+        try {
+          const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&bias=proximity:79.5567,18.0024&apiKey=${GEOAPIFY_API_KEY}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            const features = data.features || [];
+            if (features.length === 0) {
+              box.innerHTML = `<div style="padding:10px 12px; font-size:12px; color:#64748b;">No matching addresses found in Warangal</div>`;
+              box.style.display = "block";
+              return;
+            }
+
+            box.innerHTML = features.slice(0, 5).map(f => {
+              const props = f.properties;
+              const mainText = props.address_line1 || props.formatted.split(",")[0];
+              const subText = props.address_line2 || props.formatted;
+              const lat = props.lat;
+              const lon = props.lon;
+              const escapedFormatted = (props.formatted || "").replace(/'/g, "\\'");
+              return `
+                <div style="padding:10px 14px; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:flex-start; gap:8px;"
+                     onmouseover="this.style.background='#f0fdf4'"
+                     onmouseout="this.style.background='#ffffff'"
+                     onclick="selectGeoapifyAddress('${escapedFormatted}', ${lat}, ${lon}, '${inputEl.id}', '${suggestionsBoxId}')">
+                  <span style="font-size:15px; margin-top:1px;">📍</span>
+                  <div style="flex:1;">
+                    <div style="font-size:12.5px; font-weight:800; color:#0f172a;">${mainText}</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:1px;">${subText}</div>
+                  </div>
+                </div>
+              `;
+            }).join("");
+            box.style.display = "block";
+          }
+        } catch (err) {
+          console.error("Geoapify autocomplete error:", err);
+        }
+      }, 280);
+    }
+
+    function selectGeoapifyAddress(formatted, lat, lon, inputElId, suggestionsBoxId) {
+      selectedCustomerLat = parseFloat(lat);
+      selectedCustomerLon = parseFloat(lon);
+
+      // Sync across all delivery address inputs
+      const ids = ["custOrderAddressInput", "cartModalAddressInput", "rxOrderAddressInput"];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = formatted;
+      });
+
+      const box = document.getElementById(suggestionsBoxId);
+      if (box) {
+        box.innerHTML = "";
+        box.style.display = "none";
+      }
+      localStorage.setItem("tapza_customer_address", formatted);
+      localStorage.setItem("tapza_customer_lat", String(lat));
+      localStorage.setItem("tapza_customer_lon", String(lon));
+    }
+
+    document.addEventListener("click", function(e) {
+      if (!e.target.closest(".geoapify-autocomplete-box") && !e.target.closest(".search-input")) {
+        document.querySelectorAll(".geoapify-autocomplete-box").forEach(b => b.style.display = "none");
+      }
+    });
+
+    async function fetchCustomerOrderRadar(orderId) {
+      if (!orderId || !token) return;
+      try {
+        const res = await fetch(`${API}/orders/${orderId}/radar`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentRadarData = data;
+          renderRadarUI(data);
+        }
+      } catch (err) {
+        console.error("Radar fetch error:", err);
+      }
+    }
+
+    function renderRadarUI(data) {
+      const card = document.getElementById("custRadarMapCard");
+      const img = document.getElementById("custRadarMapImg");
+      const loading = document.getElementById("custRadarMapLoading");
+      const radiusLabel = document.getElementById("custRadarRadiusLabel");
+      const timerBadge = document.getElementById("custRadarTimerBadge");
+      const contactedBadge = document.getElementById("custRadarContactedBadge");
+      const acceptedBanner = document.getElementById("custRadarAcceptedBanner");
+      const acceptedText = document.getElementById("custRadarAcceptedText");
+      const expandedPill = document.getElementById("custRadarExpandedPill");
+      const zomatoSub = document.getElementById("zomatoTrackerSub");
+
+      if (!card) return;
+      card.style.display = "block";
+
+      if (radiusLabel) {
+        radiusLabel.innerText = data.is_expanded 
+          ? "⚡ 4-Min Timeout: Search expanded to 10.0 km (+5 km)"
+          : `Searching within ${data.search_radius_km} km radius`;
+      }
+
+      if (timerBadge) {
+        const secs = data.remaining_seconds || 0;
+        const mins = Math.floor(secs / 60);
+        const remSecs = secs % 60;
+        timerBadge.innerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+        if (secs <= 30) {
+          timerBadge.style.background = "#dc2626";
+        } else if (secs <= 90) {
+          timerBadge.style.background = "#f59e0b";
+        } else {
+          timerBadge.style.background = "#059669";
+        }
+      }
+
+      if (contactedBadge) {
+        contactedBadge.innerText = `📍 ${data.pharmacies_contacted_count} Pinged`;
+      }
+
+      if (expandedPill) {
+        expandedPill.style.display = data.is_expanded ? "inline-block" : "none";
+      }
+
+      if (acceptedBanner && acceptedText) {
+        if (data.accepted_pharmacy) {
+          acceptedBanner.style.display = "flex";
+          const statusText = data.accepted_pharmacy.confirmation_status === 'CONFIRMED' ? 'Confirmed' : `₹${data.accepted_pharmacy.total_price}`;
+          acceptedText.innerText = `${data.accepted_pharmacy.pharmacy_name} accepted your request (${statusText})!`;
+        } else {
+          acceptedBanner.style.display = "none";
+        }
+      }
+
+      if (img && data.map_url) {
+        if (img.src !== data.map_url) {
+          img.onload = () => {
+            img.style.display = "block";
+            if (loading) loading.style.display = "none";
+          };
+          img.src = data.map_url;
+        } else {
+          img.style.display = "block";
+          if (loading) loading.style.display = "none";
+        }
+      }
+
+      // Update Zomato bottom floating tracker
+      if (zomatoSub && data.status === "BROADCASTING") {
+        zomatoSub.innerText = `Radar: ${data.pharmacies_contacted_count} Pharmacies pinged within ${data.search_radius_km}km`;
+      }
+    }
+
     function onCustomerAddressInput(val) {
       const lower = val.toLowerCase();
       const select = document.getElementById("custOrderZoneSelect");
@@ -6144,7 +6385,13 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ zone, delivery_address, items })
+          body: JSON.stringify({
+            zone,
+            delivery_address,
+            items,
+            customer_lat: selectedCustomerLat,
+            customer_lng: selectedCustomerLon
+          })
         });
         const d = await res.json();
         if (res.ok) {
@@ -6412,7 +6659,9 @@
             zone,
             delivery_address,
             prescription_image: currentPrescriptionDataUrl,
-            notes
+            notes,
+            customer_lat: selectedCustomerLat,
+            customer_lng: selectedCustomerLon
           })
         });
         const d = await res.json();
@@ -6561,6 +6810,7 @@
           updateCustomerStatusUI(ord);
           renderCustomerPaymentUI(ord);
           fetchQuotesForCustomerOrder(oid);
+          fetchCustomerOrderRadar(oid);
         }
       } catch (e) {
         console.error(e);

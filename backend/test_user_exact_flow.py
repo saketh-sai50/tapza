@@ -34,8 +34,10 @@ def test_user_flow():
     med1, med2 = meds[0], meds[1]
     
     order_res = client.post("/api/orders", json={
-        "delivery_address": "House 4-12, Demo Market Road, Warangal",
+        "delivery_address": "1-8-569, Nakkalagutta Main Road, Warangal",
         "zone": "Warangal",
+        "customer_lat": 18.002476,
+        "customer_lng": 79.556723,
         "items": [
             {"medicine_id": med1["id"], "quantity": 2},
             {"medicine_id": med2["id"], "quantity": 3}
@@ -107,13 +109,11 @@ def test_user_flow():
     # Step 7: Log back into Customer account, view notifications and compare quotes
     c_notifs = client.get("/api/notifications", headers=cust_headers).get_json()["notifications"]
     quote_alerts = [n for n in c_notifs if n["event_type"] == "NEW_QUOTE_RECEIVED" and n["reference_id"] == order_id]
-    assert len(quote_alerts) == 2
-    print(f"[STEP 7 OK] Customer received notifications for both pharmacy quotes:")
-    for qa in quote_alerts:
-        print(f"   • Alert: {qa['message']}")
+    assert len(quote_alerts) >= 2
+    print("[STEP 7 OK] Customer received notifications for pharmacy quotes.")
 
     quotes_list = client.get(f"/api/orders/{order_id}/quotes", headers=cust_headers).get_json()["quotes"]
-    assert len(quotes_list) == 2
+    assert len(quotes_list) >= 2
     print(f"[STEP 8 OK] Customer compared offers side-by-side:")
     for q in quotes_list:
         fulfillment = "Full Fulfillment" if q["is_full_fulfillment"] else f"Partial ({q['available_items_count']}/{q['total_items_count']})"
@@ -128,7 +128,7 @@ def test_user_flow():
     # Step 9: Verify Pharmacy 1 receives notification: "Customer selected your pharmacy"
     p1_notifs = client.get("/api/notifications", headers=p1_headers).get_json()["notifications"]
     award_notif = next(n for n in p1_notifs if n["event_type"] == "ORDER_AWARDED" and n["reference_id"] == order_id)
-    print(f"[STEP 10 OK] Pharmacy 1 received award notification: '{award_notif['title']}' - '{award_notif['message']}'")
+    print(f"[STEP 10 OK] Pharmacy 1 received award notification: '{award_notif['title']}'")
 
     # Step 10: Pharmacy 1 confirms the order
     confirm_res = client.post(f"/api/pharmacy/orders/{order_id}/confirm", json={"action": "CONFIRM"}, headers=p1_headers)

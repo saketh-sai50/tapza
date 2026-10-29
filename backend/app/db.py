@@ -65,9 +65,32 @@ def init_db(app):
             license_number TEXT NOT NULL,
             address TEXT NOT NULL,
             zone TEXT NOT NULL,
+            phone TEXT,
+            latitude REAL,
+            longitude REAL,
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        );
+
+        -- SQLite R*Tree Spatial Index for Pharmacies
+        CREATE VIRTUAL TABLE IF NOT EXISTS pharmacy_rtree USING rtree(
+            id,
+            min_lat, max_lat,
+            min_lng, max_lng
+        );
+
+        -- Order broadcast targeted pharmacies
+        CREATE TABLE IF NOT EXISTS order_broadcast_pharmacies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            pharmacy_id INTEGER NOT NULL,
+            distance_km REAL NOT NULL,
+            ring_stage INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
+            FOREIGN KEY (pharmacy_id) REFERENCES users (id) ON DELETE CASCADE,
+            UNIQUE(order_id, pharmacy_id)
         );
 
         -- Medicine Catalogue
@@ -193,7 +216,7 @@ def init_db(app):
         db.executescript(schema_sql)
         db.commit()
 
-        # Ensure prescription columns exist on orders table
+        # Ensure prescription & spatial columns exist on orders table
         order_cols = [c[1] for c in db.execute("PRAGMA table_info(orders)").fetchall()]
         if "order_type" not in order_cols:
             db.execute("ALTER TABLE orders ADD COLUMN order_type TEXT DEFAULT 'CATALOGUE'")
@@ -203,6 +226,30 @@ def init_db(app):
             db.execute("ALTER TABLE orders ADD COLUMN prescription_notes TEXT")
         if "is_ocr_scanned" not in order_cols:
             db.execute("ALTER TABLE orders ADD COLUMN is_ocr_scanned INTEGER DEFAULT 0")
+        if "customer_lat" not in order_cols:
+            db.execute("ALTER TABLE orders ADD COLUMN customer_lat REAL")
+        if "customer_lng" not in order_cols:
+            db.execute("ALTER TABLE orders ADD COLUMN customer_lng REAL")
+        if "search_radius_km" not in order_cols:
+            db.execute("ALTER TABLE orders ADD COLUMN search_radius_km REAL DEFAULT 5.0")
+        if "expanded_at" not in order_cols:
+            db.execute("ALTER TABLE orders ADD COLUMN expanded_at TIMESTAMP")
+
+        prof_cols = [c[1] for c in db.execute("PRAGMA table_info(pharmacy_profiles)").fetchall()]
+        if "latitude" not in prof_cols:
+            db.execute("ALTER TABLE pharmacy_profiles ADD COLUMN latitude REAL")
+        if "longitude" not in prof_cols:
+            db.execute("ALTER TABLE pharmacy_profiles ADD COLUMN longitude REAL")
+        if "phone" not in prof_cols:
+            db.execute("ALTER TABLE pharmacy_profiles ADD COLUMN phone TEXT")
+
+        # Ensure all existing pharmacy profiles have coordinates and are indexed in pharmacy_rtree
+        unindexed = db.execute("SELECT user_id, latitude, longitude, address FROM pharmacy_profiles WHERE user_id NOT IN (SELECT id FROM pharmacy_rtree)").fetchall()
+        for u in unindexed:
+            lat = u["latitude"] or 18.002476
+            lon = u["longitude"] or 79.556723
+            db.execute("UPDATE pharmacy_profiles SET latitude = ?, longitude = ? WHERE user_id = ? AND latitude IS NULL", (lat, lon, u["user_id"]))
+            db.execute("INSERT OR REPLACE INTO pharmacy_rtree (id, min_lat, max_lat, min_lng, max_lng) VALUES (?, ?, ?, ?, ?)", (u["user_id"], lat, lat, lon, lon))
         db.commit()
 
         # Seed default Admin account if not present

@@ -12,36 +12,36 @@ order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
 
 def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: int):
     """
-    Simulates real-time competitive pharmacy quotes for the order from registered local pharmacies.
+    Simulates real-time competitive pharmacy quotes for the order from nearby contacted pharmacies.
     CRITICAL ISOLATION: Manual testing accounts (testpharm001, testpharm002, testpharm003) are strictly
     EXCLUDED from auto-quotes so they remain 100% clean, unquoted, and independently actionable by testers.
     """
     try:
         pharmacies = db.execute(
             """
-            SELECT u.id, u.full_name, p.pharmacy_name
-            FROM users u
+            SELECT u.id, u.full_name, p.pharmacy_name, obp.distance_km
+            FROM order_broadcast_pharmacies obp
+            JOIN users u ON obp.pharmacy_id = u.id
             JOIN pharmacy_profiles p ON u.id = p.user_id
-            WHERE (LOWER(u.zone) = LOWER(?) OR LOWER(p.zone) = LOWER(?))
+            WHERE obp.order_id = ?
               AND p.is_active = 1
-              AND u.id NOT IN (11, 12, 13)
               AND (u.username IS NULL OR (u.username NOT IN ('testpharm001', 'testpharm002', 'testpharm003')))
-              AND (u.email IS NULL OR (u.email NOT LIKE 'testpharm001%' AND u.email NOT LIKE 'testpharm002%' AND u.email NOT LIKE 'testpharm003%'))
+              AND (u.email IS NULL OR (u.email NOT IN ('pharma.central@example.com', 'greenvalley@example.com')))
+            ORDER BY obp.distance_km ASC
             LIMIT 2
             """,
-            (zone, zone)
+            (order_id,)
         ).fetchall()
 
         if len(pharmacies) < 1:
             pharmacies = db.execute(
                 """
-                SELECT u.id, u.full_name, p.pharmacy_name
+                SELECT u.id, u.full_name, p.pharmacy_name, 2.0 as distance_km
                 FROM users u
                 JOIN pharmacy_profiles p ON u.id = p.user_id
                 WHERE p.is_active = 1
-                  AND u.id NOT IN (11, 12, 13)
                   AND (u.username IS NULL OR (u.username NOT IN ('testpharm001', 'testpharm002', 'testpharm003')))
-                  AND (u.email IS NULL OR (u.email NOT LIKE 'testpharm001%' AND u.email NOT LIKE 'testpharm002%' AND u.email NOT LIKE 'testpharm003%'))
+                  AND (u.email IS NULL OR (u.email NOT IN ('pharma.central@example.com', 'greenvalley@example.com')))
                 LIMIT 2
                 """
             ).fetchall()
@@ -138,16 +138,15 @@ def create_order():
     data = request.get_json() or {}
     items = data.get("items") or []
     delivery_address = (data.get("delivery_address") or "").strip()
-    zone = (data.get("zone") or g.zone or "").strip().upper()
+    zone = (data.get("zone") or g.zone or "Warangal").strip()
+    customer_lat = data.get("customer_lat") or data.get("latitude")
+    customer_lon = data.get("customer_lng") or data.get("customer_lon") or data.get("longitude")
 
     if not items or not isinstance(items, list):
         return jsonify({"error": "Order must contain at least one medicine item"}), 400
 
     if not delivery_address:
         return jsonify({"error": "Delivery address is required"}), 400
-
-    if not zone:
-        return jsonify({"error": "Delivery zone is required (e.g. ZONE_A, ZONE_B)"}), 400
 
     db = get_db()
     broadcast_seconds = current_app.config.get("BROADCAST_WINDOW_SECONDS", 240)
@@ -159,7 +158,9 @@ def create_order():
             zone=zone,
             delivery_address=delivery_address,
             items=items,
-            broadcast_seconds=broadcast_seconds
+            broadcast_seconds=broadcast_seconds,
+            customer_lat=customer_lat,
+            customer_lon=customer_lon
         )
         # Generate competitive pharmacy bids so customer experiences reverse-auction bidding instantly
         generate_auto_quotes_for_order(db=db, order_id=result["order_id"], zone=zone, customer_id=g.user_id)
@@ -180,17 +181,16 @@ def create_prescription_order():
     data = request.get_json() or {}
     prescription_image = (data.get("prescription_image") or "").strip()
     delivery_address = (data.get("delivery_address") or "").strip()
-    zone = (data.get("zone") or g.zone or "").strip().upper()
+    zone = (data.get("zone") or g.zone or "Warangal").strip()
     notes = (data.get("notes") or "").strip()
+    customer_lat = data.get("customer_lat") or data.get("latitude")
+    customer_lon = data.get("customer_lng") or data.get("customer_lon") or data.get("longitude")
 
     if not prescription_image:
         return jsonify({"error": "Prescription image is required"}), 400
 
     if not delivery_address:
         return jsonify({"error": "Delivery address is required"}), 400
-
-    if not zone:
-        return jsonify({"error": "Delivery zone is required (e.g. Warangal, Hanamkonda, Kazipet)"}), 400
 
     db = get_db()
     broadcast_seconds = current_app.config.get("BROADCAST_WINDOW_SECONDS", 240)
@@ -199,6 +199,17 @@ def create_prescription_order():
     started_at_str = format_iso_timestamp(now_ts)
     expires_at_str = format_iso_timestamp(expires_ts)
 
+    from app.services.geo_service import geocode_address, find_pharmacies_in_radius
+    if customer_lat is None or customer_lon is None:
+        c_lat, c_lon, formatted_addr = geocode_address(delivery_address)
+    else:
+        c_lat, c_lon = float(customer_lat), float(customer_lon)
+        formatted_addr = delivery_address
+
+    nearby_pharmacies = find_pharmacies_in_radius(db, c_lat, c_lon, 0.0, 5.0)
+    if not nearby_pharmacies:
+        nearby_pharmacies = find_pharmacies_in_radius(db, c_lat, c_lon, 0.0, 10.0)
+
     try:
         with transaction(db):
             cursor = db.execute(
@@ -206,23 +217,35 @@ def create_prescription_order():
                 INSERT INTO orders (
                     customer_id, zone, delivery_address, status,
                     broadcast_started_at, broadcast_expires_at, total_mrp, final_amount, mock_payment_status,
-                    order_type, prescription_url, prescription_notes, is_ocr_scanned
+                    order_type, prescription_url, prescription_notes, is_ocr_scanned,
+                    customer_lat, customer_lng, search_radius_km
                 )
-                VALUES (?, ?, ?, 'BROADCASTING', ?, ?, 0.0, 0.0, 'UNPAID', 'PRESCRIPTION', ?, ?, 0)
+                VALUES (?, ?, ?, 'BROADCASTING', ?, ?, 0.0, 0.0, 'UNPAID', 'PRESCRIPTION', ?, ?, 0, ?, ?, 5.0)
                 """,
                 (
                     g.user_id,
                     zone,
-                    delivery_address,
+                    formatted_addr,
                     started_at_str,
                     expires_at_str,
                     prescription_image,
-                    notes
+                    notes,
+                    c_lat,
+                    c_lon
                 )
             )
             order_id = cursor.lastrowid
 
-            # Persist Customer Notification (Customer-friendly, Rapido/Swiggy style)
+            for p in nearby_pharmacies:
+                db.execute(
+                    """
+                    INSERT OR IGNORE INTO order_broadcast_pharmacies (order_id, pharmacy_id, distance_km, ring_stage)
+                    VALUES (?, ?, ?, 1)
+                    """,
+                    (order_id, p["pharmacy_id"], p["distance_km"])
+                )
+
+            # Persist Customer Notification
             db.execute(
                 """
                 INSERT INTO notifications (user_id, title, message, event_type, reference_id)
@@ -230,35 +253,25 @@ def create_prescription_order():
                 """,
                 (
                     g.user_id,
-                    "Order Request Placed Successfully",
-                    "Your request has been processed successfully. Please wait until nearby pharmacies accept your request.",
+                    "Prescription Broadcasted",
+                    f"Your prescription has been sent to {len(nearby_pharmacies)} nearby pharmacies within 5 km. Waiting for bids.",
                     order_id
                 )
             )
 
-            # Notify ALL active eligible pharmacies in this zone
             cust_row = db.execute("SELECT full_name FROM users WHERE id = ?", (g.user_id,)).fetchone()
             cust_name = cust_row["full_name"] if cust_row else "Customer"
 
-            eligible_pharmacies = db.execute(
-                """
-                SELECT p.user_id, p.pharmacy_name
-                FROM pharmacy_profiles p
-                WHERE LOWER(p.zone) = LOWER(?) AND p.is_active = 1
-                """,
-                (zone,)
-            ).fetchall()
-
-            for ep in eligible_pharmacies:
+            for p in nearby_pharmacies:
                 db.execute(
                     """
                     INSERT INTO notifications (user_id, title, message, event_type, reference_id)
                     VALUES (?, ?, ?, 'NEW_PRESCRIPTION_BROADCAST', ?)
                     """,
                     (
-                        ep["user_id"],
-                        f"New Prescription Request in {zone}",
-                        f"Customer {cust_name} uploaded a doctor prescription for delivery to {delivery_address}. Open your dashboard and scan prescription to submit a quote.",
+                        p["pharmacy_id"],
+                        f"New Prescription Request ({p['distance_km']} km away)",
+                        f"Customer {cust_name} uploaded a doctor prescription for delivery to {formatted_addr}. Open your dashboard and quote prices.",
                         order_id
                     )
                 )
@@ -723,6 +736,170 @@ def cancel_order(order_id: int):
         )
 
     return jsonify({"message": "Order cancelled successfully"}), 200
+
+
+@order_bp.route("/<int:order_id>/radar", methods=["GET"])
+@token_required
+def get_order_radar(order_id: int):
+    """
+    Returns live spatial radar metrics and dynamic Geoapify map URL for the order.
+    Checks and expands broadcast radius to 10 km if 4 minutes have passed without quote selection.
+    """
+    db = get_db()
+    from app.services.broadcast_service import check_and_expand_order_broadcast, compute_remaining_seconds
+    from app.services.geo_service import generate_radar_static_map_url
+
+    # Check 4-minute auto-expansion
+    check_and_expand_order_broadcast(db, order_id)
+
+    order = db.execute(
+        """
+        SELECT id, customer_id, zone, delivery_address, status,
+               customer_lat, customer_lng, search_radius_km,
+               broadcast_started_at, broadcast_expires_at, expanded_at
+        FROM orders WHERE id = ?
+        """,
+        (order_id,)
+    ).fetchone()
+
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    c_lat = float(order["customer_lat"] or 18.002476)
+    c_lon = float(order["customer_lng"] or 79.556723)
+    radius_km = float(order["search_radius_km"] or 5.0)
+
+    # Fetch targeted pharmacies for this order
+    contacted_rows = db.execute(
+        """
+        SELECT obp.pharmacy_id, obp.distance_km, obp.ring_stage,
+               p.pharmacy_name, p.address, p.phone, p.latitude, p.longitude,
+               (SELECT status FROM quotes WHERE order_id = obp.order_id AND pharmacy_id = obp.pharmacy_id) as quote_status,
+               (SELECT total_quoted_price FROM quotes WHERE order_id = obp.order_id AND pharmacy_id = obp.pharmacy_id) as quoted_price
+        FROM order_broadcast_pharmacies obp
+        JOIN pharmacy_profiles p ON obp.pharmacy_id = p.user_id
+        WHERE obp.order_id = ?
+        ORDER BY obp.distance_km ASC
+        """,
+        (order_id,)
+    ).fetchall()
+
+    # Fallback if order was created before R*Tree migration
+    if not contacted_rows:
+        from app.services.geo_service import find_pharmacies_in_radius
+        found = find_pharmacies_in_radius(db, c_lat, c_lon, 0.0, radius_km)
+        for p in found:
+            db.execute(
+                """
+                INSERT OR IGNORE INTO order_broadcast_pharmacies (order_id, pharmacy_id, distance_km, ring_stage)
+                VALUES (?, ?, ?, 1)
+                """,
+                (order_id, p["pharmacy_id"], p["distance_km"])
+            )
+        db.commit()
+        contacted_rows = db.execute(
+            """
+            SELECT obp.pharmacy_id, obp.distance_km, obp.ring_stage,
+                   p.pharmacy_name, p.address, p.phone, p.latitude, p.longitude,
+                   (SELECT status FROM quotes WHERE order_id = obp.order_id AND pharmacy_id = obp.pharmacy_id) as quote_status,
+                   (SELECT total_quoted_price FROM quotes WHERE order_id = obp.order_id AND pharmacy_id = obp.pharmacy_id) as quoted_price
+            FROM order_broadcast_pharmacies obp
+            JOIN pharmacy_profiles p ON obp.pharmacy_id = p.user_id
+            WHERE obp.order_id = ?
+            ORDER BY obp.distance_km ASC
+            """,
+            (order_id,)
+        ).fetchall()
+
+    # Winning / accepted pharmacy
+    accepted = db.execute(
+        """
+        SELECT oa.pharmacy_id, p.pharmacy_name, p.address, p.phone, p.latitude, p.longitude,
+               oa.confirmation_status, q.total_quoted_price
+        FROM order_assignments oa
+        JOIN pharmacy_profiles p ON oa.pharmacy_id = p.user_id
+        JOIN quotes q ON oa.quote_id = q.id
+        WHERE oa.order_id = ?
+        """,
+        (order_id,)
+    ).fetchone()
+
+    latest_quote = db.execute(
+        """
+        SELECT q.pharmacy_id, p.pharmacy_name, q.total_quoted_price, q.status,
+               p.address, p.phone, p.latitude, p.longitude
+        FROM quotes q
+        JOIN pharmacy_profiles p ON q.pharmacy_id = p.user_id
+        WHERE q.order_id = ? AND q.status IN ('SUBMITTED', 'SELECTED')
+        ORDER BY q.total_quoted_price ASC
+        LIMIT 1
+        """,
+        (order_id,)
+    ).fetchone()
+
+    accepted_id = accepted["pharmacy_id"] if accepted else (latest_quote["pharmacy_id"] if latest_quote else None)
+    accepted_info = None
+    if accepted:
+        accepted_info = {
+            "pharmacy_id": accepted["pharmacy_id"],
+            "pharmacy_name": accepted["pharmacy_name"],
+            "address": accepted["address"],
+            "phone": accepted["phone"],
+            "confirmation_status": accepted["confirmation_status"],
+            "total_price": float(accepted["total_quoted_price"])
+        }
+    elif latest_quote:
+        accepted_info = {
+            "pharmacy_id": latest_quote["pharmacy_id"],
+            "pharmacy_name": latest_quote["pharmacy_name"],
+            "address": latest_quote["address"],
+            "phone": latest_quote["phone"],
+            "confirmation_status": "OFFERED_QUOTE",
+            "total_price": float(latest_quote["total_quoted_price"])
+        }
+
+    contacted_list = [
+        {
+            "pharmacy_id": cr["pharmacy_id"],
+            "pharmacy_name": cr["pharmacy_name"],
+            "address": cr["address"],
+            "phone": cr["phone"],
+            "latitude": float(cr["latitude"]) if cr["latitude"] else None,
+            "longitude": float(cr["longitude"]) if cr["longitude"] else None,
+            "distance_km": float(cr["distance_km"]),
+            "ring_stage": cr["ring_stage"],
+            "quote_status": cr["quote_status"],
+            "quoted_price": float(cr["quoted_price"]) if cr["quoted_price"] else None
+        }
+        for cr in contacted_rows
+    ]
+
+    map_url = generate_radar_static_map_url(
+        customer_lat=c_lat,
+        customer_lon=c_lon,
+        contacted_pharmacies=contacted_list,
+        accepted_pharmacy_id=accepted_id,
+        current_radius_km=radius_km
+    )
+
+    remaining = compute_remaining_seconds(order["broadcast_expires_at"])
+
+    return jsonify({
+        "order_id": order_id,
+        "status": order["status"],
+        "customer": {
+            "lat": c_lat,
+            "lng": c_lon,
+            "delivery_address": order["delivery_address"]
+        },
+        "search_radius_km": radius_km,
+        "is_expanded": radius_km > 5.0,
+        "remaining_seconds": remaining,
+        "pharmacies_contacted_count": len(contacted_list),
+        "contacted_pharmacies": contacted_list,
+        "accepted_pharmacy": accepted_info,
+        "map_url": map_url
+    }), 200
 
 
 # Notification blueprint endpoints

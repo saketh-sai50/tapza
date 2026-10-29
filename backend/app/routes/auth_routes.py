@@ -60,18 +60,33 @@ def register():
 
             pharmacy_data = None
             if role == "PHARMACY":
+                from app.services.geo_service import geocode_address
+                p_lat = data.get("latitude")
+                p_lon = data.get("longitude")
+                if p_lat is None or p_lon is None:
+                    p_lat, p_lon, _ = geocode_address(address)
+
                 db.execute(
                     """
-                    INSERT INTO pharmacy_profiles (user_id, pharmacy_name, license_number, address, zone, is_active)
-                    VALUES (?, ?, ?, ?, ?, 1)
+                    INSERT INTO pharmacy_profiles (user_id, pharmacy_name, license_number, address, zone, is_active, latitude, longitude, phone)
+                    VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
                     """,
-                    (user_id, pharmacy_name, license_number, address, zone)
+                    (user_id, pharmacy_name, license_number, address, zone, p_lat, p_lon, phone)
+                )
+                db.execute(
+                    """
+                    INSERT OR REPLACE INTO pharmacy_rtree (id, min_lat, max_lat, min_lng, max_lng)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (user_id, p_lat, p_lat, p_lon, p_lon)
                 )
                 pharmacy_data = {
                     "pharmacy_name": pharmacy_name,
                     "license_number": license_number,
                     "address": address,
                     "zone": zone,
+                    "latitude": p_lat,
+                    "longitude": p_lon,
                     "is_active": True
                 }
 

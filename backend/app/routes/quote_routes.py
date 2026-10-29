@@ -32,12 +32,14 @@ def list_zone_broadcasts():
         SELECT o.id, o.customer_id, o.zone, o.delivery_address, o.status,
                o.broadcast_started_at, o.broadcast_expires_at, o.total_mrp, o.created_at,
                o.order_type, o.prescription_url, o.prescription_notes, o.is_ocr_scanned,
+               obp.distance_km,
                (SELECT COUNT(*) FROM quotes WHERE order_id = o.id AND pharmacy_id = ?) as quoted_by_me
         FROM orders o
-        WHERE LOWER(o.zone) = LOWER(?) AND o.status = 'BROADCASTING'
+        JOIN order_broadcast_pharmacies obp ON o.id = obp.order_id
+        WHERE obp.pharmacy_id = ? AND o.status = 'BROADCASTING'
         ORDER BY o.id DESC
         """,
-        (g.user_id, pharmacy_zone)
+        (g.user_id, g.user_id)
     ).fetchall()
 
     active_broadcasts = []
@@ -78,6 +80,7 @@ def list_zone_broadcasts():
             "order_id": o["id"],
             "zone": o["zone"],
             "delivery_address": o["delivery_address"],
+            "distance_km": round(float(o["distance_km"]), 1) if "distance_km" in o.keys() and o["distance_km"] is not None else None,
             "status": o["status"],
             "order_type": o["order_type"] or "CATALOGUE",
             "prescription_url": o["prescription_url"],
