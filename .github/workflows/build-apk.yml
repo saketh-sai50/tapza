@@ -36,23 +36,23 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p output
-          find android/app/build/outputs/apk -name "*.apk" -exec cp {} output/Tapza.apk \;
+          find android/app/build/outputs/apk -name "*.apk" -exec cp {} output/Tapza-Radar.apk \;
           ls -lh output/
 
-      - name: Upload Tapza APK Artifact
+      - name: Upload Tapza Radar APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Tapza-Android-APK
-          path: output/Tapza.apk
+          name: Tapza-Radar-Android-APK
+          path: output/Tapza-Radar.apk
           retention-days: 30
 
       - name: Create Public GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.11
-          name: "Tapza Android App v1.0.11 (Pharmacist Medicine Note & Main Advice Message Routing)"
-          body: "Official Android APK release with distinct routing for individual medicine advice notes (light green badge) and overall pharmacy order messages (dashed advice box)."
-          files: output/Tapza.apk
+          tag_name: v1.0.12-radar
+          name: "Tapza Radar v1.0.12 (Geoapify 5km Spatial Radius & Live Map Radar)"
+          body: "Official standalone Tapza Radar Android APK (com.tapza.radar). Features SQLite R*Tree spatial matching, Geoapify address autocomplete, dynamic 5km to 10km radius auto-expansion, and real-time interactive map radar with pharmacy pins. Installs side-by-side with Tapza Classic without replacing it."
+          files: output/Tapza-Radar.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -7,11 +7,11 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.tapza.app"
+        applicationId "com.tapza.radar"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 12
+        versionName "1.0.12-radar"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
