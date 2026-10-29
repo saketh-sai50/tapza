@@ -3,47 +3,48 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Deep Indigo Brand Background -->
+    <!-- Rich Medical Emerald Gradient / Solid Base -->
     <path
-        android:fillColor="#1e1b4b"
+        android:fillColor="#047857"
         android:pathData="M0,0h108v108h-108z"/>
 
-    <!-- Outer Radar Pulse Ring (radius 36) -->
+    <!-- Subtle Rounded Inner Badge / Card Background -->
     <path
-        android:strokeColor="#3b82f6"
-        android:strokeWidth="3.5"
-        android:pathData="M54,18 A36,36 0 1,1 53.9,18"/>
+        android:fillColor="#065f46"
+        android:pathData="M16,24 C16,19.58 19.58,16 24,16 L84,16 C88.42,16 92,19.58 92,24 L92,84 C92,88.42 88.42,92 84,92 L24,92 C19.58,92 16,88.42 16,84 Z"/>
 
-    <!-- Middle Radar Pulse Ring (radius 24) -->
-    <path
-        android:strokeColor="#10b981"
-        android:strokeWidth="3.5"
-        android:pathData="M54,30 A24,24 0 1,1 53.9,30"/>
-
-    <!-- Radar Crosshair lines -->
-    <path
-        android:strokeColor="#475569"
-        android:strokeWidth="1.5"
-        android:pathData="M54,14 L54,94 M14,54 L94,54"/>
-
-    <!-- Radar Sweep Signal Beam (top-right quadrant) -->
-    <path
-        android:fillColor="#38bdf8"
-        android:fillAlpha="0.35"
-        android:pathData="M54,54 L79,28 A36,36 0 0,0 54,18 Z"/>
-
-    <!-- Inner Emerald Ring (radius 12) -->
-    <path
-        android:fillColor="#15803d"
-        android:pathData="M54,42 A12,12 0 1,1 53.9,42"/>
-
-    <!-- White Beacon Base -->
+    <!-- Clean White Rounded Medical Cross -->
+    <!-- Vertical bar: width 16, height 50, centered at x=54 (46 to 62), y=29 to 79 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,47 A7,7 0 1,1 53.9,47"/>
-
-    <!-- Center Crimson Beacon Point -->
+        android:pathData="M46,31 C46,28.79 47.79,27 50,27 L58,27 C60.21,27 62,28.79 62,31 L62,77 C62,79.21 60.21,81 58,81 L50,81 C47.79,81 46,79.21 46,77 Z"/>
+    
+    <!-- Horizontal bar: width 50, height 16, centered at y=54 (46 to 62), x=29 to 79 -->
     <path
-        android:fillColor="#ef4444"
-        android:pathData="M54,50 A4,4 0 1,1 53.9,50"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M31,46 L77,46 C79.21,46 81,47.79 81,50 L81,58 C81,60.21 79.21,62 77,62 L31,62 C28.79,62 27,60.21 27,58 L27,50 C27,47.79 28.79,46 31,46 Z"/>
+
+    <!-- Dynamic Modern Angled Capsule Pill at center overlay -->
+    <!-- Pill rotated ~45 deg or floating in the lower-right quadrant -->
+    <!-- Left Capsule Half (Vibrant Cyan / Teal) -->
+    <path
+        android:fillColor="#06b6d4"
+        android:pathData="M50,42 L58,34 C61.12,30.88 66.18,30.88 69.3,34 L74,38.7 C77.12,41.82 77.12,46.88 74,50 L66,58 Z"/>
+
+    <!-- Right Capsule Half (Vibrant Coral / Crimson) -->
+    <path
+        android:fillColor="#f43f5e"
+        android:pathData="M50,42 L42,50 C38.88,53.12 38.88,58.18 42,61.3 L46.7,66 C49.82,69.12 54.88,69.12 58,66 L66,58 Z"/>
+
+    <!-- Shiny capsule separator line -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M50,42 L66,58"/>
+
+    <!-- Small glossy shine accent on capsule -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.6"
+        android:pathData="M64,36 C65,37 66,38 67,40 C66,41 64,40 63,39 Z"/>
 </vector>

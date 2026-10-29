@@ -36,23 +36,26 @@ jobs:
       - name: Copy & Rename APK
         run: |
           mkdir -p output
-          find android/app/build/outputs/apk -name "*.apk" -exec cp {} output/Tapza-Radar.apk \;
+          find android/app/build/outputs/apk -name "*.apk" -exec cp {} output/Tapza-Meds.apk \;
+          cp output/Tapza-Meds.apk output/Tapza-Radar.apk
           ls -lh output/
 
-      - name: Upload Tapza Radar APK Artifact
+      - name: Upload Tapza Meds APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Tapza-Radar-Android-APK
-          path: output/Tapza-Radar.apk
+          name: Tapza-Meds-Android-APK
+          path: output/Tapza-Meds.apk
           retention-days: 30
 
       - name: Create Public GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.16-radar
-          name: "Tapza Radar v1.0.16 (White Screen Fix & Fully Verified Scripts)"
-          body: "Official standalone Tapza Radar Android APK (com.tapza.radar). Resolved duplicate syntax brace causing white screen, verified script execution with 0 syntax errors, and validated live app boot. Installs side-by-side with Tapza Classic."
-          files: output/Tapza-Radar.apk
+          tag_name: v1.0.17-meds
+          name: "Tapza Meds v1.0.17 (Custom Medicine App Icon & Rebranded Name)"
+          body: "Official Tapza Meds Android APK with custom medical cross & capsule pill icon. Features live GPS ordering, 5km/10km radius expansion, and instant over-the-air updates."
+          files: |
+            output/Tapza-Meds.apk
+            output/Tapza-Radar.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
