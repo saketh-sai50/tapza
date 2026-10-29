@@ -50,9 +50,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.15-radar
-          name: "Tapza Radar v1.0.15 (Floating Tracker Dismiss, Payment UI Fix & Pharmacy Notes)"
-          body: "Official standalone Tapza Radar Android APK (com.tapza.radar). Added dismiss [X] button and smart auto-hiding for floating tracker, direct [Pay Now] option upon pharmacy selection, guaranteed broadcast delivery to testpharm001, and cleaned pharmacy item notes to only display what was typed. Installs side-by-side with Tapza Classic."
+          tag_name: v1.0.16-radar
+          name: "Tapza Radar v1.0.16 (White Screen Fix & Fully Verified Scripts)"
+          body: "Official standalone Tapza Radar Android APK (com.tapza.radar). Resolved duplicate syntax brace causing white screen, verified script execution with 0 syntax errors, and validated live app boot. Installs side-by-side with Tapza Classic."
           files: output/Tapza-Radar.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

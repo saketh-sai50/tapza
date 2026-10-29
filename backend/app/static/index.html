@@ -7346,16 +7346,6 @@
         });
       }
     }
-          });
-        }
-      } catch (e) {
-        showInAppToast({
-          title: "Selection Error ⚠️",
-          message: e.message,
-          type: "DANGER"
-        });
-      }
-    }
 
     async function executeMockPayment() {
       if (!activeOrderId) return;
