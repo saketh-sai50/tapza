@@ -122,10 +122,11 @@ def generate_radar_static_map_url(
     """
     Constructs a dynamic Geoapify Static Map URL with:
     - Customer Pin (Red, marker 'C')
-    - 5km Translucent Radius Circle
-    - 10km Expanded Radius Circle (if expanded)
+    - 5km Translucent Radius Circle (5000 meters)
+    - 10km Expanded Radius Circle (10000 meters, if expanded)
     - Blue pins for all contacted pharmacies
-    - Green Pin with checkmark for accepted pharmacy
+    - Green Pin with checkmark icon for accepted pharmacy
+    - Green highlight circle around accepted pharmacy
     """
     marker_parts = []
 
@@ -142,20 +143,25 @@ def generate_radar_static_map_url(
             continue
 
         if accepted_pharmacy_id and p_id == accepted_pharmacy_id:
-            # Accepted pharmacy: pulsing green pin
-            marker_parts.append(f"lonlat:{p_lon},{p_lat};color:#16a34a;text:✓;size:large")
+            # Accepted pharmacy: green pin with check icon (Geoapify valid format)
+            marker_parts.append(f"lonlat:{p_lon},{p_lat};color:#16a34a;icon:check;size:large")
         else:
             # Contacted pharmacy: standard blue pin
             marker_parts.append(f"lonlat:{p_lon},{p_lat};color:#2563eb;size:medium")
 
-    # 3. Geometry (Circles)
-    # Circle pixel radius: at zoom 12/13, 5km is ~75px, 10km is ~140px
+    # 3. Geometry (Circles in meters)
     geometry_parts = []
-    # 5km circle (Blue translucent)
-    geometry_parts.append(f"circle:{customer_lon},{customer_lat},75;linecolor:#2563eb;fillcolor:#3b82f6;fillopacity:0.18;linewidth:2")
+    # 5km circle (Blue translucent): 5000 meters
+    geometry_parts.append(f"circle:{customer_lon},{customer_lat},5000;linecolor:#2563eb;fillcolor:#3b82f6;fillopacity:0.18;linewidth:2")
     if current_radius_km > 5.0:
-        # 10km expanded circle (Amber translucent)
-        geometry_parts.append(f"circle:{customer_lon},{customer_lat},140;linecolor:#d97706;fillcolor:#f59e0b;fillopacity:0.15;linewidth:2")
+        # 10km expanded circle (Amber translucent): 10000 meters
+        geometry_parts.append(f"circle:{customer_lon},{customer_lat},10000;linecolor:#d97706;fillcolor:#f59e0b;fillopacity:0.15;linewidth:2")
+
+    # Highlight accepted pharmacy with 400m green circle
+    if accepted_pharmacy_id:
+        acc_p = next((p for p in contacted_pharmacies if (p.get("pharmacy_id") or p.get("id")) == accepted_pharmacy_id), None)
+        if acc_p and acc_p.get("latitude") and acc_p.get("longitude"):
+            geometry_parts.append(f"circle:{acc_p['longitude']},{acc_p['latitude']},400;linecolor:#16a34a;fillcolor:#22c55e;fillopacity:0.4;linewidth:3")
 
     markers_str = "|".join(marker_parts)
     geometry_str = "|".join(geometry_parts)
@@ -165,7 +171,7 @@ def generate_radar_static_map_url(
         "width": "620",
         "height": "380",
         "center": f"lonlat:{customer_lon},{customer_lat}",
-        "zoom": "12" if current_radius_km > 5.0 else "13",
+        "zoom": "11" if current_radius_km > 5.0 else "12",
         "marker": markers_str,
         "geometry": geometry_str,
         "apiKey": GEOAPIFY_API_KEY

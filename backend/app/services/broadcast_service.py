@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from app.db import transaction
 from app.services.geo_service import geocode_address, find_pharmacies_in_radius, haversine_distance
@@ -202,7 +202,7 @@ def check_and_expand_order_broadcast(db, order_id: int) -> Dict[str, Any]:
         (order_id,)
     ).fetchone()
 
-    if not order or order["status"] != "BROADCASTING":
+    if not order or order["status"] not in ("BROADCASTING", "PENDING_SELECTION"):
         return {"expanded": False}
 
     current_radius = float(order["search_radius_km"] or 5.0)
@@ -226,14 +226,18 @@ def check_and_expand_order_broadcast(db, order_id: int) -> Dict[str, Any]:
         new_pharmacies = find_pharmacies_in_radius(db, c_lat, c_lon, min_radius_km=5.0, max_radius_km=10.0)
 
         with transaction(db):
-            now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            now_dt = datetime.now(timezone.utc)
+            now_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+            new_expires_dt = now_dt + timedelta(seconds=240)
+            new_expires_str = new_expires_dt.strftime("%Y-%m-%d %H:%M:%S")
+
             db.execute(
                 """
                 UPDATE orders
-                SET search_radius_km = ?, expanded_at = ?
+                SET search_radius_km = ?, expanded_at = ?, broadcast_expires_at = ?, status = 'BROADCASTING'
                 WHERE id = ?
                 """,
-                (new_radius, now_str, order_id)
+                (new_radius, now_str, new_expires_str, order_id)
             )
 
             for p in new_pharmacies:

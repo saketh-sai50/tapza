@@ -665,14 +665,22 @@ def get_order_details(order_id: int):
 
     remaining = compute_remaining_seconds(order["broadcast_expires_at"]) if order["status"] == "BROADCASTING" else 0
 
-    # Auto transition state if broadcast timer elapsed and still marked BROADCASTING
+    # Auto transition or expand radius if broadcast timer elapsed and still marked BROADCASTING
     current_status = order["status"]
-    if current_status == "BROADCASTING" and remaining == 0:
-        quotes_count = db.execute("SELECT COUNT(*) as cnt FROM quotes WHERE order_id = ?", (order_id,)).fetchone()["cnt"]
-        new_status = "PENDING_SELECTION" if quotes_count > 0 else "EXPIRED"
-        with transaction(db):
-            db.execute("UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id))
-        current_status = new_status
+    if current_status in ("BROADCASTING", "PENDING_SELECTION") and remaining == 0:
+        from app.services.broadcast_service import check_and_expand_order_broadcast
+        exp_res = check_and_expand_order_broadcast(db, order_id)
+        if exp_res.get("expanded"):
+            # Radius expanded to 10 km! Refresh order and keep BROADCASTING with new timer
+            refreshed = db.execute("SELECT status, broadcast_expires_at FROM orders WHERE id = ?", (order_id,)).fetchone()
+            current_status = refreshed["status"]
+            remaining = compute_remaining_seconds(refreshed["broadcast_expires_at"])
+        else:
+            quotes_count = db.execute("SELECT COUNT(*) as cnt FROM quotes WHERE order_id = ?", (order_id,)).fetchone()["cnt"]
+            new_status = "PENDING_SELECTION" if quotes_count > 0 else "EXPIRED"
+            with transaction(db):
+                db.execute("UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id))
+            current_status = new_status
 
     return jsonify({
         "order": {
@@ -824,20 +832,21 @@ def get_order_radar(order_id: int):
         (order_id,)
     ).fetchone()
 
-    latest_quote = db.execute(
+    # Explicitly selected quote (customer clicked Accept / Select Quote)
+    selected_quote = db.execute(
         """
         SELECT q.pharmacy_id, p.pharmacy_name, q.total_quoted_price, q.status,
                p.address, p.phone, p.latitude, p.longitude
         FROM quotes q
         JOIN pharmacy_profiles p ON q.pharmacy_id = p.user_id
-        WHERE q.order_id = ? AND q.status IN ('SUBMITTED', 'SELECTED')
+        WHERE q.order_id = ? AND q.status = 'SELECTED'
         ORDER BY q.total_quoted_price ASC
         LIMIT 1
         """,
         (order_id,)
     ).fetchone()
 
-    accepted_id = accepted["pharmacy_id"] if accepted else (latest_quote["pharmacy_id"] if latest_quote else None)
+    accepted_id = accepted["pharmacy_id"] if accepted else (selected_quote["pharmacy_id"] if selected_quote else None)
     accepted_info = None
     if accepted:
         accepted_info = {
@@ -848,14 +857,14 @@ def get_order_radar(order_id: int):
             "confirmation_status": accepted["confirmation_status"],
             "total_price": float(accepted["total_quoted_price"])
         }
-    elif latest_quote:
+    elif selected_quote:
         accepted_info = {
-            "pharmacy_id": latest_quote["pharmacy_id"],
-            "pharmacy_name": latest_quote["pharmacy_name"],
-            "address": latest_quote["address"],
-            "phone": latest_quote["phone"],
-            "confirmation_status": "OFFERED_QUOTE",
-            "total_price": float(latest_quote["total_quoted_price"])
+            "pharmacy_id": selected_quote["pharmacy_id"],
+            "pharmacy_name": selected_quote["pharmacy_name"],
+            "address": selected_quote["address"],
+            "phone": selected_quote["phone"],
+            "confirmation_status": "CONFIRMED",
+            "total_price": float(selected_quote["total_quoted_price"])
         }
 
     contacted_list = [
@@ -899,6 +908,57 @@ def get_order_radar(order_id: int):
         "contacted_pharmacies": contacted_list,
         "accepted_pharmacy": accepted_info,
         "map_url": map_url
+    }), 200
+
+
+@order_bp.route("/<int:order_id>/expand_radius", methods=["POST"])
+@token_required
+def force_expand_order_radius(order_id: int):
+    """
+    Manually forces or simulates the 4-minute +5km (to 10km) radius expansion.
+    Finds and broadcasts to all pharmacies in Ring 2 (5km to 10km) and resets the timer for 240s.
+    """
+    db = get_db()
+    from datetime import datetime, timezone, timedelta
+    from app.services.geo_service import find_pharmacies_in_radius
+
+    order = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    c_lat = float(order["customer_lat"] or 18.002476)
+    c_lon = float(order["customer_lng"] or 79.556723)
+    new_radius = 10.0
+    new_pharmacies = find_pharmacies_in_radius(db, c_lat, c_lon, min_radius_km=5.0, max_radius_km=10.0)
+
+    now_dt = datetime.now(timezone.utc)
+    now_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+    new_expires_dt = now_dt + timedelta(seconds=240)
+    new_expires_str = new_expires_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    with transaction(db):
+        db.execute(
+            """
+            UPDATE orders
+            SET search_radius_km = ?, expanded_at = ?, broadcast_expires_at = ?, status = 'BROADCASTING'
+            WHERE id = ?
+            """,
+            (new_radius, now_str, new_expires_str, order_id)
+        )
+        for p in new_pharmacies:
+            db.execute(
+                """
+                INSERT OR IGNORE INTO order_broadcast_pharmacies
+                (order_id, pharmacy_id, distance_km, ring_stage)
+                VALUES (?, ?, ?, 2)
+                """,
+                (order_id, p["pharmacy_id"], p["distance_km"])
+            )
+
+    return jsonify({
+        "message": "Order broadcast successfully expanded to 10.0 km (+5.0 km)",
+        "search_radius_km": 10.0,
+        "additional_pharmacies_count": len(new_pharmacies)
     }), 200
 
 

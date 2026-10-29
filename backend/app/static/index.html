@@ -3372,6 +3372,9 @@
                     <span id="custRadarTimerBadge" style="background:#059669; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums;">
                       ⏱️ 04:00
                     </span>
+                    <button type="button" id="custFastForwardExpandBtn" onclick="testFastForwardExpand()" style="background:#f59e0b; color:#ffffff; border:none; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:800; cursor:pointer;" title="Simulate 4-min timeout and expand search to 10 km">
+                      ⚡ Test +5km
+                    </button>
                     <span id="custRadarContactedBadge" style="background:#2563eb; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800;">
                       📍 0 Pinged
                     </span>
@@ -3763,10 +3766,10 @@
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
-          <button class="live-tracker-cta" style="background:#059669; color:#fff;" onclick="event.stopPropagation(); switchCustomerTab('ORDERS');">
-            <span>🗺️ Live Radar</span>
+          <button class="live-tracker-cta" style="background:#059669; color:#fff;" onclick="event.stopPropagation(); switchCustomerTab('ORDERS'); setTimeout(() => { document.getElementById('custRadarMapCard')?.scrollIntoView({ behavior:'smooth', block:'start'}); }, 300);">
+            <span>📡 Live Radar Map</span>
           </button>
-          <button class="live-tracker-cta">
+          <button class="live-tracker-cta" onclick="event.stopPropagation(); switchCustomerTab('ORDERS');">
             <span>View Quotes</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
@@ -6336,6 +6339,7 @@
       const acceptedText = document.getElementById("custRadarAcceptedText");
       const expandedPill = document.getElementById("custRadarExpandedPill");
       const zomatoSub = document.getElementById("zomatoTrackerSub");
+      const fastExpandBtn = document.getElementById("custFastForwardExpandBtn");
 
       if (!card) return;
       card.style.display = "block";
@@ -6344,6 +6348,14 @@
         radiusLabel.innerText = data.is_expanded 
           ? "⚡ 4-Min Timeout: Search expanded to 10.0 km (+5 km)"
           : `Searching within ${data.search_radius_km} km radius`;
+      }
+
+      if (fastExpandBtn) {
+        if (data.is_expanded || data.search_radius_km > 5.0) {
+          fastExpandBtn.style.display = "none";
+        } else {
+          fastExpandBtn.style.display = "inline-flex";
+        }
       }
 
       if (timerBadge) {
@@ -6384,6 +6396,13 @@
             img.style.display = "block";
             if (loading) loading.style.display = "none";
           };
+          img.onerror = (e) => {
+            console.warn("Map image load warning. Retrying...", e);
+            if (loading) {
+              loading.innerHTML = `<div style="padding:15px; text-align:center; color:#64748b; font-size:12px;">📡 Loading map radar pins...</div>`;
+              loading.style.display = "block";
+            }
+          };
           img.src = data.map_url;
         } else {
           img.style.display = "block";
@@ -6394,6 +6413,40 @@
       // Update Zomato bottom floating tracker
       if (zomatoSub && data.status === "BROADCASTING") {
         zomatoSub.innerText = `Radar: ${data.pharmacies_contacted_count} Pharmacies pinged within ${data.search_radius_km}km`;
+      }
+    }
+
+    async function testFastForwardExpand() {
+      if (!activeOrderId || !token) {
+        alert("No active broadcast order to expand.");
+        return;
+      }
+      const btn = document.getElementById("custFastForwardExpandBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "⏳ Expanding...";
+      }
+      try {
+        const res = await fetch(`${API}/orders/${activeOrderId}/expand_radius`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          showInAppToast({
+            title: "Radius Expanded! 📡",
+            message: "Search radius expanded to 10.0 km (+5 km). Ring 2 pharmacies pinged!",
+            type: "SUCCESS"
+          });
+          await fetchCustomerOrderRadar(activeOrderId);
+          await fetchCustomerOrderDetails(activeOrderId);
+        }
+      } catch (err) {
+        console.error("Fast forward expand error:", err);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "⚡ Test +5km";
+        }
       }
     }
 
@@ -6479,6 +6532,10 @@
           switchCustomerTab("ORDERS");
           fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
+          setTimeout(() => {
+            const radarCard = document.getElementById("custRadarMapCard");
+            if (radarCard) radarCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 350);
         } else {
           showInAppToast({
             title: "Order Failed ⚠️",
@@ -6746,7 +6803,12 @@
             duration: 6000
           });
           switchCustomerTab("ORDERS");
+          fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
+          setTimeout(() => {
+            const radarCard = document.getElementById("custRadarMapCard");
+            if (radarCard) radarCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 350);
         } else {
           showInAppToast({
             title: "Upload Failed ⚠️",
