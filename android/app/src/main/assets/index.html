@@ -7321,11 +7321,11 @@
       } else if (ord.status === "CONFIRMED_PENDING_PHARMACY") {
         if (stepperContainer) stepperContainer.style.display = "none";
         if (statusBadge) {
-          statusBadge.innerText = "AWAITING PHARMACY";
+          statusBadge.innerText = "ORDER ASSIGNED";
           statusBadge.className = "role-pill role-pill-pharmacy";
         }
-        if (heading) heading.innerText = "Order Assigned — Awaiting Pharmacy Confirmation";
-        if (desc) desc.innerText = `You selected ${pharmaName}. They have been notified to confirm acceptance.`;
+        if (heading) heading.innerText = "Order Assigned";
+        if (desc) desc.innerText = `You selected ${pharmaName}. You can complete payment below, or change pharmacy anytime before payment.`;
       } else if (ord.status === "CONFIRMED") {
         if (stepperContainer) stepperContainer.style.display = "block";
         if (step1) step1.className = "order-step completed";
