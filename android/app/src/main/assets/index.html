@@ -7450,6 +7450,7 @@
 
     let activeCustomerQuoteId = null;
     let cachedCustomerQuotes = [];
+    let lastRenderedQuotesSignature = "";
 
     async function fetchQuotesForCustomerOrder(oid) {
       try {
@@ -7468,39 +7469,61 @@
 
     function selectQuoteToView(qid) {
       activeCustomerQuoteId = qid;
-      if (cachedCustomerQuotes && cachedCustomerQuotes.length) {
-        renderCustomerQuotes(cachedCustomerQuotes);
-        setTimeout(() => {
-          const detailEl = document.getElementById("custQuoteDetailContainer");
-          if (detailEl) {
-            detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }, 50);
-      }
+      // 1. Update existing table row visual selection without rebuilding the table or shifting scrollLeft!
+      const rows = document.querySelectorAll(".quote-compare-row");
+      rows.forEach(r => {
+        const rowId = parseInt(r.getAttribute("data-qid"), 10);
+        const isViewing = (rowId === qid);
+        r.classList.toggle("active-viewing", isViewing);
+        const btn = r.querySelector(".row-action-btn");
+        if (btn) {
+          btn.innerText = isViewing ? "Viewing 👁️" : "View Detail →";
+          btn.style.background = isViewing ? "#2563eb" : "#ffffff";
+          btn.style.color = isViewing ? "#ffffff" : "#334155";
+          btn.style.borderColor = isViewing ? "#2563eb" : "#cbd5e1";
+        }
+      });
+
+      // 2. Render only the detail card below the table (zero impact on table scroll)
+      renderActiveQuoteDetailOnly(cachedCustomerQuotes);
     }
 
     function renderCustomerQuotes(quotes) {
       const el = document.getElementById("custQuotesList");
-      document.getElementById("custQuotesCount").innerText = quotes.length;
+      const countEl = document.getElementById("custQuotesCount");
+      if (countEl) countEl.innerText = quotes.length;
       if (!quotes.length) {
         el.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted); font-size:13px;">Waiting for quotes from local pharmacies...</div>`;
+        lastRenderedQuotesSignature = "";
         return;
       }
 
       cachedCustomerQuotes = quotes;
-      const hasAnyWinner = quotes.some(q => q.status === "SELECTED");
       const isPaid = Boolean(currentCustomerOrder?.mock_payment_status && ["MOCK_PAID", "COMPLETED", "PAID"].includes(currentCustomerOrder.mock_payment_status));
 
-      // Choose which quote to display in detail view:
-      // Priority 1: User previously clicked quote (activeCustomerQuoteId) if it still exists
-      // Priority 2: The selected winner quote (if one is chosen)
-      // Priority 3: The first quote (quotes[0])
+      // Signature to detect if quotes list or selection status changed
+      const quotesSig = JSON.stringify(quotes.map(q => [q.id, q.status, q.total_quoted_price, q.available_items_count])) + "_" + (isPaid ? "PAID" : "UNPAID");
+
+      // Ensure active quote exists
       let activeQuote = quotes.find(q => q.id === activeCustomerQuoteId);
       if (!activeQuote) {
         const winner = quotes.find(q => q.status === "SELECTED");
         activeQuote = winner || quotes[0];
         activeCustomerQuoteId = activeQuote.id;
       }
+
+      // If quotes data hasn't changed and table is already rendered, DO NOT touch table or reset horizontal scroll!
+      const existingTable = el.querySelector(".quote-compare-table");
+      if (existingTable && lastRenderedQuotesSignature === quotesSig) {
+        renderActiveQuoteDetailOnly(quotes);
+        return;
+      }
+
+      // Preserve previous horizontal scroll if table was already there
+      const scrollEl = el.querySelector(".quote-table-scroll");
+      const prevScrollLeft = scrollEl ? scrollEl.scrollLeft : 0;
+
+      lastRenderedQuotesSignature = quotesSig;
 
       // 1. Build Interactive Comparison Table Rows
       const tableRowsHtml = quotes.map((q, idx) => {
@@ -7515,7 +7538,7 @@
         const savingsPct = q.savings_pct !== undefined ? parseFloat(q.savings_pct) : (totalMrp > 0 ? Math.round((totalSavings / totalMrp) * 100) : 0);
 
         return `
-          <tr class="quote-compare-row ${isViewing ? 'active-viewing' : ''} ${isWinner ? 'active-winner' : ''}" onclick="selectQuoteToView(${q.id})" title="Click to view detailed medicines & prices from ${escapeHtml(q.pharmacy_name)}">
+          <tr class="quote-compare-row ${isViewing ? 'active-viewing' : ''} ${isWinner ? 'active-winner' : ''}" data-qid="${q.id}" onclick="selectQuoteToView(${q.id})" title="Click to view detailed medicines & prices from ${escapeHtml(q.pharmacy_name)}">
             <td style="padding:11px 12px;">
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 <span style="font-weight:900; color:#1e1b4b; font-size:13px; font-family:'Plus Jakarta Sans', sans-serif;">
@@ -7547,7 +7570,7 @@
               `}
             </td>
             <td style="padding:11px 12px; text-align:center; white-space:nowrap;">
-              <button type="button" style="padding:5px 10px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
+              <button type="button" class="row-action-btn" style="padding:5px 10px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
                 ${isViewing ? 'Viewing 👁️' : 'View Detail →'}
               </button>
             </td>
@@ -7555,7 +7578,64 @@
         `;
       }).join("");
 
-      // 2. Build Detailed Card for Currently Active / Selected Pharmacy (activeQuote)
+      el.innerHTML = `
+        <!-- 1. COMPARISON TABLE -->
+        <div class="quote-table-wrapper">
+          <div style="background:#f8fafc; padding:10px 14px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="font-weight:800; font-size:13px; color:#1e1b4b; display:flex; align-items:center; gap:6px;">
+              <span>📊</span>
+              <span>Compare Pharmacy Offers (${quotes.length} Received)</span>
+            </div>
+            <div style="font-size:11.5px; color:#2563eb; font-weight:700;">
+              👉 Tap any row to inspect medicines & pricing
+            </div>
+          </div>
+          <div class="quote-table-scroll">
+            <table class="quote-compare-table">
+              <thead>
+                <tr>
+                  <th>Pharmacy Name</th>
+                  <th>Availability</th>
+                  <th>Total MRP</th>
+                  <th>Quoted Price</th>
+                  <th>Savings</th>
+                  <th style="text-align:center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. DETAILED BREAKDOWN OF SELECTED / VIEWED PHARMACY -->
+        <div id="custQuoteDetailContainer" style="margin-top:12px;"></div>
+      `;
+
+      // Restore horizontal scroll immediately if previously scrolled by user!
+      if (prevScrollLeft > 0) {
+        const newScrollEl = el.querySelector(".quote-table-scroll");
+        if (newScrollEl) newScrollEl.scrollLeft = prevScrollLeft;
+      }
+
+      renderActiveQuoteDetailOnly(quotes);
+    }
+
+    function renderActiveQuoteDetailOnly(quotes) {
+      const container = document.getElementById("custQuoteDetailContainer");
+      if (!container || !quotes || !quotes.length) return;
+
+      let activeQuote = quotes.find(q => q.id === activeCustomerQuoteId);
+      if (!activeQuote) {
+        const winner = quotes.find(q => q.status === "SELECTED");
+        activeQuote = winner || quotes[0];
+        activeCustomerQuoteId = activeQuote.id;
+      }
+
+      const hasAnyWinner = quotes.some(q => q.status === "SELECTED");
+      const isPaid = Boolean(currentCustomerOrder?.mock_payment_status && ["MOCK_PAID", "COMPLETED", "PAID"].includes(currentCustomerOrder.mock_payment_status));
+
       const q = activeQuote;
       const isWinner = q.status === "SELECTED";
       const badgeClass = q.is_full_fulfillment ? "full-badge" : "partial-badge";
@@ -7613,150 +7693,117 @@
         </div>
       ` : '';
 
-      el.innerHTML = `
-        <!-- 1. COMPARISON TABLE -->
-        <div class="quote-table-wrapper">
-          <div style="background:#f8fafc; padding:10px 14px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-            <div style="font-weight:800; font-size:13px; color:#1e1b4b; display:flex; align-items:center; gap:6px;">
-              <span>📊</span>
-              <span>Compare Pharmacy Offers (${quotes.length} Received)</span>
-            </div>
-            <div style="font-size:11.5px; color:#2563eb; font-weight:700;">
-              👉 Tap any row to inspect medicines & pricing
-            </div>
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:0 2px; flex-wrap:wrap; gap:6px;">
+          <div style="font-size:12px; font-weight:800; color:#334155; text-transform:uppercase; letter-spacing:0.5px;">
+            Detailed Medicine Breakdown & Notes:
           </div>
-          <div class="quote-table-scroll">
-            <table class="quote-compare-table">
-              <thead>
-                <tr>
-                  <th>Pharmacy Name</th>
-                  <th>Availability</th>
-                  <th>Total MRP</th>
-                  <th>Quoted Price</th>
-                  <th>Savings</th>
-                  <th style="text-align:center;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRowsHtml}
-              </tbody>
-            </table>
+          <div style="font-size:12px; font-weight:800; color:#2563eb; background:#eff6ff; padding:3px 9px; border-radius:6px; border:1px solid #bfdbfe;">
+            Viewing: <b>${escapeHtml(q.pharmacy_name)}</b>
           </div>
         </div>
 
-        <!-- 2. DETAILED BREAKDOWN OF SELECTED / VIEWED PHARMACY -->
-        <div id="custQuoteDetailContainer" style="margin-top:12px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:0 2px; flex-wrap:wrap; gap:6px;">
-            <div style="font-size:12px; font-weight:800; color:#334155; text-transform:uppercase; letter-spacing:0.5px;">
-              Detailed Medicine Breakdown & Notes:
+        <div class="quote-box ${isWinner ? 'winner' : ''}" style="margin-bottom:18px; padding:0; overflow:hidden; border-radius:14px; border:1.5px solid ${isWinner ? '#10b981' : '#cbd5e1'}; box-shadow:0 3px 12px rgba(0,0,0,0.06); background:#ffffff;">
+          
+          <!-- SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE BANNER -->
+          <div class="swiggy-zomato-store-header">
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
+                <span class="zomato-rating-pill">★ 4.8</span>
+                <span style="font-size:9.5px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#93c5fd; background:rgba(255,255,255,0.14); padding:2px 7px; border-radius:4px; font-family:'Plus Jakarta Sans', sans-serif;">
+                  LICENSED PHARMACY
+                </span>
+                <span class="uber-quick-badge">⚡ 15-25 mins</span>
+              </div>
+
+              <div class="swiggy-zomato-pharmacy-title">
+                <span>${escapeHtml(q.pharmacy_name)}</span>
+                <span class="swiggy-verified-badge" title="Verified Pharmacy Partner">✓</span>
+              </div>
+
+              <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px; display:flex; align-items:flex-start; gap:4px; font-weight:500; line-height:1.35; font-family:'Inter', sans-serif;">
+                <span style="color:#94a3b8;">📍</span>
+                <span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(q.pharmacy_address)}</span>
+              </div>
             </div>
-            <div style="font-size:12px; font-weight:800; color:#2563eb; background:#eff6ff; padding:3px 9px; border-radius:6px; border:1px solid #bfdbfe;">
-              Viewing: <b>${escapeHtml(q.pharmacy_name)}</b>
+
+            <div style="flex-shrink:0;">
+              <span class="${badgeClass}" style="box-shadow:0 2px 6px rgba(0,0,0,0.18); font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; font-size:10.5px; letter-spacing:0.3px;">${badgeText}</span>
             </div>
           </div>
 
-          <div class="quote-box ${isWinner ? 'winner' : ''}" style="margin-bottom:18px; padding:0; overflow:hidden; border-radius:14px; border:1.5px solid ${isWinner ? '#10b981' : '#cbd5e1'}; box-shadow:0 3px 12px rgba(0,0,0,0.06); background:#ffffff;">
-            
-            <!-- SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE BANNER -->
-            <div class="swiggy-zomato-store-header">
-              <div style="flex:1; min-width:0;">
-                <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
-                  <span class="zomato-rating-pill">★ 4.8</span>
-                  <span style="font-size:9.5px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#93c5fd; background:rgba(255,255,255,0.14); padding:2px 7px; border-radius:4px; font-family:'Plus Jakarta Sans', sans-serif;">
-                    LICENSED PHARMACY
-                  </span>
-                  <span class="uber-quick-badge">⚡ 15-25 mins</span>
-                </div>
-
-                <div class="swiggy-zomato-pharmacy-title">
-                  <span>${escapeHtml(q.pharmacy_name)}</span>
-                  <span class="swiggy-verified-badge" title="Verified Pharmacy Partner">✓</span>
-                </div>
-
-                <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px; display:flex; align-items:flex-start; gap:4px; font-weight:500; line-height:1.35; font-family:'Inter', sans-serif;">
-                  <span style="color:#94a3b8;">📍</span>
-                  <span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(q.pharmacy_address)}</span>
-                </div>
+          <!-- ATTACHED TOTAL SAVINGS & MRP OFF RIBBON -->
+          ${totalSavings > 0 ? `
+            <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color:#ffffff; padding:9px 14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(5,150,105,0.25); border-bottom:1.5px solid rgba(255,255,255,0.15);">
+              <div style="font-size:13.5px; font-weight:900; display:flex; align-items:center; gap:6px; letter-spacing:0.2px;">
+                <span style="font-size:15px;">🎉</span>
+                <span>TOTAL SAVINGS: ₹${totalSavings.toFixed(2)}</span>
               </div>
+              <div style="background:#ffffff; color:#065f46; font-size:12px; font-weight:900; padding:3px 10px; border-radius:20px; box-shadow:0 2px 5px rgba(0,0,0,0.12); letter-spacing:0.3px;">
+                ${savingsPct}% OFF MRP
+              </div>
+            </div>
+          ` : `
+            <div style="background:#f1f5f9; color:#475569; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; font-weight:700; border-bottom:1px solid #e2e8f0;">
+              <span>Standard MRP Reference Offer</span>
+              <span style="background:#e2e8f0; color:#334155; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">MRP</span>
+            </div>
+          `}
 
-              <div style="flex-shrink:0;">
-                <span class="${badgeClass}" style="box-shadow:0 2px 6px rgba(0,0,0,0.18); font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; font-size:10.5px; letter-spacing:0.3px;">${badgeText}</span>
+          <!-- INNER CONTENT: COMPARISON METRICS, ITEMS DETAIL, PHARMACIST NOTE, AND FOOTER -->
+          <div style="padding:12px 14px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; gap:6px;">
+              <div>
+                <div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase;">Total MRP</div>
+                <div style="font-size:13px; font-weight:700; color:#64748b; ${totalSavings > 0 ? 'text-decoration:line-through;' : ''}">₹${totalMrp.toFixed(2)}</div>
+              </div>
+              <div>
+                <div style="font-size:10px; font-weight:800; color:#065f46; text-transform:uppercase;">Quoted Selling Price</div>
+                <div style="font-size:15px; font-weight:900; color:#065f46;">₹${quotedTotal.toFixed(2)}</div>
+              </div>
+              <div>
+                <div style="font-size:10px; font-weight:800; color:#15803d; text-transform:uppercase;">You Save</div>
+                <div style="font-size:14px; font-weight:900; color:#15803d;">₹${totalSavings.toFixed(2)}</div>
               </div>
             </div>
 
-            <!-- ATTACHED TOTAL SAVINGS & MRP OFF RIBBON -->
-            ${totalSavings > 0 ? `
-              <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color:#ffffff; padding:9px 14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(5,150,105,0.25); border-bottom:1.5px solid rgba(255,255,255,0.15);">
-                <div style="font-size:13.5px; font-weight:900; display:flex; align-items:center; gap:6px; letter-spacing:0.2px;">
-                  <span style="font-size:15px;">🎉</span>
-                  <span>TOTAL SAVINGS: ₹${totalSavings.toFixed(2)}</span>
-                </div>
-                <div style="background:#ffffff; color:#065f46; font-size:12px; font-weight:900; padding:3px 10px; border-radius:20px; box-shadow:0 2px 5px rgba(0,0,0,0.12); letter-spacing:0.3px;">
-                  ${savingsPct}% OFF MRP
-                </div>
-              </div>
-            ` : `
-              <div style="background:#f1f5f9; color:#475569; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; font-weight:700; border-bottom:1px solid #e2e8f0;">
-                <span>Standard MRP Reference Offer</span>
-                <span style="background:#e2e8f0; color:#334155; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">MRP</span>
-              </div>
-            `}
+            <!-- MEDICINE ITEMS DETAIL -->
+            <div class="quote-items-detail">${itemsHtml}</div>
+            
+            <!-- PHARMACIST NOTE -->
+            ${noteHtml}
 
-            <!-- INNER CONTENT: COMPARISON METRICS, ITEMS DETAIL, PHARMACIST NOTE, AND FOOTER -->
-            <div style="padding:12px 14px;">
-              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; gap:6px;">
-                <div>
-                  <div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase;">Total MRP</div>
-                  <div style="font-size:13px; font-weight:700; color:#64748b; ${totalSavings > 0 ? 'text-decoration:line-through;' : ''}">₹${totalMrp.toFixed(2)}</div>
-                </div>
-                <div>
-                  <div style="font-size:10px; font-weight:800; color:#065f46; text-transform:uppercase;">Quoted Selling Price</div>
-                  <div style="font-size:15px; font-weight:900; color:#065f46;">₹${quotedTotal.toFixed(2)}</div>
-                </div>
-                <div>
-                  <div style="font-size:10px; font-weight:800; color:#15803d; text-transform:uppercase;">You Save</div>
-                  <div style="font-size:14px; font-weight:900; color:#15803d;">₹${totalSavings.toFixed(2)}</div>
-                </div>
+            <!-- FINAL PRICE & SELECT BUTTON FOOTER -->
+            <div class="quote-foot" style="margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Final Quoted Price</div>
+                <div class="payable-sum" style="font-size:18px; font-weight:900; color:#065f46;">₹${quotedTotal.toFixed(2)}</div>
               </div>
-
-              <!-- MEDICINE ITEMS DETAIL -->
-              <div class="quote-items-detail">${itemsHtml}</div>
-              
-              <!-- PHARMACIST NOTE -->
-              ${noteHtml}
-
-              <!-- FINAL PRICE & SELECT BUTTON FOOTER -->
-              <div class="quote-foot" style="margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div>
-                  <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Final Quoted Price</div>
-                  <div class="payable-sum" style="font-size:18px; font-weight:900; color:#065f46;">₹${quotedTotal.toFixed(2)}</div>
-                </div>
-                ${isWinner ? `
-                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span class="full-badge" style="padding:6px 12px; font-size:12px; background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800;">
-                      ✓ SELECTED PHARMACY
-                    </span>
-                    ${!isPaid ? `
-                      <button class="btn-auth-submit" style="width:auto; padding:8px 16px; font-size:12px; margin:0; background:#059669; font-weight:800;" onclick="document.getElementById('custPaymentSection')?.scrollIntoView({ behavior:'smooth', block:'center'});">
-                        💳 Pay Now →
-                      </button>
-                      <button type="button" class="btn-logout" style="padding:7px 12px; font-size:11.5px; font-weight:800; color:#dc2626; border-color:#fca5a5; background:#fef2f2; border-radius:8px;" onclick="cancelPharmacySelection(${activeOrderId})" title="Deselect this pharmacy and choose another">
-                        ✕ Deselect
-                      </button>
-                    ` : `
-                      <span style="font-size:11.5px; font-weight:800; color:#065f46; background:#d1fae5; padding:4px 8px; border-radius:8px;">PAID & FINALIZED ✓</span>
-                    `}
-                  </div>
-                ` : `
+              ${isWinner ? `
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="full-badge" style="padding:6px 12px; font-size:12px; background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800;">
+                    ✓ SELECTED PHARMACY
+                  </span>
                   ${!isPaid ? `
-                    <button class="btn-auth-submit" style="width:auto; padding:9px 18px; font-size:12.5px; font-weight:800; background:${hasAnyWinner ? '#2563eb' : '#059669'}; border-radius:10px;" onclick="awardWinningPharmacy(${activeOrderId}, ${q.id})">
-                      ${hasAnyWinner ? 'Switch to This Pharmacy 🔁' : 'Select This Pharmacy'}
+                    <button class="btn-auth-submit" style="width:auto; padding:8px 16px; font-size:12px; margin:0; background:#059669; font-weight:800;" onclick="document.getElementById('custPaymentSection')?.scrollIntoView({ behavior:'smooth', block:'center'});">
+                      💳 Pay Now →
+                    </button>
+                    <button type="button" class="btn-logout" style="padding:7px 12px; font-size:11.5px; font-weight:800; color:#dc2626; border-color:#fca5a5; background:#fef2f2; border-radius:8px;" onclick="cancelPharmacySelection(${activeOrderId})" title="Deselect this pharmacy and choose another">
+                      ✕ Deselect
                     </button>
                   ` : `
-                    <span style="font-size:11px; color:#94a3b8; font-weight:600;">Other Pharmacy Quote (Order Finalized)</span>
+                    <span style="font-size:11.5px; font-weight:800; color:#065f46; background:#d1fae5; padding:4px 8px; border-radius:8px;">PAID & FINALIZED ✓</span>
                   `}
+                </div>
+              ` : `
+                ${!isPaid ? `
+                  <button class="btn-auth-submit" style="width:auto; padding:9px 18px; font-size:12.5px; font-weight:800; background:${hasAnyWinner ? '#2563eb' : '#059669'}; border-radius:10px;" onclick="awardWinningPharmacy(${activeOrderId}, ${q.id})">
+                    ${hasAnyWinner ? 'Switch to This Pharmacy 🔁' : 'Select This Pharmacy'}
+                  </button>
+                ` : `
+                  <span style="font-size:11px; color:#94a3b8; font-weight:600;">Other Pharmacy Quote (Order Finalized)</span>
                 `}
-              </div>
+              `}
             </div>
           </div>
         </div>
