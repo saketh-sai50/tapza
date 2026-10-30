@@ -10,7 +10,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="/static/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
   <!-- Tesseract.js Client-Side OCR Engine -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -2747,6 +2748,71 @@
     @keyframes slideUpRadarModal {
       from { opacity: 0; transform: translateY(20px) scale(0.97); }
       to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ==============================================================
+       SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE HEADERS & TYPOGRAPHY
+    =============================================================== */
+    .swiggy-zomato-store-header {
+      background: linear-gradient(135deg, #090d16 0%, #1e1b4b 55%, #1e3a8a 100%);
+      color: #ffffff;
+      padding: 13px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+    }
+    .swiggy-zomato-pharmacy-title {
+      font-family: 'Plus Jakarta Sans', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 17.5px;
+      font-weight: 900;
+      letter-spacing: -0.4px;
+      line-height: 1.25;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      word-break: break-word;
+    }
+    .swiggy-verified-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px;
+      height: 17px;
+      background: #2563eb;
+      color: #ffffff;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 900;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(37, 99, 235, 0.5);
+    }
+    .zomato-rating-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #22c55e;
+      color: #ffffff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      letter-spacing: 0.2px;
+    }
+    .uber-quick-badge {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      letter-spacing: 0.2px;
     }
 
   </style>
@@ -7185,7 +7251,7 @@
             ⚠️ SIMULATED TEST PAYMENT (MOCK) — NO REAL MONEY WILL BE CHARGED
           </div>
           <div style="font-size:13.5px; font-weight:800; color:#065f46; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-            <span>🏥 Selected Pharmacy:</span> <b>${escapeHtml(ord.assigned_pharmacy?.name || 'Local Pharmacy')}</b>
+            <span>🏥 Selected Pharmacy:</span> <span class="swiggy-zomato-pharmacy-title" style="color:#065f46; font-size:15px; text-shadow:none;">${escapeHtml(ord.assigned_pharmacy?.name || 'Local Pharmacy')} <span class="swiggy-verified-badge" style="width:15px; height:15px; font-size:9px;">✓</span></span>
           </div>
           <button class="btn-auth-submit" style="background:#059669; padding:14px; font-size:14px; font-weight:900; border-radius:10px; width:100%; box-shadow:0 4px 14px rgba(5,150,105,0.3);" onclick="executeMockPayment()">
             💳 Complete Simulated Payment (₹${ord.final_amount.toFixed(2)})
@@ -7421,23 +7487,33 @@
         return `
           <div class="quote-box ${isWinner ? 'winner' : ''}" style="margin-bottom:18px; padding:0; overflow:hidden; border-radius:14px; border:1.5px solid #cbd5e1; box-shadow:0 3px 12px rgba(0,0,0,0.06); background:#ffffff;">
             
-            <!-- 1. SPECIAL PHARMACY NAME HEADER BANNER (Prominently Highlighted at Top) -->
-            <div style="background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #1e3a8a 100%); color:#ffffff; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-              <div style="flex:1;">
-                <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
-                  <span style="font-size:15px;">🏥</span>
-                  <span style="font-size:10px; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; color:#93c5fd; background:rgba(255,255,255,0.12); padding:2px 7px; border-radius:4px;">VERIFIED PHARMACY</span>
+            <!-- 1. SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE BANNER -->
+            <div class="swiggy-zomato-store-header">
+              <div style="flex:1; min-width:0;">
+                <!-- Swiggy/Zomato Micro-Pills Header Row -->
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
+                  <span class="zomato-rating-pill">★ 4.8</span>
+                  <span style="font-size:9.5px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#93c5fd; background:rgba(255,255,255,0.14); padding:2px 7px; border-radius:4px; font-family:'Plus Jakarta Sans', sans-serif;">
+                    LICENSED PHARMACY
+                  </span>
+                  <span class="uber-quick-badge">⚡ 15-25 mins</span>
                 </div>
-                <div style="font-size:15.5px; font-weight:900; color:#ffffff; line-height:1.25; margin-top:2px; text-shadow:0 1px 2px rgba(0,0,0,0.25);">
-                  ${escapeHtml(q.pharmacy_name)}
+
+                <!-- SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE TITLE -->
+                <div class="swiggy-zomato-pharmacy-title">
+                  <span>${escapeHtml(q.pharmacy_name)}</span>
+                  <span class="swiggy-verified-badge" title="Verified Pharmacy Partner">✓</span>
                 </div>
-                <div style="font-size:11.5px; color:#cbd5e1; margin-top:3px; display:flex; align-items:flex-start; gap:4px; font-weight:500;">
-                  <span>📍</span>
-                  <span style="line-height:1.35;">${escapeHtml(q.pharmacy_address)}</span>
+
+                <!-- Address & Distance Micro-copy -->
+                <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px; display:flex; align-items:flex-start; gap:4px; font-weight:500; line-height:1.35; font-family:'Inter', sans-serif;">
+                  <span style="color:#94a3b8;">📍</span>
+                  <span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(q.pharmacy_address)}</span>
                 </div>
               </div>
+
               <div style="flex-shrink:0;">
-                <span class="${badgeClass}" style="box-shadow:0 2px 6px rgba(0,0,0,0.15);">${badgeText}</span>
+                <span class="${badgeClass}" style="box-shadow:0 2px 6px rgba(0,0,0,0.18); font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; font-size:10.5px; letter-spacing:0.3px;">${badgeText}</span>
               </div>
             </div>
 
