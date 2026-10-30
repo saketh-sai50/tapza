@@ -4276,6 +4276,17 @@
     const seenNotificationIds = new Set();
     let hasInitialNotificationsLoaded = false;
 
+    // Lightweight unified toast helper used across features
+    function showToast(msg, type = "info") {
+      try {
+        const title = (type === "success") ? "Success" : (type === "danger" || type === "error") ? "Attention" : "Tapza";
+        const toastType = (type === "success") ? "SUCCESS" : (type === "danger" || type === "error") ? "DANGER" : "INFO";
+        showInAppToast({ title, message: msg, type: toastType, duration: 4000 });
+      } catch (err) {
+        console.log("[Toast]", msg);
+      }
+    }
+
     function playInAppChime(type) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -6495,7 +6506,7 @@
 
     async function startCustomerBroadcast() {
       if (!currentUser || currentUser.role !== "CUSTOMER") {
-        alert("Please log in as a Customer to place an order.");
+        showToast("Please log in as a Customer to place an order.", "info");
         showAuthScreen();
         return;
       }
@@ -6510,7 +6521,7 @@
         };
       });
       if (!items.length) {
-        alert("Please add at least 1 medicine to your cart.");
+        showToast("Please add at least 1 medicine to your cart.", "info");
         return;
       }
 
@@ -6521,6 +6532,11 @@
       const cartAddr = document.getElementById("cartModalAddressInput");
       const custAddr = document.getElementById("custOrderAddressInput");
       const delivery_address = (cartAddr && cartAddr.value.trim()) || (custAddr && custAddr.value.trim()) || localStorage.getItem("tapza_user_zone_sub") || `Plot 12, Main Road, ${zone}`;
+
+      const homeBtn = document.getElementById("custBroadcastSubmitBtn");
+      const cartBtn = document.getElementById("cartModalCheckoutBtn");
+      if (homeBtn) { homeBtn.disabled = true; homeBtn.innerText = "⏳ Broadcasting Order..."; }
+      if (cartBtn) { cartBtn.disabled = true; cartBtn.innerText = "⏳ Broadcasting Order..."; }
 
       try {
         const res = await fetch(`${API}/orders`, {
@@ -6569,6 +6585,9 @@
           message: e.message,
           type: "DANGER"
         });
+      } finally {
+        if (homeBtn) { homeBtn.disabled = false; homeBtn.innerText = "🚀 Request Order"; }
+        if (cartBtn) { cartBtn.disabled = false; cartBtn.innerText = "🚀 Request Order"; }
       }
     }
 
@@ -6770,13 +6789,13 @@
 
     async function submitPrescriptionOrder() {
       if (!currentUser || currentUser.role !== "CUSTOMER") {
-        alert("Please log in as a Customer to upload a prescription and place an order.");
+        showToast("Please log in as a Customer to upload a prescription and place an order.", "info");
         showAuthScreen();
         return;
       }
 
       if (!currentPrescriptionDataUrl) {
-        alert("Please upload a prescription image or select one of the Quick Demo Prescriptions.");
+        showToast("Please upload a prescription image or select a Quick Demo Rx.", "info");
         return;
       }
 
@@ -6786,7 +6805,7 @@
       const notes = (document.getElementById("rxOrderNotesInput")?.value || "").trim();
 
       if (!delivery_address) {
-        alert("Please enter your delivery street address.");
+        showToast("Please enter your delivery street address.", "info");
         return;
       }
 
