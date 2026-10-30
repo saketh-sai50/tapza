@@ -2815,6 +2815,67 @@
       letter-spacing: 0.2px;
     }
 
+    /* ==============================================================
+       INTERACTIVE PHARMACY QUOTES COMPARISON TABLE & ACCORDION
+    =============================================================== */
+    .quote-table-wrapper {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+      margin-bottom: 16px;
+    }
+    .quote-table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .quote-compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      text-align: left;
+      min-width: 560px;
+    }
+    .quote-compare-table th {
+      background: #1e1b4b;
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #334155;
+      white-space: nowrap;
+    }
+    .quote-compare-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      transition: background 0.15s ease;
+    }
+    .quote-compare-row {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .quote-compare-row:hover {
+      background: #f8fafc;
+    }
+    .quote-compare-row.active-viewing {
+      background: #eff6ff !important;
+      border-left: 4px solid #2563eb;
+    }
+    .quote-compare-row.active-winner {
+      background: #f0fdf4 !important;
+    }
+    .quote-compare-row.active-winner.active-viewing {
+      background: #ecfdf5 !important;
+      border-left: 4px solid #059669;
+    }
+
   </style>
 </head>
 <body>
@@ -7387,6 +7448,9 @@
       }
     }
 
+    let activeCustomerQuoteId = null;
+    let cachedCustomerQuotes = [];
+
     async function fetchQuotesForCustomerOrder(oid) {
       try {
         const res = await fetch(`${API}/orders/${oid}/quotes`, {
@@ -7394,10 +7458,24 @@
         });
         if (res.ok) {
           const d = await res.json();
-          renderCustomerQuotes(d.quotes || []);
+          cachedCustomerQuotes = d.quotes || [];
+          renderCustomerQuotes(cachedCustomerQuotes);
         }
       } catch (e) {
         console.error(e);
+      }
+    }
+
+    function selectQuoteToView(qid) {
+      activeCustomerQuoteId = qid;
+      if (cachedCustomerQuotes && cachedCustomerQuotes.length) {
+        renderCustomerQuotes(cachedCustomerQuotes);
+        setTimeout(() => {
+          const detailEl = document.getElementById("custQuoteDetailContainer");
+          if (detailEl) {
+            detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 50);
       }
     }
 
@@ -7409,11 +7487,25 @@
         return;
       }
 
+      cachedCustomerQuotes = quotes;
       const hasAnyWinner = quotes.some(q => q.status === "SELECTED");
       const isPaid = Boolean(currentCustomerOrder?.mock_payment_status && ["MOCK_PAID", "COMPLETED", "PAID"].includes(currentCustomerOrder.mock_payment_status));
 
-      el.innerHTML = quotes.map(q => {
+      // Choose which quote to display in detail view:
+      // Priority 1: User previously clicked quote (activeCustomerQuoteId) if it still exists
+      // Priority 2: The selected winner quote (if one is chosen)
+      // Priority 3: The first quote (quotes[0])
+      let activeQuote = quotes.find(q => q.id === activeCustomerQuoteId);
+      if (!activeQuote) {
+        const winner = quotes.find(q => q.status === "SELECTED");
+        activeQuote = winner || quotes[0];
+        activeCustomerQuoteId = activeQuote.id;
+      }
+
+      // 1. Build Interactive Comparison Table Rows
+      const tableRowsHtml = quotes.map((q, idx) => {
         const isWinner = q.status === "SELECTED";
+        const isViewing = q.id === activeQuote.id;
         const badgeClass = q.is_full_fulfillment ? "full-badge" : "partial-badge";
         const badgeText = q.is_full_fulfillment ? "FULL FULFILLMENT" : `PARTIAL (${q.available_items_count}/${q.total_items_count})`;
 
@@ -7422,60 +7514,152 @@
         const totalSavings = q.total_savings !== undefined ? parseFloat(q.total_savings) : Math.max(0, totalMrp - quotedTotal);
         const savingsPct = q.savings_pct !== undefined ? parseFloat(q.savings_pct) : (totalMrp > 0 ? Math.round((totalSavings / totalMrp) * 100) : 0);
 
-        const itemsHtml = q.items.map(it => {
-          const itemMrp = parseFloat(it.unit_mrp || 0);
-          const itemSelling = parseFloat(it.unit_selling_price || 0);
-          const subtotalMrp = parseFloat(it.subtotal_mrp || (itemMrp * it.quantity));
-          const subtotalPrice = parseFloat(it.subtotal_price || 0);
-          const itemSavings = it.savings !== undefined ? parseFloat(it.savings) : Math.max(0, subtotalMrp - subtotalPrice);
-          const discPct = it.discount_pct !== undefined ? parseFloat(it.discount_pct) : (itemMrp > 0 && itemSelling < itemMrp ? Math.round(((itemMrp - itemSelling) / itemMrp) * 100) : 0);
-
-          return `
-            <div class="quote-item-row" style="padding:10px 0; border-bottom:1px dashed #f1f5f9; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
-              <div style="flex:1; padding-right:8px;">
-                <span class="${it.is_available ? '' : 'unavailable-line'}" style="font-weight:800; font-size:13.5px; color:#0f172a;">• ${escapeHtml(it.medicine_name)} (${it.quantity}x)</span>
-                <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
-                  Standard MRP: ₹${itemMrp.toFixed(2)}/unit (Total MRP: ₹${subtotalMrp.toFixed(2)})
+        return `
+          <tr class="quote-compare-row ${isViewing ? 'active-viewing' : ''} ${isWinner ? 'active-winner' : ''}" onclick="selectQuoteToView(${q.id})" title="Click to view detailed medicines & prices from ${escapeHtml(q.pharmacy_name)}">
+            <td style="padding:11px 12px;">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span style="font-weight:900; color:#1e1b4b; font-size:13px; font-family:'Plus Jakarta Sans', sans-serif;">
+                  #${idx + 1} ${escapeHtml(q.pharmacy_name)}
+                </span>
+                ${isWinner ? '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:4px;">SELECTED</span>' : ''}
+              </div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px; font-weight:500;">
+                📍 ${escapeHtml(q.pharmacy_address || '')}
+              </div>
+            </td>
+            <td style="padding:11px 12px; white-space:nowrap;">
+              <span class="${badgeClass}" style="font-size:10px; font-weight:800; padding:2px 7px;">${badgeText}</span>
+            </td>
+            <td style="padding:11px 12px; white-space:nowrap; color:#64748b; font-weight:700; ${totalSavings > 0 ? 'text-decoration:line-through;' : ''}">
+              ₹${totalMrp.toFixed(2)}
+            </td>
+            <td style="padding:11px 12px; white-space:nowrap; font-weight:900; font-size:14px; color:#065f46;">
+              ₹${quotedTotal.toFixed(2)}
+            </td>
+            <td style="padding:11px 12px; white-space:nowrap;">
+              ${totalSavings > 0 ? `
+                <div style="color:#15803d; font-weight:900; font-size:12.5px;">Save ₹${totalSavings.toFixed(2)}</div>
+                <div style="font-size:10px; font-weight:800; color:#166534; background:#dcfce7; border:1px solid #86efac; padding:1px 5px; border-radius:4px; display:inline-block; margin-top:2px;">
+                  ${savingsPct}% OFF
                 </div>
-                ${(it.notes && it.notes.trim() && it.notes.trim() !== 'null' && it.notes.trim() !== 'undefined') ? `
-                  <div style="margin-top:6px; font-size:11.5px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:3px 9px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; line-height:1.4;">
-                    <span>📝 <b>Pharmacy Item Note:</b></span> <span>${escapeHtml(it.notes.trim())}</span>
-                  </div>
-                ` : ''}
-              </div>
-              <div style="text-align:right; min-width:130px; flex-shrink:0;">
-                ${it.is_available ? `
-                  <div style="font-size:11.5px; font-weight:700; color:#64748b; ${discPct > 0 ? 'text-decoration:line-through;' : ''} margin-bottom:1px;">
-                    MRP: ₹${subtotalMrp.toFixed(2)}
-                  </div>
-                  <div style="font-weight:900; font-size:14px; color:#065f46;">Quoted: ₹${subtotalPrice.toFixed(2)}</div>
-                  ${discPct > 0 ? `
-                    <span style="font-size:10.5px; font-weight:800; color:#15803d; background:#dcfce7; border:1px solid #86efac; padding:1px 6px; border-radius:4px; display:inline-block; margin-top:3px;">
-                      🏷️ ${discPct}% OFF (Save ₹${itemSavings.toFixed(2)})
-                    </span>
-                  ` : `
-                    <span style="font-size:10px; color:#64748b; font-weight:700;">MRP Price</span>
-                  `}
-                ` : '<span class="zero-billing">₹0.00 (Out of stock)</span>'}
-              </div>
-            </div>
-          `;
-        }).join("");
+              ` : `
+                <span style="font-size:11px; color:#64748b; font-weight:600;">₹0 (MRP)</span>
+              `}
+            </td>
+            <td style="padding:11px 12px; text-align:center; white-space:nowrap;">
+              <button type="button" style="padding:5px 10px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
+                ${isViewing ? 'Viewing 👁️' : 'View Detail →'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
 
-        const noteHtml = (q.notes && q.notes.trim() && q.notes.trim() !== 'null' && q.notes.trim() !== 'undefined') ? `
-          <div class="pharma-note-box" style="margin-top:10px; padding:10px 14px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px;">
-            <span style="font-weight:800; color:#065f46; display:block; margin-bottom:2px;">💬 Pharmacist Advice / Note:</span>
-            <span style="color:#1e293b; font-size:12.5px;">${escapeHtml(q.notes.trim())}</span>
-          </div>
-        ` : '';
+      // 2. Build Detailed Card for Currently Active / Selected Pharmacy (activeQuote)
+      const q = activeQuote;
+      const isWinner = q.status === "SELECTED";
+      const badgeClass = q.is_full_fulfillment ? "full-badge" : "partial-badge";
+      const badgeText = q.is_full_fulfillment ? "FULL FULFILLMENT" : `PARTIAL (${q.available_items_count}/${q.total_items_count})`;
+
+      const totalMrp = q.total_mrp !== undefined ? parseFloat(q.total_mrp) : q.items.reduce((acc, it) => acc + (it.is_available ? it.subtotal_mrp : 0), 0);
+      const quotedTotal = parseFloat(q.total_quoted_price || 0);
+      const totalSavings = q.total_savings !== undefined ? parseFloat(q.total_savings) : Math.max(0, totalMrp - quotedTotal);
+      const savingsPct = q.savings_pct !== undefined ? parseFloat(q.savings_pct) : (totalMrp > 0 ? Math.round((totalSavings / totalMrp) * 100) : 0);
+
+      const itemsHtml = q.items.map(it => {
+        const itemMrp = parseFloat(it.unit_mrp || 0);
+        const itemSelling = parseFloat(it.unit_selling_price || 0);
+        const subtotalMrp = parseFloat(it.subtotal_mrp || (itemMrp * it.quantity));
+        const subtotalPrice = parseFloat(it.subtotal_price || 0);
+        const itemSavings = it.savings !== undefined ? parseFloat(it.savings) : Math.max(0, subtotalMrp - subtotalPrice);
+        const discPct = it.discount_pct !== undefined ? parseFloat(it.discount_pct) : (itemMrp > 0 && itemSelling < itemMrp ? Math.round(((itemMrp - itemSelling) / itemMrp) * 100) : 0);
 
         return `
-          <div class="quote-box ${isWinner ? 'winner' : ''}" style="margin-bottom:18px; padding:0; overflow:hidden; border-radius:14px; border:1.5px solid #cbd5e1; box-shadow:0 3px 12px rgba(0,0,0,0.06); background:#ffffff;">
+          <div class="quote-item-row" style="padding:10px 0; border-bottom:1px dashed #f1f5f9; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+            <div style="flex:1; padding-right:8px;">
+              <span class="${it.is_available ? '' : 'unavailable-line'}" style="font-weight:800; font-size:13.5px; color:#0f172a;">• ${escapeHtml(it.medicine_name)} (${it.quantity}x)</span>
+              <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+                Standard MRP: ₹${itemMrp.toFixed(2)}/unit (Total MRP: ₹${subtotalMrp.toFixed(2)})
+              </div>
+              ${(it.notes && it.notes.trim() && it.notes.trim() !== 'null' && it.notes.trim() !== 'undefined') ? `
+                <div style="margin-top:6px; font-size:11.5px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:3px 9px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; line-height:1.4;">
+                  <span>📝 <b>Pharmacy Item Note:</b></span> <span>${escapeHtml(it.notes.trim())}</span>
+                </div>
+              ` : ''}
+            </div>
+            <div style="text-align:right; min-width:130px; flex-shrink:0;">
+              ${it.is_available ? `
+                <div style="font-size:11.5px; font-weight:700; color:#64748b; ${discPct > 0 ? 'text-decoration:line-through;' : ''} margin-bottom:1px;">
+                  MRP: ₹${subtotalMrp.toFixed(2)}
+                </div>
+                <div style="font-weight:900; font-size:14px; color:#065f46;">Quoted: ₹${subtotalPrice.toFixed(2)}</div>
+                ${discPct > 0 ? `
+                  <span style="font-size:10.5px; font-weight:800; color:#15803d; background:#dcfce7; border:1px solid #86efac; padding:1px 6px; border-radius:4px; display:inline-block; margin-top:3px;">
+                    🏷️ ${discPct}% OFF (Save ₹${itemSavings.toFixed(2)})
+                  </span>
+                ` : `
+                  <span style="font-size:10px; color:#64748b; font-weight:700;">MRP Price</span>
+                `}
+              ` : '<span class="zero-billing">₹0.00 (Out of stock)</span>'}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const noteHtml = (q.notes && q.notes.trim() && q.notes.trim() !== 'null' && q.notes.trim() !== 'undefined') ? `
+        <div class="pharma-note-box" style="margin-top:10px; padding:10px 14px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px;">
+          <span style="font-weight:800; color:#065f46; display:block; margin-bottom:2px;">💬 Pharmacist Advice / Note:</span>
+          <span style="color:#1e293b; font-size:12.5px;">${escapeHtml(q.notes.trim())}</span>
+        </div>
+      ` : '';
+
+      el.innerHTML = `
+        <!-- 1. COMPARISON TABLE -->
+        <div class="quote-table-wrapper">
+          <div style="background:#f8fafc; padding:10px 14px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="font-weight:800; font-size:13px; color:#1e1b4b; display:flex; align-items:center; gap:6px;">
+              <span>📊</span>
+              <span>Compare Pharmacy Offers (${quotes.length} Received)</span>
+            </div>
+            <div style="font-size:11.5px; color:#2563eb; font-weight:700;">
+              👉 Tap any row to inspect medicines & pricing
+            </div>
+          </div>
+          <div class="quote-table-scroll">
+            <table class="quote-compare-table">
+              <thead>
+                <tr>
+                  <th>Pharmacy Name</th>
+                  <th>Availability</th>
+                  <th>Total MRP</th>
+                  <th>Quoted Price</th>
+                  <th>Savings</th>
+                  <th style="text-align:center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. DETAILED BREAKDOWN OF SELECTED / VIEWED PHARMACY -->
+        <div id="custQuoteDetailContainer" style="margin-top:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:0 2px; flex-wrap:wrap; gap:6px;">
+            <div style="font-size:12px; font-weight:800; color:#334155; text-transform:uppercase; letter-spacing:0.5px;">
+              Detailed Medicine Breakdown & Notes:
+            </div>
+            <div style="font-size:12px; font-weight:800; color:#2563eb; background:#eff6ff; padding:3px 9px; border-radius:6px; border:1px solid #bfdbfe;">
+              Viewing: <b>${escapeHtml(q.pharmacy_name)}</b>
+            </div>
+          </div>
+
+          <div class="quote-box ${isWinner ? 'winner' : ''}" style="margin-bottom:18px; padding:0; overflow:hidden; border-radius:14px; border:1.5px solid ${isWinner ? '#10b981' : '#cbd5e1'}; box-shadow:0 3px 12px rgba(0,0,0,0.06); background:#ffffff;">
             
-            <!-- 1. SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE BANNER -->
+            <!-- SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE BANNER -->
             <div class="swiggy-zomato-store-header">
               <div style="flex:1; min-width:0;">
-                <!-- Swiggy/Zomato Micro-Pills Header Row -->
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
                   <span class="zomato-rating-pill">★ 4.8</span>
                   <span style="font-size:9.5px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase; color:#93c5fd; background:rgba(255,255,255,0.14); padding:2px 7px; border-radius:4px; font-family:'Plus Jakarta Sans', sans-serif;">
@@ -7484,13 +7668,11 @@
                   <span class="uber-quick-badge">⚡ 15-25 mins</span>
                 </div>
 
-                <!-- SWIGGY / ZOMATO / UBER STYLE PHARMACY STORE TITLE -->
                 <div class="swiggy-zomato-pharmacy-title">
                   <span>${escapeHtml(q.pharmacy_name)}</span>
                   <span class="swiggy-verified-badge" title="Verified Pharmacy Partner">✓</span>
                 </div>
 
-                <!-- Address & Distance Micro-copy -->
                 <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px; display:flex; align-items:flex-start; gap:4px; font-weight:500; line-height:1.35; font-family:'Inter', sans-serif;">
                   <span style="color:#94a3b8;">📍</span>
                   <span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(q.pharmacy_address)}</span>
@@ -7502,7 +7684,7 @@
               </div>
             </div>
 
-            <!-- 2. ATTACHED TOTAL SAVINGS & MRP OFF RIBBON (Directly Attached Below Pharmacy Banner) -->
+            <!-- ATTACHED TOTAL SAVINGS & MRP OFF RIBBON -->
             ${totalSavings > 0 ? `
               <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color:#ffffff; padding:9px 14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(5,150,105,0.25); border-bottom:1.5px solid rgba(255,255,255,0.15);">
                 <div style="font-size:13.5px; font-weight:900; display:flex; align-items:center; gap:6px; letter-spacing:0.2px;">
@@ -7520,9 +7702,8 @@
               </div>
             `}
 
-            <!-- 3. INNER CONTENT: COMPARISON METRICS, ITEMS DETAIL, PHARMACIST NOTE, AND FOOTER -->
+            <!-- INNER CONTENT: COMPARISON METRICS, ITEMS DETAIL, PHARMACIST NOTE, AND FOOTER -->
             <div style="padding:12px 14px;">
-              <!-- COMPARISON METRICS BAR (MRP vs Quoted Price vs You Save) -->
               <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; gap:6px;">
                 <div>
                   <div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase;">Total MRP</div>
@@ -7578,11 +7759,12 @@
               </div>
             </div>
           </div>
-        `;
-      }).join("");
+        </div>
+      `;
     }
 
     async function awardWinningPharmacy(oid, qid) {
+      activeCustomerQuoteId = qid;
       try {
         const res = await fetch(`${API}/orders/${oid}/select`, {
           method: "POST",
