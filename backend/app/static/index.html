@@ -2667,6 +2667,88 @@
       transform: translateY(-1px);
     }
 
+    /* Floating Right-Edge Circular Radar Button */
+    .radar-edge-dock-btn {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 56px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #2563eb 100%);
+      color: #ffffff;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      border-right: none;
+      border-radius: 28px 0 0 28px;
+      box-shadow: -4px 6px 20px rgba(37, 99, 235, 0.45);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9998;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, background 0.2s;
+      user-select: none;
+      padding-left: 6px;
+      padding-right: 2px;
+    }
+    .radar-edge-dock-btn:hover {
+      transform: translateY(-50%) translateX(-4px);
+      box-shadow: -6px 8px 24px rgba(37, 99, 235, 0.6);
+      background: linear-gradient(135deg, #2e1065 0%, #1d4ed8 100%);
+    }
+    .radar-edge-dock-btn:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+    .radar-edge-dock-beacon {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: radarBeaconPulse 1.8s infinite;
+    }
+    @keyframes radarBeaconPulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Radar Map Modal Backdrop */
+    .radar-map-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(5px);
+      z-index: 99999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      animation: fadeInRadarBackdrop 0.2s ease-out;
+    }
+    @keyframes fadeInRadarBackdrop {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .radar-modal-card {
+      background: #ffffff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+      animation: slideUpRadarModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUpRadarModal {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
   </style>
 </head>
 <body>
@@ -2777,6 +2859,79 @@
       </button>
     </div>
   </header>
+
+  <!-- Floating Circular Edge Button (Attached to Right Screen Edge for Live Pharmacy Radar) -->
+  <button id="custRadarSideBtn" class="radar-edge-dock-btn" onclick="toggleCustomerRadarMap()" title="Open Live Pharmacy Radar Map">
+    <div class="radar-edge-dock-beacon"></div>
+    <div style="font-size:19px; line-height:1;">📡</div>
+    <div style="font-size:8.5px; font-weight:900; letter-spacing:0.5px; margin-top:3px; color:#ffffff;">RADAR</div>
+  </button>
+
+  <!-- Live Geoapify Radar Map Modal (Clean View Without Obtrusive Green Overlay) -->
+  <div id="custRadarMapModal" class="radar-map-modal-backdrop" style="display:none;" onclick="closeCustomerRadarMap(event)">
+    <div class="radar-modal-card" id="custRadarMapCard" onclick="event.stopPropagation()">
+      <!-- Header Strip -->
+      <div style="background:#1e1b4b; color:#ffffff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">📡</span>
+          <div>
+            <div style="font-size:13px; font-weight:900; letter-spacing:0.3px;">LIVE PHARMACY RADAR</div>
+            <div id="custRadarRadiusLabel" style="font-size:11px; color:#cbd5e1; font-weight:600;">Searching within 5.0 km radius</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span id="custRadarTimerBadge" style="background:#059669; color:#ffffff; padding:4px 9px; border-radius:20px; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums;">
+            ⏱️ 04:00
+          </span>
+          <button type="button" id="custFastForwardExpandBtn" onclick="testFastForwardExpand()" style="background:#f59e0b; color:#ffffff; border:none; padding:4px 8px; border-radius:12px; font-size:10.5px; font-weight:800; cursor:pointer;" title="Simulate 4-min timeout and expand search to 10 km">
+            ⚡ Test +5km
+          </button>
+          <button type="button" onclick="closeCustomerRadarMap()" style="background:rgba(255,255,255,0.18); border:none; color:#ffffff; width:28px; height:28px; border-radius:50%; font-size:16px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px;" title="Close Map">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Map View Container -->
+      <div style="position:relative; width:100%; min-height:240px; max-height:360px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <img id="custRadarMapImg" src="" style="width:100%; height:100%; max-height:360px; object-fit:cover; display:none;" alt="Live Pharmacy Radar Map">
+        <div id="custRadarMapLoading" style="padding:40px 20px; text-align:center; color:#64748b; font-size:12.5px; font-weight:700;">
+          <div style="font-size:28px; margin-bottom:8px;">📡</div>
+          Connecting to Geoapify Radar & scanning nearby pharmacies...
+        </div>
+      </div>
+
+      <!-- Legend & Status Strip -->
+      <div style="padding:10px 16px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; font-size:11.5px; color:#475569;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="display:inline-flex; align-items:center; gap:5px; font-weight:700;">
+            <span style="width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block;"></span> Red: You
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-weight:700;">
+            <span style="width:10px; height:10px; border-radius:50%; background:#2563eb; display:inline-block;"></span> Blue: Pinged
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-weight:700;">
+            <span style="width:10px; height:10px; border-radius:50%; background:#16a34a; display:inline-block;"></span> Green: Accepted
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="custRadarContactedBadge" style="background:#2563eb; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800;">
+            📍 0 Pinged
+          </span>
+          <div id="custRadarExpandedPill" style="display:none; background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-weight:800; border:1px solid #fde68a;">
+            ⚡ 10 km
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom action button -->
+      <div style="padding:10px 16px; background:#ffffff; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end;">
+        <button type="button" onclick="closeCustomerRadarMap()" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; border-radius:10px; padding:7px 16px; font-size:12px; font-weight:800; cursor:pointer;">
+          ✕ Close Map
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="app-container">
 
@@ -3357,64 +3512,21 @@
                 Nearby pharmacies are currently calculating prices and availability. Please compare quotes below and pick the best offer.
               </div>
 
-              <!-- LIVE GEOAPIFY BROADCAST RADAR & SPATIAL MAP -->
-              <div class="radar-map-card" id="custRadarMapCard" style="margin-top:14px; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.06);">
-                <!-- Header Strip -->
-                <div style="background:#1e1b4b; color:#ffffff; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:16px;">📡</span>
-                    <div>
-                      <div style="font-size:12.5px; font-weight:900; letter-spacing:0.3px;">LIVE PHARMACY RADAR</div>
-                      <div id="custRadarRadiusLabel" style="font-size:10.5px; color:#cbd5e1; font-weight:600;">Searching within 5.0 km radius</div>
+              <!-- Clean Radar Trigger Banner (Compact & Non-intrusive) -->
+              <div id="custRadarInlineBanner" onclick="openCustomerRadarMap()" style="margin-top:12px; background:linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border:1.5px solid #bfdbfe; border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; box-shadow:0 2px 8px rgba(37,99,235,0.06); transition:all 0.15s ease;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:34px; height:34px; border-radius:50%; background:#2563eb; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 2px 6px rgba(37,99,235,0.3);">📡</div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:900; color:#1e1b4b; display:flex; align-items:center; gap:6px;">
+                      <span>Live Pharmacy Radar Map</span>
+                      <span id="custRadarInlineTimer" style="background:#059669; color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; font-weight:800;">⏱️ 04:00</span>
                     </div>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:6px;">
-                    <span id="custRadarTimerBadge" style="background:#059669; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums;">
-                      ⏱️ 04:00
-                    </span>
-                    <button type="button" id="custFastForwardExpandBtn" onclick="testFastForwardExpand()" style="background:#f59e0b; color:#ffffff; border:none; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:800; cursor:pointer;" title="Simulate 4-min timeout and expand search to 10 km">
-                      ⚡ Test +5km
-                    </button>
-                    <span id="custRadarContactedBadge" style="background:#2563eb; color:#ffffff; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:800;">
-                      📍 0 Pinged
-                    </span>
+                    <div style="font-size:11px; color:#64748b; font-weight:600; margin-top:2px;" id="custRadarInlineSub">Tap to view live radar & pinged pharmacies</div>
                   </div>
                 </div>
-
-                <!-- Dynamic Map View Container -->
-                <div style="position:relative; width:100%; min-height:220px; max-height:300px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                  <img id="custRadarMapImg" src="" style="width:100%; height:100%; max-height:300px; object-fit:cover; display:none;" alt="Live Pharmacy Radar Map">
-                  <div id="custRadarMapLoading" style="padding:30px; text-align:center; color:#64748b; font-size:12px; font-weight:700;">
-                    <div style="font-size:24px; margin-bottom:6px;">📡</div>
-                    Connecting to Geoapify Radar & scanning nearby pharmacies...
-                  </div>
-
-                  <!-- Accepted Pharmacy Popup Alert Overlay -->
-                  <div id="custRadarAcceptedBanner" style="display:none; position:absolute; bottom:10px; left:10px; right:10px; background:rgba(22, 163, 74, 0.95); backdrop-filter:blur(6px); color:#ffffff; padding:10px 14px; border-radius:10px; font-size:12px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,0.25); align-items:center; gap:10px;">
-                    <div style="width:28px; height:28px; border-radius:50%; background:#ffffff; color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900;">✓</div>
-                    <div style="flex:1;">
-                      <div id="custRadarAcceptedText">Sri Lasya Pharmacy accepted your request!</div>
-                      <div style="font-size:10px; opacity:0.9; font-weight:600;">Offer ready to review and confirm below</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Legend & Status Strip -->
-                <div style="padding:9px 14px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; font-size:11px; color:#475569;">
-                  <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
-                      <span style="width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block;"></span> Red: You
-                    </span>
-                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
-                      <span style="width:10px; height:10px; border-radius:50%; background:#2563eb; display:inline-block;"></span> Blue: Pinged
-                    </span>
-                    <span style="display:inline-flex; align-items:center; gap:4px; font-weight:700;">
-                      <span style="width:10px; height:10px; border-radius:50%; background:#16a34a; display:inline-block;"></span> Green: Accepted
-                    </span>
-                  </div>
-                  <div id="custRadarExpandedPill" style="display:none; background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-weight:800; border:1px solid #fde68a;">
-                    ⚡ 4-Min Timeout: Search Expanded to 10 km
-                  </div>
+                <div style="display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:800; color:#2563eb; background:#ffffff; border:1px solid #bfdbfe; padding:5px 11px; border-radius:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                  <span>View Map</span>
+                  <span>🗺️</span>
                 </div>
               </div>
 
@@ -3769,7 +3881,7 @@
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
-          <button class="live-tracker-cta" style="background:#059669; color:#fff;" onclick="event.stopPropagation(); switchCustomerTab('ORDERS'); setTimeout(() => { document.getElementById('custRadarMapCard')?.scrollIntoView({ behavior:'smooth', block:'start'}); }, 300);">
+          <button class="live-tracker-cta" style="background:#059669; color:#fff;" onclick="event.stopPropagation(); switchCustomerTab('ORDERS'); setTimeout(() => { openCustomerRadarMap(); }, 300);">
             <span>📡 Live Radar Map</span>
           </button>
           <button class="live-tracker-cta" onclick="event.stopPropagation(); switchCustomerTab('ORDERS');">
@@ -4710,6 +4822,14 @@
 
       window.scrollTo({ top: 0, behavior: "smooth" });
 
+      const sideBtn = document.getElementById("custRadarSideBtn");
+      if (sideBtn) {
+        sideBtn.style.display = (tabName === 'ORDERS' && activeOrderId) ? "flex" : "none";
+      }
+      if (tabName !== 'ORDERS') {
+        closeCustomerRadarMap();
+      }
+
       const zomatoBar = document.getElementById("zomatoLiveTrackerBar");
       if (tabName === 'ORDERS') {
         if (zomatoBar) zomatoBar.style.display = "none";
@@ -4913,6 +5033,8 @@
             if (noActiveBanner) noActiveBanner.style.display = "none";
             if (badge) badge.style.display = "inline-block";
             if (dot) dot.style.display = "block";
+            const sideBtn = document.getElementById("custRadarSideBtn");
+            if (sideBtn) sideBtn.style.display = "flex";
             document.getElementById("custOrderTrackingTitle").innerText = `Order #${active.id} Live Tracking`;
             updateCustomerStatusUI(active);
             renderCustomerPaymentUI(active);
@@ -4933,6 +5055,9 @@
             if (noActiveBanner) noActiveBanner.style.display = "block";
             if (badge) badge.style.display = "none";
             if (dot) dot.style.display = "none";
+            const sideBtn = document.getElementById("custRadarSideBtn");
+            if (sideBtn) sideBtn.style.display = "none";
+            closeCustomerRadarMap();
             // Disappear from Home when no active order or when delivered
             if (zomatoBar) zomatoBar.style.display = "none";
           }
@@ -6359,21 +6484,65 @@
       }
     }
 
+    let isCustomerRadarMapOpen = false;
+
+    function openCustomerRadarMap() {
+      const modal = document.getElementById("custRadarMapModal");
+      if (modal) {
+        modal.style.display = "flex";
+        isCustomerRadarMapOpen = true;
+      }
+    }
+
+    function closeCustomerRadarMap(e) {
+      if (e && e.target && e.target.id !== "custRadarMapModal" && !e.target.closest("button")) {
+        return;
+      }
+      const modal = document.getElementById("custRadarMapModal");
+      if (modal) {
+        modal.style.display = "none";
+        isCustomerRadarMapOpen = false;
+      }
+    }
+
+    function toggleCustomerRadarMap(force) {
+      if (force === true) {
+        openCustomerRadarMap();
+      } else if (force === false) {
+        closeCustomerRadarMap();
+      } else {
+        if (isCustomerRadarMapOpen) {
+          closeCustomerRadarMap();
+        } else {
+          openCustomerRadarMap();
+        }
+      }
+    }
+
     function renderRadarUI(data) {
-      const card = document.getElementById("custRadarMapCard");
+      const sideBtn = document.getElementById("custRadarSideBtn");
       const img = document.getElementById("custRadarMapImg");
       const loading = document.getElementById("custRadarMapLoading");
       const radiusLabel = document.getElementById("custRadarRadiusLabel");
       const timerBadge = document.getElementById("custRadarTimerBadge");
       const contactedBadge = document.getElementById("custRadarContactedBadge");
-      const acceptedBanner = document.getElementById("custRadarAcceptedBanner");
-      const acceptedText = document.getElementById("custRadarAcceptedText");
       const expandedPill = document.getElementById("custRadarExpandedPill");
       const zomatoSub = document.getElementById("zomatoTrackerSub");
       const fastExpandBtn = document.getElementById("custFastForwardExpandBtn");
+      const inlineTimer = document.getElementById("custRadarInlineTimer");
+      const inlineSub = document.getElementById("custRadarInlineSub");
 
-      if (!card) return;
-      card.style.display = "block";
+      // Show floating right-edge circular button when customer has active order on Orders tab
+      if (sideBtn && currentUser?.role === "CUSTOMER") {
+        const ordersTab = document.getElementById("custPageOrders");
+        if (ordersTab && ordersTab.style.display !== "none") {
+          sideBtn.style.display = "flex";
+        }
+      }
+
+      if (inlineSub) {
+        inlineSub.innerText = `${data.pharmacies_contacted_count || 0} pharmacies pinged within ${data.search_radius_km || 5.0} km`;
+      }
 
       if (radiusLabel) {
         radiusLabel.innerText = data.is_expanded 
@@ -6389,18 +6558,19 @@
         }
       }
 
+      const secs = data.remaining_seconds || 0;
+      const mins = Math.floor(secs / 60);
+      const remSecs = secs % 60;
+      const timerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+      const timerBg = (secs <= 30) ? "#dc2626" : ((secs <= 90) ? "#f59e0b" : "#059669");
+
       if (timerBadge) {
-        const secs = data.remaining_seconds || 0;
-        const mins = Math.floor(secs / 60);
-        const remSecs = secs % 60;
-        timerBadge.innerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
-        if (secs <= 30) {
-          timerBadge.style.background = "#dc2626";
-        } else if (secs <= 90) {
-          timerBadge.style.background = "#f59e0b";
-        } else {
-          timerBadge.style.background = "#059669";
-        }
+        timerBadge.innerText = timerText;
+        timerBadge.style.background = timerBg;
+      }
+      if (inlineTimer) {
+        inlineTimer.innerText = timerText;
+        inlineTimer.style.background = timerBg;
       }
 
       if (contactedBadge) {
@@ -6409,16 +6579,6 @@
 
       if (expandedPill) {
         expandedPill.style.display = data.is_expanded ? "inline-block" : "none";
-      }
-
-      if (acceptedBanner && acceptedText) {
-        if (data.accepted_pharmacy) {
-          acceptedBanner.style.display = "flex";
-          const statusText = data.accepted_pharmacy.confirmation_status === 'CONFIRMED' ? 'Confirmed' : `₹${data.accepted_pharmacy.total_price}`;
-          acceptedText.innerText = `${data.accepted_pharmacy.pharmacy_name} accepted your request (${statusText})!`;
-        } else {
-          acceptedBanner.style.display = "none";
-        }
       }
 
       if (img && data.map_url) {
@@ -6569,8 +6729,8 @@
           fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
           setTimeout(() => {
-            const radarCard = document.getElementById("custRadarMapCard");
-            if (radarCard) radarCard.scrollIntoView({ behavior: "smooth", block: "start" });
+            const statusCard = document.getElementById("custLiveStatusCard");
+            if (statusCard) statusCard.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 350);
         } else {
           showInAppToast({
@@ -6845,8 +7005,8 @@
           fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
           setTimeout(() => {
-            const radarCard = document.getElementById("custRadarMapCard");
-            if (radarCard) radarCard.scrollIntoView({ behavior: "smooth", block: "start" });
+            const statusCard = document.getElementById("custLiveStatusCard");
+            if (statusCard) statusCard.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 350);
         } else {
           showInAppToast({
@@ -7037,6 +7197,9 @@
     function startNewOrderSession() {
       activeOrderId = null;
       document.getElementById("customerActiveOrderCard").style.display = "none";
+      const sideBtn = document.getElementById("custRadarSideBtn");
+      if (sideBtn) sideBtn.style.display = "none";
+      closeCustomerRadarMap();
       cart = {};
       renderCatalogueList(medicines);
       updateCartSummaryUI();
