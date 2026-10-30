@@ -4376,6 +4376,7 @@
     let allMedicinesMap = {};
     let cart = {};
     let activeOrderId = null;
+    let currentCustomerOrder = null;
     let pharmacyDrafts = {};
     let currentModalMed = null;
     let searchDebounceTimer = null;
@@ -5077,6 +5078,7 @@
 
           if (active) {
             activeOrderId = active.id;
+            currentCustomerOrder = active;
             if (activeCard) activeCard.style.display = "block";
             if (noActiveBanner) noActiveBanner.style.display = "none";
             if (badge) badge.style.display = "inline-block";
@@ -5099,6 +5101,7 @@
             }
           } else {
             activeOrderId = null;
+            currentCustomerOrder = null;
             if (activeCard) activeCard.style.display = "none";
             if (noActiveBanner) noActiveBanner.style.display = "block";
             if (badge) badge.style.display = "none";
@@ -7177,6 +7180,7 @@
         if (res.ok) {
           const d = await res.json();
           const ord = d.order;
+          currentCustomerOrder = ord;
           updateCustomerStatusUI(ord);
           renderCustomerPaymentUI(ord);
           fetchQuotesForCustomerOrder(oid);
@@ -7222,8 +7226,13 @@
           <div style="background:#fef3c7; border:1px solid #fde68a; padding:10px 14px; border-radius:8px; font-size:12px; color:#92400e; font-weight:800; margin-bottom:12px;">
             ⚠️ SIMULATED TEST PAYMENT (MOCK) — NO REAL MONEY WILL BE CHARGED
           </div>
-          <div style="font-size:13.5px; font-weight:800; color:#065f46; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-            <span>🏥 Selected Pharmacy:</span> <span class="swiggy-zomato-pharmacy-title" style="color:#065f46; font-size:15px; text-shadow:none;">${escapeHtml(ord.assigned_pharmacy?.name || 'Local Pharmacy')} <span class="swiggy-verified-badge" style="width:15px; height:15px; font-size:9px;">✓</span></span>
+          <div style="font-size:13.5px; font-weight:800; color:#065f46; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span>🏥 Selected Pharmacy:</span> <span class="swiggy-zomato-pharmacy-title" style="color:#065f46; font-size:15px; text-shadow:none;">${escapeHtml(ord.assigned_pharmacy?.name || 'Local Pharmacy')} <span class="swiggy-verified-badge" style="width:15px; height:15px; font-size:9px;">✓</span></span>
+            </div>
+            <button type="button" class="btn-logout" style="padding:6px 14px; font-size:12px; font-weight:800; color:#dc2626; border-color:#fca5a5; background:#ffffff; border-radius:8px; display:inline-flex; align-items:center; gap:4px;" onclick="cancelPharmacySelection(${ord.id})" title="Deselect this pharmacy and choose another">
+              <span>✕</span> Deselect / Change
+            </button>
           </div>
           <button class="btn-auth-submit" style="background:#059669; padding:14px; font-size:14px; font-weight:900; border-radius:10px; width:100%; box-shadow:0 4px 14px rgba(5,150,105,0.3);" onclick="executeMockPayment()">
             💳 Complete Simulated Payment (₹${ord.final_amount.toFixed(2)})
@@ -7234,6 +7243,7 @@
 
     function startNewOrderSession() {
       activeOrderId = null;
+      currentCustomerOrder = null;
       document.getElementById("customerActiveOrderCard").style.display = "none";
       const sideBtn = document.getElementById("custRadarSideBtn");
       if (sideBtn) sideBtn.style.display = "none";
@@ -7399,6 +7409,9 @@
         return;
       }
 
+      const hasAnyWinner = quotes.some(q => q.status === "SELECTED");
+      const isPaid = Boolean(currentCustomerOrder?.mock_payment_status && ["MOCK_PAID", "COMPLETED", "PAID"].includes(currentCustomerOrder.mock_payment_status));
+
       el.innerHTML = quotes.map(q => {
         const isWinner = q.status === "SELECTED";
         const badgeClass = q.is_full_fulfillment ? "full-badge" : "partial-badge";
@@ -7532,22 +7545,35 @@
               ${noteHtml}
 
               <!-- FINAL PRICE & SELECT BUTTON FOOTER -->
-              <div class="quote-foot" style="margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+              <div class="quote-foot" style="margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                   <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Final Quoted Price</div>
                   <div class="payable-sum" style="font-size:18px; font-weight:900; color:#065f46;">₹${quotedTotal.toFixed(2)}</div>
                 </div>
                 ${isWinner ? `
                   <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span class="full-badge" style="padding:6px 12px; font-size:12px; background:#dcfce7; color:#15803d; border:1px solid #86efac;">SELECTED WINNER ✓</span>
-                    <button class="btn-auth-submit" style="width:auto; padding:8px 16px; font-size:12px; margin:0; background:#059669;" onclick="document.getElementById('custPaymentSection')?.scrollIntoView({ behavior:'smooth', block:'center'});">
-                      💳 Pay Now →
-                    </button>
+                    <span class="full-badge" style="padding:6px 12px; font-size:12px; background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800;">
+                      ✓ SELECTED PHARMACY
+                    </span>
+                    ${!isPaid ? `
+                      <button class="btn-auth-submit" style="width:auto; padding:8px 16px; font-size:12px; margin:0; background:#059669; font-weight:800;" onclick="document.getElementById('custPaymentSection')?.scrollIntoView({ behavior:'smooth', block:'center'});">
+                        💳 Pay Now →
+                      </button>
+                      <button type="button" class="btn-logout" style="padding:7px 12px; font-size:11.5px; font-weight:800; color:#dc2626; border-color:#fca5a5; background:#fef2f2; border-radius:8px;" onclick="cancelPharmacySelection(${activeOrderId})" title="Deselect this pharmacy and choose another">
+                        ✕ Deselect
+                      </button>
+                    ` : `
+                      <span style="font-size:11.5px; font-weight:800; color:#065f46; background:#d1fae5; padding:4px 8px; border-radius:8px;">PAID & FINALIZED ✓</span>
+                    `}
                   </div>
                 ` : `
-                  <button class="btn-auth-submit" style="width:auto; padding:9px 20px; font-size:13px; font-weight:800; background:#059669; border-radius:10px;" onclick="awardWinningPharmacy(${activeOrderId}, ${q.id})">
-                    Select This Pharmacy
-                  </button>
+                  ${!isPaid ? `
+                    <button class="btn-auth-submit" style="width:auto; padding:9px 18px; font-size:12.5px; font-weight:800; background:${hasAnyWinner ? '#2563eb' : '#059669'}; border-radius:10px;" onclick="awardWinningPharmacy(${activeOrderId}, ${q.id})">
+                      ${hasAnyWinner ? 'Switch to This Pharmacy 🔁' : 'Select This Pharmacy'}
+                    </button>
+                  ` : `
+                    <span style="font-size:11px; color:#94a3b8; font-weight:600;">Other Pharmacy Quote (Order Finalized)</span>
+                  `}
                 `}
               </div>
             </div>
@@ -7570,7 +7596,7 @@
         if (res.ok) {
           showInAppToast({
             title: "Pharmacy Selected! 🎉",
-            message: `${d.assignment.pharmacy_name} selected. Please complete simulated payment below!`,
+            message: `${d.assignment.pharmacy_name} selected. You can complete payment below, or change anytime before payment.`,
             type: "SUCCESS",
             duration: 6000
           });
@@ -7594,6 +7620,48 @@
       } catch (e) {
         showInAppToast({
           title: "Selection Error ⚠️",
+          message: e.message,
+          type: "DANGER"
+        });
+      }
+    }
+
+    async function cancelPharmacySelection(oid) {
+      if (!oid) oid = activeOrderId;
+      if (!oid) return;
+
+      const confirmDeselect = confirm("Deselect this pharmacy? You will then be able to choose any other pharmacy quote.");
+      if (!confirmDeselect) return;
+
+      try {
+        const res = await fetch(`${API}/orders/${oid}/deselect`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        const d = await res.json();
+        if (res.ok) {
+          showInAppToast({
+            title: "Pharmacy Deselected ↩",
+            message: "You can now choose any other pharmacy quote or wait for new offers.",
+            type: "INFO",
+            duration: 5000
+          });
+          await fetchCustomerOrderDetails(oid);
+          await fetchQuotesForCustomerOrder(oid);
+          await fetchCustomerOrders();
+        } else {
+          showInAppToast({
+            title: "Deselect Error ⚠️",
+            message: d.error || "Failed to deselect pharmacy",
+            type: "WARNING"
+          });
+        }
+      } catch (e) {
+        showInAppToast({
+          title: "Deselect Error ⚠️",
           message: e.message,
           type: "DANGER"
         });

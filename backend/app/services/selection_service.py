@@ -21,7 +21,7 @@ def select_winning_quote(
         # 1. Fetch order and lock row
         order = db.execute(
             """
-            SELECT id, customer_id, zone, status, total_mrp, final_amount
+            SELECT id, customer_id, zone, status, total_mrp, final_amount, mock_payment_status
             FROM orders
             WHERE id = ?
             """,
@@ -34,21 +34,18 @@ def select_winning_quote(
         if order["customer_id"] != customer_id:
             raise PermissionError("Access denied: You do not own this order")
 
-        # 2. Concurrency Check: Verify no existing assignment
-        existing_assignment = db.execute(
-            "SELECT id, pharmacy_id, quote_id FROM order_assignments WHERE order_id = ?",
-            (order_id,)
-        ).fetchone()
-
-        if existing_assignment:
-            raise RuntimeError(
-                f"Conflict: Order #{order_id} has already been assigned to Pharmacy #{existing_assignment['pharmacy_id']}."
+        # Check if already paid. Once paid, pharmacy selection is locked.
+        is_paid = order["mock_payment_status"] in ("MOCK_PAID", "PAID", "COMPLETED")
+        if is_paid:
+            raise ValueError(
+                f"Payment has already been completed for Order #{order_id}. Pharmacy selection is locked and cannot be changed."
             )
 
-        if order["status"] not in ("BROADCASTING", "PENDING_SELECTION"):
+        # Allow selecting/switching pharmacy while order is in BROADCASTING, PENDING_SELECTION, or CONFIRMED_PENDING_PHARMACY
+        if order["status"] not in ("BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"):
             raise ValueError(f"Cannot select quote for order in status '{order['status']}'")
 
-        # 3. Verify selected quote exists and belongs to this order
+        # 2. Verify selected quote exists and belongs to this order
         quote = db.execute(
             """
             SELECT q.id, q.order_id, q.pharmacy_id, q.status, q.total_quoted_price,
@@ -64,13 +61,13 @@ def select_winning_quote(
         if not quote:
             raise ValueError(f"Quote #{quote_id} not found for Order #{order_id}")
 
-        if quote["status"] != "SUBMITTED":
-            raise ValueError(f"Quote #{quote_id} is in status '{quote['status']}' and cannot be selected")
-
         winning_pharmacy_id = quote["pharmacy_id"]
         final_payable_amount = float(quote["total_quoted_price"])
 
-        # 4. Insert atomic assignment record (Strict 1-to-1 unique constraint)
+        # 3. Seamlessly remove any prior assignment for this order before assigning new winner
+        db.execute("DELETE FROM order_assignments WHERE order_id = ?", (order_id,))
+
+        # 4. Insert atomic assignment record
         cursor = db.execute(
             """
             INSERT INTO order_assignments (order_id, quote_id, pharmacy_id, confirmation_status)
@@ -80,16 +77,11 @@ def select_winning_quote(
         )
         assignment_id = cursor.lastrowid
 
-        # 5. Mark winning quote SELECTED
+        # 5. Mark all quotes for this order as SUBMITTED, and winning quote as SELECTED
+        db.execute("UPDATE quotes SET status = 'SUBMITTED' WHERE order_id = ?", (order_id,))
         db.execute("UPDATE quotes SET status = 'SELECTED' WHERE id = ?", (quote_id,))
 
-        # 6. Mark all other competing quotes REJECTED
-        db.execute(
-            "UPDATE quotes SET status = 'REJECTED' WHERE order_id = ? AND id != ?",
-            (order_id, quote_id)
-        )
-
-        # 7. Update Order status and final amount
+        # 6. Update Order status and final amount
         db.execute(
             """
             UPDATE orders
@@ -216,4 +208,76 @@ def process_mock_payment(
         "amount_paid": float(order["final_amount"]),
         "is_mock": True,
         "disclaimer": "Simulated mock payment for demonstration. No financial transaction occurred."
+    }
+
+
+def deselect_winning_quote(
+    db,
+    order_id: int,
+    customer_id: int
+) -> Dict[str, Any]:
+    """
+    Deselects the currently assigned pharmacy before payment is made.
+    Restores the order back to BROADCASTING status and resets all quotes to SUBMITTED,
+    allowing the customer to choose any other pharmacy or reconsider.
+    """
+    with transaction(db):
+        order = db.execute(
+            """
+            SELECT id, customer_id, zone, status, mock_payment_status
+            FROM orders
+            WHERE id = ?
+            """,
+            (order_id,)
+        ).fetchone()
+
+        if not order:
+            raise ValueError(f"Order #{order_id} not found")
+
+        if order["customer_id"] != customer_id:
+            raise PermissionError("Access denied: You do not own this order")
+
+        # Cannot deselect if already paid!
+        is_paid = order["mock_payment_status"] in ("MOCK_PAID", "PAID", "COMPLETED")
+        if is_paid:
+            raise ValueError(
+                f"Payment has already been completed for Order #{order_id}. Pharmacy selection is locked and cannot be deselected."
+            )
+
+        # Remove assignment
+        db.execute("DELETE FROM order_assignments WHERE order_id = ?", (order_id,))
+
+        # Reset all quotes for this order back to SUBMITTED
+        db.execute("UPDATE quotes SET status = 'SUBMITTED' WHERE order_id = ?", (order_id,))
+
+        # Reset order status back to BROADCASTING and clear final_amount
+        db.execute(
+            """
+            UPDATE orders
+            SET status = 'BROADCASTING',
+                final_amount = 0.0
+            WHERE id = ?
+            """,
+            (order_id,)
+        )
+
+        # Notify customer
+        db.execute(
+            """
+            INSERT INTO notifications (user_id, title, message, event_type, reference_id)
+            VALUES (?, ?, ?, 'QUOTE_DESELECTED', ?)
+            """,
+            (
+                customer_id,
+                "Pharmacy Selection Cancelled",
+                f"You deselected the pharmacy for Order #{order_id}. You can select any other quote or wait for new offers.",
+                order_id
+            )
+        )
+
+    return {
+        "order_id": order_id,
+        "status": "BROADCASTING",
+        "deselected": True,
+        "message": "Pharmacy deselected. You can now choose any pharmacy quote."
     }

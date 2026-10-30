@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from app.db import get_db
 from app.utils.auth_helpers import token_required, role_required
-from app.services.selection_service import select_winning_quote, process_mock_payment
+from app.services.selection_service import select_winning_quote, process_mock_payment, deselect_winning_quote
 
 selection_bp = Blueprint("selection", __name__)
 
@@ -40,6 +40,33 @@ def select_quote(order_id: int):
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         return jsonify({"error": f"Selection failed: {str(e)}"}), 500
+
+
+@selection_bp.route("/api/orders/<int:order_id>/deselect", methods=["POST"])
+@token_required
+@role_required("CUSTOMER")
+def deselect_quote_route(order_id: int):
+    """
+    Deselects the currently assigned pharmacy before payment is made,
+    allowing the customer to switch to another pharmacy or reconsider.
+    """
+    db = get_db()
+    try:
+        result = deselect_winning_quote(
+            db=db,
+            order_id=order_id,
+            customer_id=g.user_id
+        )
+        return jsonify({
+            "message": "Pharmacy selection cancelled successfully",
+            "result": result
+        }), 200
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to deselect pharmacy: {str(e)}"}), 500
 
 
 @selection_bp.route("/api/orders/<int:order_id>/mock-pay", methods=["POST"])
