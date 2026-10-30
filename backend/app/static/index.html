@@ -3578,24 +3578,6 @@
                 Nearby pharmacies are currently calculating prices and availability. Please compare quotes below and pick the best offer.
               </div>
 
-              <!-- Clean Radar Trigger Banner (Compact & Non-intrusive) -->
-              <div id="custRadarInlineBanner" onclick="openCustomerRadarMap()" style="margin-top:12px; background:linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border:1.5px solid #bfdbfe; border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; box-shadow:0 2px 8px rgba(37,99,235,0.06); transition:all 0.15s ease;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <div style="width:34px; height:34px; border-radius:50%; background:#2563eb; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 2px 6px rgba(37,99,235,0.3);">📡</div>
-                  <div>
-                    <div style="font-size:12.5px; font-weight:900; color:#1e1b4b; display:flex; align-items:center; gap:6px;">
-                      <span>Live Pharmacy Radar Map</span>
-                      <span id="custRadarInlineTimer" style="background:#059669; color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; font-weight:800;">⏱️ 04:00</span>
-                    </div>
-                    <div style="font-size:11px; color:#64748b; font-weight:600; margin-top:2px;" id="custRadarInlineSub">Tap to view live radar & pinged pharmacies</div>
-                  </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:800; color:#2563eb; background:#ffffff; border:1px solid #bfdbfe; padding:5px 11px; border-radius:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                  <span>View Map</span>
-                  <span>🗺️</span>
-                </div>
-              </div>
-
               <!-- Prescription Info Card (if order has prescription) -->
               <div id="custLivePrescriptionBadge" style="display:none; margin-top:12px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; align-items:center; gap:12px;">
                 <img id="custLivePrescriptionThumb" src="" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #86efac; cursor:pointer;" onclick="viewFullPrescription(this.src)" title="Click to view full prescription">
@@ -6595,8 +6577,6 @@
       const expandedPill = document.getElementById("custRadarExpandedPill");
       const zomatoSub = document.getElementById("zomatoTrackerSub");
       const fastExpandBtn = document.getElementById("custFastForwardExpandBtn");
-      const inlineTimer = document.getElementById("custRadarInlineTimer");
-      const inlineSub = document.getElementById("custRadarInlineSub");
 
       // Show floating right-edge circular button when customer has active order on Orders tab
       if (sideBtn && currentUser?.role === "CUSTOMER") {
@@ -6604,10 +6584,6 @@
         if (ordersTab && ordersTab.style.display !== "none") {
           sideBtn.style.display = "flex";
         }
-      }
-
-      if (inlineSub) {
-        inlineSub.innerText = `${data.pharmacies_contacted_count || 0} pharmacies pinged within ${data.search_radius_km || 5.0} km`;
       }
 
       if (radiusLabel) {
@@ -6633,10 +6609,6 @@
       if (timerBadge) {
         timerBadge.innerText = timerText;
         timerBadge.style.background = timerBg;
-      }
-      if (inlineTimer) {
-        inlineTimer.innerText = timerText;
-        inlineTimer.style.background = timerBg;
       }
 
       if (contactedBadge) {
