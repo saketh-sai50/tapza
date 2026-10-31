@@ -265,6 +265,14 @@ def create_prescription_order():
                     )
                 )
 
+        # Auto-extract prescription medicines via OCR and generate competitive pharmacy quotes
+        try:
+            from app.services.ocr_service import process_prescription_ocr
+            process_prescription_ocr(db=db, order_id=order_id, client_ocr_text=notes)
+            generate_auto_quotes_for_order(db=db, order_id=order_id, zone=zone, customer_id=g.user_id)
+        except Exception as ocr_q_err:
+            print(f"Prescription auto-quote error for order #{order_id}: {ocr_q_err}")
+
         return jsonify({
             "message": "Prescription order created and broadcasted successfully",
             "order": {

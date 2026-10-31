@@ -266,6 +266,37 @@ def get_order_quotes(order_id: int):
         (order_id,)
     ).fetchall()
 
+    # If no quotes exist yet and order is actively broadcasting, ensure auto-quotes are generated immediately
+    if not quotes_rows and order["status"] in ("BROADCASTING", "PENDING_SELECTION"):
+        try:
+            has_items = db.execute("SELECT id FROM order_items WHERE order_id = ?", (order_id,)).fetchone()
+            if not has_items:
+                from app.services.ocr_service import process_prescription_ocr
+                process_prescription_ocr(db=db, order_id=order_id)
+            from app.routes.order_routes import generate_auto_quotes_for_order
+            order_row = db.execute("SELECT zone, customer_id FROM orders WHERE id = ?", (order_id,)).fetchone()
+            generate_auto_quotes_for_order(
+                db=db,
+                order_id=order_id,
+                zone=order_row["zone"] if order_row else "Warangal",
+                customer_id=order_row["customer_id"] if order_row else order["customer_id"]
+            )
+            quotes_rows = db.execute(
+                """
+                SELECT q.id, q.order_id, q.pharmacy_id, q.status, q.total_quoted_price,
+                       q.available_items_count, q.total_items_count, q.is_full_fulfillment,
+                       q.notes, q.submitted_at,
+                       p.pharmacy_name, p.address as pharmacy_address, p.license_number, p.zone as pharmacy_zone
+                FROM quotes q
+                JOIN pharmacy_profiles p ON q.pharmacy_id = p.user_id
+                WHERE q.order_id = ?
+                ORDER BY q.is_full_fulfillment DESC, q.total_quoted_price ASC
+                """,
+                (order_id,)
+            ).fetchall()
+        except Exception as auto_q_err:
+            print(f"Auto-quote fallback error for order #{order_id}: {auto_q_err}")
+
     quotes = []
     for qr in quotes_rows:
         # Fetch item details
