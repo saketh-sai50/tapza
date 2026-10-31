@@ -5178,9 +5178,10 @@
           const d = await res.json();
           const orders = d.orders || [];
 
-          // Separate into LIVE UNPAID vs PAST/PAID (once paid, order moves to history & home stays clean)
-          const liveOrders = orders.filter(o => !isOrderPaid(o) && ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"].includes(o.status));
-          const pastOrders = orders.filter(o => isOrderPaid(o) || !["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"].includes(o.status));
+          // LIVE ORDERS: Any order undergoing bidding, pharmacy selection, or active fulfillment (packing, dispatch)
+          // Finished orders: Only DELIVERED, CANCELLED, or EXPIRED
+          const liveOrders = orders.filter(o => ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
+          const pastOrders = orders.filter(o => ["DELIVERED", "CANCELLED", "EXPIRED"].includes(o.status));
 
           const liveCountEl = document.getElementById("ordersLiveCount");
           if (liveCountEl) liveCountEl.innerText = liveOrders.length;
@@ -5213,9 +5214,14 @@
               const onHome = document.getElementById("custPageHome") && document.getElementById("custPageHome").style.display !== "none";
               zomatoBar.style.display = (onHome && !trackerDismissedManually) ? "flex" : "none";
               document.getElementById("zomatoTrackerTitle").innerText = `Live Order #${active.id}`;
-              document.getElementById("zomatoTrackerSub").innerText = (active.status === "BROADCASTING") 
-                ? "Pharmacies Quoting Live • Best Prices" 
-                : `Status: ${active.status.replace(/_/g, ' ')}`;
+              let subText = "Order In Progress";
+              if (active.status === "BROADCASTING") subText = "Pharmacies Quoting Live • Best Prices";
+              else if (active.status === "PENDING_SELECTION") subText = "Quotes Received • Compare Offers";
+              else if (active.status === "CONFIRMED_PENDING_PHARMACY") subText = isOrderPaid(active) ? "Paid • Preparing Order 📦" : "Pharmacy Selected • Complete Payment";
+              else if (active.status === "CONFIRMED") subText = "Pharmacy Confirmed • Preparing 📦";
+              else if (active.status === "PREPARING") subText = "Packing Medicines 💊";
+              else if (active.status === "DISPATCHED") subText = "Out for Delivery 🚚";
+              document.getElementById("zomatoTrackerSub").innerText = subText;
             }
           } else {
             activeOrderId = null;
@@ -7300,25 +7306,55 @@
           const historyCountBtn = document.getElementById("custOrderHistoryCount");
           if (historyCountBtn) historyCountBtn.innerText = orders.length;
 
-          // Customer Requirement:
-          // If customer has an order where payment is NOT yet completed (BROADCASTING, PENDING_SELECTION, or CONFIRMED_PENDING_PHARMACY with !isOrderPaid):
-          // Reopening the app MUST show this active order (with pharmacy offers and payment option) so customer can complete payment or deselect.
-          // BUT once payment is completed, this order MUST NOT appear on Home screen when reopening or polling!
-          // Home stays clean for new searches/orders, and paid orders are tracked in "My Orders".
-          const activeUnpaid = orders.find(o => !isOrderPaid(o) && ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"].includes(o.status));
+          // Active live orders across bidding, selection, and fulfillment
+          const liveOrders = orders.filter(o => ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
+          const currentActive = liveOrders.find(o => o.id === activeOrderId);
+          const activeLive = currentActive || liveOrders[0] || null;
 
-          if (activeUnpaid) {
-            activeOrderId = activeUnpaid.id;
-            currentCustomerOrder = activeUnpaid;
+          if (activeLive) {
+            activeOrderId = activeLive.id;
+            currentCustomerOrder = activeLive;
+
+            const onOrders = document.getElementById("custPageOrders") && document.getElementById("custPageOrders").style.display !== "none";
+            const onHome = document.getElementById("custPageHome") && document.getElementById("custPageHome").style.display !== "none";
             const activeCard = document.getElementById("customerActiveOrderCard");
-            if (activeCard) activeCard.style.display = "block";
-            const titleEl = document.getElementById("custOrderTrackingTitle");
-            if (titleEl) titleEl.innerText = `Order #${activeUnpaid.id} Live Tracking`;
-            updateCustomerStatusUI(activeUnpaid);
-            renderCustomerPaymentUI(activeUnpaid);
-            fetchCustomerOrderDetails(activeUnpaid.id);
+            const isPaid = isOrderPaid(activeLive);
+
+            if (onOrders) {
+              if (activeCard) activeCard.style.display = "block";
+              const titleEl = document.getElementById("custOrderTrackingTitle");
+              if (titleEl) titleEl.innerText = `Order #${activeLive.id} Live Tracking`;
+              updateCustomerStatusUI(activeLive);
+              renderCustomerPaymentUI(activeLive);
+              fetchCustomerOrderDetails(activeLive.id);
+            } else if (onHome) {
+              // On Home: if unpaid, show card to allow quick payment; if paid, hide card to keep Home catalogue clean
+              if (!isPaid) {
+                if (activeCard) activeCard.style.display = "block";
+                const titleEl = document.getElementById("custOrderTrackingTitle");
+                if (titleEl) titleEl.innerText = `Order #${activeLive.id} Live Tracking`;
+                updateCustomerStatusUI(activeLive);
+                renderCustomerPaymentUI(activeLive);
+                fetchCustomerOrderDetails(activeLive.id);
+              } else {
+                if (activeCard) activeCard.style.display = "none";
+              }
+              const zomatoBar = document.getElementById("zomatoLiveTrackerBar");
+              if (zomatoBar) {
+                zomatoBar.style.display = trackerDismissedManually ? "none" : "flex";
+                document.getElementById("zomatoTrackerTitle").innerText = `Live Order #${activeLive.id}`;
+                let subText = "Order In Progress";
+                if (activeLive.status === "BROADCASTING") subText = "Pharmacies Quoting Live • Best Prices";
+                else if (activeLive.status === "PENDING_SELECTION") subText = "Quotes Received • Compare Offers";
+                else if (activeLive.status === "CONFIRMED_PENDING_PHARMACY") subText = isPaid ? "Paid • Packing Medicines 📦" : "Pharmacy Selected • Complete Payment";
+                else if (activeLive.status === "CONFIRMED") subText = "Pharmacy Confirmed • Preparing 📦";
+                else if (activeLive.status === "PREPARING") subText = "Packing Medicines 💊";
+                else if (activeLive.status === "DISPATCHED") subText = "Out for Delivery 🚚";
+                document.getElementById("zomatoTrackerSub").innerText = subText;
+              }
+            }
           } else {
-            // If all orders are completed, paid, or delivered, keep active tracking card hidden from Home
+            // If all orders are completed, delivered, or cancelled, hide active tracking
             activeOrderId = null;
             currentCustomerOrder = null;
             const activeCard = document.getElementById("customerActiveOrderCard");
@@ -7502,13 +7538,26 @@
             : `Your request has been processed successfully. Please wait until nearby pharmacies in <b style="color:var(--text);">${ord.zone}</b> accept your request.`;
         }
       } else if (ord.status === "CONFIRMED_PENDING_PHARMACY") {
-        if (stepperContainer) stepperContainer.style.display = "none";
-        if (statusBadge) {
-          statusBadge.innerText = "ORDER ASSIGNED";
-          statusBadge.className = "role-pill role-pill-pharmacy";
+        const isPaid = isOrderPaid(ord);
+        if (isPaid) {
+          if (stepperContainer) stepperContainer.style.display = "block";
+          if (step1) step1.className = "order-step completed";
+          if (pharmaMsgText) pharmaMsgText.innerText = `💳 Payment received! ${pharmaName} is preparing your medicines.`;
+          if (statusBadge) {
+            statusBadge.innerText = "PAID • PREPARING 💳";
+            statusBadge.className = "role-pill role-pill-pharmacy";
+          }
+          if (heading) heading.innerText = "Payment Received • Order Confirmed 💳";
+          if (desc) desc.innerHTML = `Your payment of <b>₹${(ord.final_amount || 0).toFixed(2)}</b> was transferred to <b style="color:var(--text);">${escapeHtml(pharmaName)}</b>. The pharmacy is now packing your medicines.`;
+        } else {
+          if (stepperContainer) stepperContainer.style.display = "none";
+          if (statusBadge) {
+            statusBadge.innerText = "ORDER ASSIGNED";
+            statusBadge.className = "role-pill role-pill-pharmacy";
+          }
+          if (heading) heading.innerText = "Pharmacy Selected";
+          if (desc) desc.innerText = `You selected ${pharmaName}. Please complete simulated payment below to start delivery.`;
         }
-        if (heading) heading.innerText = "Order Assigned";
-        if (desc) desc.innerText = `You selected ${pharmaName}. You can complete payment below, or change pharmacy anytime before payment.`;
       } else if (ord.status === "CONFIRMED") {
         if (stepperContainer) stepperContainer.style.display = "block";
         if (step1) step1.className = "order-step completed";
@@ -8148,13 +8197,21 @@
           if (zomatoBar) zomatoBar.style.display = "none";
           showInAppToast({
             title: "Payment Successful! 💳",
-            message: "Money transferred successfully! The pharmacy has been notified to dispatch your medicines.",
+            message: "Money transferred successfully! The pharmacy has been notified to prepare and dispatch your medicines.",
             type: "PAYMENT",
             duration: 6000
           });
-          fetchCustomerOrderDetails(activeOrderId);
+          // Ensure live order tracking card stays visible with the fulfillment progress stepper!
+          const activeCard = document.getElementById("customerActiveOrderCard");
+          if (activeCard) activeCard.style.display = "block";
+          await fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
-          fetchCustomerOrders();
+          const onOrders = document.getElementById("custPageOrders") && document.getElementById("custPageOrders").style.display !== "none";
+          if (onOrders) {
+            await loadCustomerOrdersPage();
+          } else {
+            await fetchCustomerOrders();
+          }
         } else {
           showInAppToast({
             title: "Payment Error ⚠️",
