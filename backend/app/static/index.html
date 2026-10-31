@@ -2828,8 +2828,7 @@
     }
     .quote-table-scroll {
       width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow-x: hidden;
     }
     .quote-compare-table {
       width: 100%;
@@ -2837,22 +2836,20 @@
       font-family: 'Inter', sans-serif;
       font-size: 12.5px;
       text-align: left;
-      min-width: 560px;
     }
     .quote-compare-table th {
       background: #1e1b4b;
       color: #ffffff;
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 10px 12px;
+      padding: 10px 14px;
       border-bottom: 1px solid #334155;
-      white-space: nowrap;
     }
     .quote-compare-table td {
-      padding: 11px 12px;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 12px 14px;
+      border-bottom: 1.5px solid #f1f5f9;
       vertical-align: middle;
       transition: background 0.15s ease;
     }
@@ -7525,7 +7522,29 @@
 
       lastRenderedQuotesSignature = quotesSig;
 
-      // 1. Build Interactive Comparison Table Rows
+    function extractPharmacyCity(q) {
+      if (!q) return "Warangal";
+      if (q.pharmacy_zone && q.pharmacy_zone.trim() && q.pharmacy_zone.toUpperCase() !== "ALL") {
+        const z = q.pharmacy_zone.trim();
+        return z.charAt(0).toUpperCase() + z.slice(1).toLowerCase();
+      }
+      const addr = (q.pharmacy_address || "").trim();
+      if (!addr) {
+        return window.selectedCityName || "Warangal";
+      }
+      const parts = addr.split(",").map(p => p.trim()).filter(Boolean);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        let p = parts[i].replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
+        const skipList = ["telangana", "andhra pradesh", "karnataka", "maharashtra", "tamil nadu", "india", "ts", "ap"];
+        if (!p || skipList.includes(p.toLowerCase())) continue;
+        if (/\b(road|rd|street|st|lane|opp|opposite|near|behind|beside|h\.?no|plot|flat|floor|building)\b/i.test(p)) continue;
+        return p;
+      }
+      const fallback = (parts[parts.length - 1] || "").replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
+      return fallback || window.selectedCityName || "Warangal";
+    }
+
+    // 1. Build Interactive Comparison Table Rows
       const tableRowsHtml = quotes.map((q, idx) => {
         const isWinner = q.status === "SELECTED";
         const isViewing = q.id === activeQuote.id;
@@ -7536,43 +7555,64 @@
         const quotedTotal = parseFloat(q.total_quoted_price || 0);
         const totalSavings = q.total_savings !== undefined ? parseFloat(q.total_savings) : Math.max(0, totalMrp - quotedTotal);
         const savingsPct = q.savings_pct !== undefined ? parseFloat(q.savings_pct) : (totalMrp > 0 ? Math.round((totalSavings / totalMrp) * 100) : 0);
+        const pharmacyCity = extractPharmacyCity(q);
 
         return `
           <tr class="quote-compare-row ${isViewing ? 'active-viewing' : ''} ${isWinner ? 'active-winner' : ''}" data-qid="${q.id}" onclick="selectQuoteToView(${q.id})" title="Click to view detailed medicines & prices from ${escapeHtml(q.pharmacy_name)}">
-            <td style="padding:11px 12px;">
-              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                <span style="font-weight:900; color:#1e1b4b; font-size:13px; font-family:'Plus Jakarta Sans', sans-serif;">
-                  #${idx + 1} ${escapeHtml(q.pharmacy_name)}
-                </span>
-                ${isWinner ? '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:4px;">SELECTED</span>' : ''}
-              </div>
-              <div style="font-size:11px; color:#64748b; margin-top:2px; font-weight:500;">
-                📍 ${escapeHtml(q.pharmacy_address || '')}
-              </div>
-            </td>
-            <td style="padding:11px 12px; white-space:nowrap;">
-              <span class="${badgeClass}" style="font-size:10px; font-weight:800; padding:2px 7px;">${badgeText}</span>
-            </td>
-            <td style="padding:11px 12px; white-space:nowrap; color:#64748b; font-weight:700; ${totalSavings > 0 ? 'text-decoration:line-through;' : ''}">
-              ₹${totalMrp.toFixed(2)}
-            </td>
-            <td style="padding:11px 12px; white-space:nowrap; font-weight:900; font-size:14px; color:#065f46;">
-              ₹${quotedTotal.toFixed(2)}
-            </td>
-            <td style="padding:11px 12px; white-space:nowrap;">
-              ${totalSavings > 0 ? `
-                <div style="color:#15803d; font-weight:900; font-size:12.5px;">Save ₹${totalSavings.toFixed(2)}</div>
-                <div style="font-size:10px; font-weight:800; color:#166534; background:#dcfce7; border:1px solid #86efac; padding:1px 5px; border-radius:4px; display:inline-block; margin-top:2px;">
-                  ${savingsPct}% OFF
+            <td style="padding:13px 14px;">
+              <!-- 1. TOP LINE: PHARMACY NAME & SELECTED BADGE (LEFT) + ACTION BUTTON (RIGHT) -->
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span style="font-weight:900; color:#1e1b4b; font-size:14.5px; font-family:'Plus Jakarta Sans', sans-serif; letter-spacing:0.1px;">
+                      #${idx + 1} ${escapeHtml(q.pharmacy_name)}
+                    </span>
+                    ${isWinner ? '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:1px 7px; border-radius:4px; letter-spacing:0.3px;">SELECTED</span>' : ''}
+                  </div>
+                  <!-- ONLY CITY NAME UNDER PHARMACY NAME -->
+                  <div style="font-size:11.5px; color:#64748b; margin-top:3px; font-weight:700; display:flex; align-items:center; gap:4px;">
+                    <span>📍</span> <span>${escapeHtml(pharmacyCity)}</span>
+                  </div>
                 </div>
-              ` : `
-                <span style="font-size:11px; color:#64748b; font-weight:600;">₹0 (MRP)</span>
-              `}
-            </td>
-            <td style="padding:11px 12px; text-align:center; white-space:nowrap;">
-              <button type="button" class="row-action-btn" style="padding:5px 10px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
-                ${isViewing ? 'Viewing 👁️' : 'View Detail →'}
-              </button>
+
+                <!-- ACTION BUTTON -->
+                <div style="flex-shrink:0;">
+                  <button type="button" class="row-action-btn" style="padding:6px 12px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
+                    ${isViewing ? 'Viewing 👁️' : 'View Detail →'}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. DIRECTLY UNDER PHARMACY NAME: AVAILABILITY, TOTAL MRP, QUOTED PRICE, SAVINGS -->
+              <div style="margin-top:10px; padding-top:9px; border-top:1px dashed #e2e8f0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <!-- Availability -->
+                <div style="flex-shrink:0;">
+                  <span class="${badgeClass}" style="font-size:10px; font-weight:800; padding:3px 8px;">${badgeText}</span>
+                </div>
+
+                <!-- Total MRP & Quoted Price -->
+                <div style="display:flex; align-items:baseline; gap:6px;">
+                  <span style="font-size:11.5px; color:#64748b; font-weight:700; ${totalSavings > 0 ? 'text-decoration:line-through;' : ''}">
+                    MRP: ₹${totalMrp.toFixed(2)}
+                  </span>
+                  <span style="font-weight:900; font-size:15px; color:#065f46;">
+                    ₹${quotedTotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <!-- Savings Pill -->
+                <div style="flex-shrink:0;">
+                  ${totalSavings > 0 ? `
+                    <span style="font-size:10.5px; font-weight:800; color:#15803d; background:#dcfce7; border:1px solid #86efac; padding:2px 7px; border-radius:4px; display:inline-flex; align-items:center; gap:3px;">
+                      🏷️ Save ₹${totalSavings.toFixed(2)} (${savingsPct}% OFF)
+                    </span>
+                  ` : `
+                    <span style="font-size:10.5px; color:#64748b; font-weight:700; background:#f1f5f9; padding:2px 7px; border-radius:4px;">
+                      Standard MRP
+                    </span>
+                  `}
+                </div>
+              </div>
             </td>
           </tr>
         `;
@@ -7587,19 +7627,14 @@
               <span>Compare Pharmacy Offers (${quotes.length} Received)</span>
             </div>
             <div style="font-size:11.5px; color:#2563eb; font-weight:700;">
-              👉 Tap any row to inspect medicines & pricing
+              👉 Tap any pharmacy to inspect medicines & pricing
             </div>
           </div>
           <div class="quote-table-scroll">
             <table class="quote-compare-table">
               <thead>
                 <tr>
-                  <th>Pharmacy Name</th>
-                  <th>Availability</th>
-                  <th>Total MRP</th>
-                  <th>Quoted Price</th>
-                  <th>Savings</th>
-                  <th style="text-align:center;">Action</th>
+                  <th style="padding:10px 14px;">Pharmacy Name & Offer Summary</th>
                 </tr>
               </thead>
               <tbody>

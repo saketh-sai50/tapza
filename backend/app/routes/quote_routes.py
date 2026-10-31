@@ -257,7 +257,7 @@ def get_order_quotes(order_id: int):
         SELECT q.id, q.order_id, q.pharmacy_id, q.status, q.total_quoted_price,
                q.available_items_count, q.total_items_count, q.is_full_fulfillment,
                q.notes, q.submitted_at,
-               p.pharmacy_name, p.address as pharmacy_address, p.license_number
+               p.pharmacy_name, p.address as pharmacy_address, p.license_number, p.zone as pharmacy_zone
         FROM quotes q
         JOIN pharmacy_profiles p ON q.pharmacy_id = p.user_id
         WHERE q.order_id = ?
@@ -318,6 +318,7 @@ def get_order_quotes(order_id: int):
             "pharmacy_id": qr["pharmacy_id"],
             "pharmacy_name": qr["pharmacy_name"],
             "pharmacy_address": qr["pharmacy_address"],
+            "pharmacy_zone": qr["pharmacy_zone"] if ("pharmacy_zone" in qr.keys() and qr["pharmacy_zone"]) else "",
             "license_number": qr["license_number"],
             "status": qr["status"],
             "total_mrp": total_mrp,
