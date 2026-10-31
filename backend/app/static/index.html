@@ -2872,6 +2872,17 @@
       background: #ecfdf5 !important;
       border-left: 4px solid #059669;
     }
+    .swiggy-compare-pharmacy-name {
+      font-family: 'Plus Jakarta Sans', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15.5px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+      line-height: 1.25;
+      color: #0f172a;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
 
   </style>
 </head>
@@ -7524,24 +7535,30 @@
 
     function extractPharmacyCity(q) {
       if (!q) return "Warangal";
+      let city = "";
       if (q.pharmacy_zone && q.pharmacy_zone.trim() && q.pharmacy_zone.toUpperCase() !== "ALL") {
-        const z = q.pharmacy_zone.trim();
-        return z.charAt(0).toUpperCase() + z.slice(1).toLowerCase();
+        city = q.pharmacy_zone.trim();
+      } else {
+        const addr = (q.pharmacy_address || "").trim();
+        if (!addr) {
+          city = window.selectedCityName || "Warangal";
+        } else {
+          const parts = addr.split(",").map(p => p.trim()).filter(Boolean);
+          for (let i = parts.length - 1; i >= 0; i--) {
+            let p = parts[i].replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
+            const skipList = ["telangana", "andhra pradesh", "karnataka", "maharashtra", "tamil nadu", "india", "ts", "ap"];
+            if (!p || skipList.includes(p.toLowerCase())) continue;
+            if (/\b(road|rd|street|st|lane|opp|opposite|near|behind|beside|h\.?no|plot|flat|floor|building)\b/i.test(p)) continue;
+            city = p;
+            break;
+          }
+          if (!city) {
+            city = (parts[parts.length - 1] || "").replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim() || window.selectedCityName || "Warangal";
+          }
+        }
       }
-      const addr = (q.pharmacy_address || "").trim();
-      if (!addr) {
-        return window.selectedCityName || "Warangal";
-      }
-      const parts = addr.split(",").map(p => p.trim()).filter(Boolean);
-      for (let i = parts.length - 1; i >= 0; i--) {
-        let p = parts[i].replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
-        const skipList = ["telangana", "andhra pradesh", "karnataka", "maharashtra", "tamil nadu", "india", "ts", "ap"];
-        if (!p || skipList.includes(p.toLowerCase())) continue;
-        if (/\b(road|rd|street|st|lane|opp|opposite|near|behind|beside|h\.?no|plot|flat|floor|building)\b/i.test(p)) continue;
-        return p;
-      }
-      const fallback = (parts[parts.length - 1] || "").replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
-      return fallback || window.selectedCityName || "Warangal";
+      city = city.replace(/_/g, " ").trim();
+      return city.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
     }
 
     // 1. Build Interactive Comparison Table Rows
@@ -7560,23 +7577,33 @@
         return `
           <tr class="quote-compare-row ${isViewing ? 'active-viewing' : ''} ${isWinner ? 'active-winner' : ''}" data-qid="${q.id}" onclick="selectQuoteToView(${q.id})" title="Click to view detailed medicines & prices from ${escapeHtml(q.pharmacy_name)}">
             <td style="padding:13px 14px;">
-              <!-- 1. TOP LINE: PHARMACY NAME & SELECTED BADGE (LEFT) + ACTION BUTTON (RIGHT) -->
+              <!-- 1. TOP LINE: SWIGGY/ZOMATO TYPOGRAPHY PHARMACY NAME & BADGES (LEFT) + ACTION BUTTON (RIGHT) -->
               <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
                 <div style="flex:1; min-width:0;">
                   <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span style="font-weight:900; color:#1e1b4b; font-size:14.5px; font-family:'Plus Jakarta Sans', sans-serif; letter-spacing:0.1px;">
-                      #${idx + 1} ${escapeHtml(q.pharmacy_name)}
+                    <!-- SWIGGY/ZOMATO BOLD BRAND TYPOGRAPHY (NO '#' SYMBOL) -->
+                    <span class="swiggy-compare-pharmacy-name">
+                      ${escapeHtml(q.pharmacy_name)}
                     </span>
-                    ${isWinner ? '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:1px 7px; border-radius:4px; letter-spacing:0.3px;">SELECTED</span>' : ''}
+                    <span class="swiggy-verified-badge" style="width:15px; height:15px; font-size:9px;" title="Verified Pharmacy Partner">✓</span>
+                    <span class="zomato-rating-pill" style="font-size:10px; padding:1px 5px; border-radius:4px;">★ 4.8</span>
+                    ${isWinner ? '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:4px; letter-spacing:0.3px;">SELECTED</span>' : ''}
                   </div>
-                  <!-- ONLY CITY NAME UNDER PHARMACY NAME -->
-                  <div style="font-size:11.5px; color:#64748b; margin-top:3px; font-weight:700; display:flex; align-items:center; gap:4px;">
+                  <!-- ONLY CITY NAME & FAST DELIVERY MICRO-COPY UNDER PHARMACY NAME -->
+                  <div style="font-size:11.5px; color:#64748b; margin-top:3px; font-weight:600; display:flex; align-items:center; gap:5px; font-family:'Inter', sans-serif;">
                     <span>📍</span> <span>${escapeHtml(pharmacyCity)}</span>
+                    <span style="color:#cbd5e1;">•</span>
+                    <span style="color:#059669; font-weight:700;">⚡ 15-25 mins</span>
                   </div>
                 </div>
 
                 <!-- ACTION BUTTON -->
                 <div style="flex-shrink:0;">
+                  <button type="button" class="row-action-btn" style="padding:6px 12px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
+                    ${isViewing ? 'Viewing 👁️' : 'View Detail →'}
+                  </button>
+                </div>
+              </div>
                   <button type="button" class="row-action-btn" style="padding:6px 12px; font-size:11px; font-weight:800; border-radius:6px; cursor:pointer; border:1px solid ${isViewing ? '#2563eb' : '#cbd5e1'}; background:${isViewing ? '#2563eb' : '#ffffff'}; color:${isViewing ? '#ffffff' : '#334155'}; transition:all 0.15s ease;">
                     ${isViewing ? 'Viewing 👁️' : 'View Detail →'}
                   </button>
