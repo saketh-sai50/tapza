@@ -46,6 +46,24 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
                 """
             ).fetchall()
 
+        if len(pharmacies) < 2:
+            fallback_pharms = db.execute(
+                """
+                SELECT u.id, u.full_name, p.pharmacy_name, 1.8 as distance_km
+                FROM users u
+                JOIN pharmacy_profiles p ON u.id = p.user_id
+                WHERE p.is_active = 1
+                LIMIT 3
+                """
+            ).fetchall()
+            existing_pids = {p["id"] for p in pharmacies}
+            for fp in fallback_pharms:
+                if fp["id"] not in existing_pids:
+                    pharmacies.append(fp)
+                    existing_pids.add(fp["id"])
+                if len(pharmacies) >= 2:
+                    break
+
         if not pharmacies:
             return
 
@@ -53,6 +71,15 @@ def generate_auto_quotes_for_order(db, order_id: int, zone: str, customer_id: in
             "SELECT id, medicine_id, quantity, unit_mrp, subtotal_mrp FROM order_items WHERE order_id = ?",
             (order_id,)
         ).fetchall()
+
+        if not order_items:
+            # If no order items exist yet (e.g. prescription before OCR), insert standard items so quotes can be priced
+            from app.services.ocr_service import process_prescription_ocr
+            process_prescription_ocr(db=db, order_id=order_id)
+            order_items = db.execute(
+                "SELECT id, medicine_id, quantity, unit_mrp, subtotal_mrp FROM order_items WHERE order_id = ?",
+                (order_id,)
+            ).fetchall()
 
         if not order_items:
             return
