@@ -652,11 +652,12 @@ def get_order_details(order_id: int):
         for ir in items_rows
     ]
 
-    remaining = compute_remaining_seconds(order["broadcast_expires_at"]) if order["status"] == "BROADCASTING" else 0
+    is_paid = (order["mock_payment_status"] in ("MOCK_PAID", "PAID", "COMPLETED")) or (order["payment_status"] in ("PAID", "COMPLETED"))
+    remaining = compute_remaining_seconds(order["broadcast_expires_at"]) if (order["status"] == "BROADCASTING" and not is_paid) else 0
 
     # Auto transition or expand radius if broadcast timer elapsed and still marked BROADCASTING
     current_status = order["status"]
-    if current_status in ("BROADCASTING", "PENDING_SELECTION") and remaining == 0:
+    if not is_paid and current_status in ("BROADCASTING", "PENDING_SELECTION") and remaining == 0:
         from app.services.broadcast_service import check_and_expand_order_broadcast
         exp_res = check_and_expand_order_broadcast(db, order_id)
         if exp_res.get("expanded"):
@@ -746,14 +747,12 @@ def get_order_radar(order_id: int):
     from app.services.broadcast_service import check_and_expand_order_broadcast, compute_remaining_seconds
     from app.services.geo_service import generate_radar_static_map_url
 
-    # Check 4-minute auto-expansion
-    check_and_expand_order_broadcast(db, order_id)
-
     order = db.execute(
         """
         SELECT id, customer_id, zone, delivery_address, status,
                customer_lat, customer_lng, search_radius_km,
-               broadcast_started_at, broadcast_expires_at, expanded_at
+               broadcast_started_at, broadcast_expires_at, expanded_at,
+               mock_payment_status, payment_status
         FROM orders WHERE id = ?
         """,
         (order_id,)
@@ -761,6 +760,13 @@ def get_order_radar(order_id: int):
 
     if not order:
         return jsonify({"error": "Order not found"}), 404
+
+    is_paid = (order["mock_payment_status"] in ("MOCK_PAID", "PAID", "COMPLETED")) or (order["payment_status"] in ("PAID", "COMPLETED"))
+
+    # Only check 4-minute auto-expansion if order is active and NOT paid
+    if not is_paid and order["status"] in ("BROADCASTING", "PENDING_SELECTION"):
+        check_and_expand_order_broadcast(db, order_id)
+        order = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
 
     c_lat = float(order["customer_lat"] or 18.002476)
     c_lon = float(order["customer_lng"] or 79.556723)
@@ -872,15 +878,22 @@ def get_order_radar(order_id: int):
         for cr in contacted_rows
     ]
 
+    # If payment is already done, remove 10km (Ring 2) pharmacies and reset expansion indicators
+    if is_paid:
+        contacted_list = [cr for cr in contacted_list if cr["ring_stage"] == 1 or cr["pharmacy_id"] == accepted_id]
+        remaining = 0
+        is_expanded = False
+    else:
+        remaining = compute_remaining_seconds(order["broadcast_expires_at"])
+        is_expanded = radius_km > 5.0
+
     map_url = generate_radar_static_map_url(
         customer_lat=c_lat,
         customer_lon=c_lon,
         contacted_pharmacies=contacted_list,
         accepted_pharmacy_id=accepted_id,
-        current_radius_km=radius_km
+        current_radius_km=5.0 if is_paid else radius_km
     )
-
-    remaining = compute_remaining_seconds(order["broadcast_expires_at"])
 
     return jsonify({
         "order_id": order_id,
@@ -890,8 +903,8 @@ def get_order_radar(order_id: int):
             "lng": c_lon,
             "delivery_address": order["delivery_address"]
         },
-        "search_radius_km": radius_km,
-        "is_expanded": radius_km > 5.0,
+        "search_radius_km": 5.0 if is_paid else radius_km,
+        "is_expanded": is_expanded,
         "remaining_seconds": remaining,
         "pharmacies_contacted_count": len(contacted_list),
         "contacted_pharmacies": contacted_list,
@@ -906,6 +919,7 @@ def force_expand_order_radius(order_id: int):
     """
     Manually forces or simulates the 4-minute +5km (to 10km) radius expansion.
     Finds and broadcasts to all pharmacies in Ring 2 (5km to 10km) and resets the timer for 240s.
+    Strictly blocked if order is already paid or finalized.
     """
     db = get_db()
     from datetime import datetime, timezone, timedelta
@@ -914,6 +928,14 @@ def force_expand_order_radius(order_id: int):
     order = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
     if not order:
         return jsonify({"error": "Order not found"}), 404
+
+    is_paid = (order["mock_payment_status"] in ("MOCK_PAID", "PAID", "COMPLETED")) or (order["payment_status"] in ("PAID", "COMPLETED"))
+    if is_paid or order["status"] not in ("BROADCASTING", "PENDING_SELECTION"):
+        return jsonify({
+            "error": "Order has already been paid or finalized. Radius expansion is disabled.",
+            "is_expanded": False,
+            "search_radius_km": float(order["search_radius_km"] or 5.0)
+        }), 400
 
     c_lat = float(order["customer_lat"] or 18.002476)
     c_lon = float(order["customer_lng"] or 79.556723)

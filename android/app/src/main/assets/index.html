@@ -5175,9 +5175,9 @@
           const d = await res.json();
           const orders = d.orders || [];
 
-          // Separate into LIVE vs DELIVERED/PAST
-          const liveOrders = orders.filter(o => ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
-          const pastOrders = orders.filter(o => !["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
+          // Separate into LIVE UNPAID vs PAST/PAID (once paid, order moves to history & home stays clean)
+          const liveOrders = orders.filter(o => !isOrderPaid(o) && ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"].includes(o.status));
+          const pastOrders = orders.filter(o => isOrderPaid(o) || !["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"].includes(o.status));
 
           const liveCountEl = document.getElementById("ordersLiveCount");
           if (liveCountEl) liveCountEl.innerText = liveOrders.length;
@@ -6704,37 +6704,50 @@
         }
       }
 
-      if (radiusLabel) {
-        radiusLabel.innerText = data.is_expanded 
-          ? "⚡ 4-Min Timeout: Search expanded to 10.0 km (+5 km)"
-          : `Searching within ${data.search_radius_km} km radius`;
-      }
+      const isPaid = isOrderPaid(currentCustomerOrder);
 
       if (fastExpandBtn) {
-        if (data.is_expanded || data.search_radius_km > 5.0) {
+        if (isPaid || data.is_expanded || data.search_radius_km > 5.0) {
           fastExpandBtn.style.display = "none";
         } else {
           fastExpandBtn.style.display = "inline-flex";
         }
       }
 
-      const secs = data.remaining_seconds || 0;
-      const mins = Math.floor(secs / 60);
-      const remSecs = secs % 60;
-      const timerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
-      const timerBg = (secs <= 30) ? "#dc2626" : ((secs <= 90) ? "#f59e0b" : "#059669");
+      if (isPaid) {
+        if (radiusLabel) radiusLabel.innerText = "Order Confirmed & Paid ✓";
+        if (timerBadge) {
+          timerBadge.innerText = "Paid ✓";
+          timerBadge.style.background = "#059669";
+        }
+        if (expandedPill) {
+          expandedPill.style.display = "none";
+        }
+      } else {
+        if (radiusLabel) {
+          radiusLabel.innerText = data.is_expanded 
+            ? "⚡ 4-Min Timeout: Search expanded to 10.0 km (+5 km)"
+            : `Searching within ${data.search_radius_km} km radius`;
+        }
 
-      if (timerBadge) {
-        timerBadge.innerText = timerText;
-        timerBadge.style.background = timerBg;
+        const secs = data.remaining_seconds || 0;
+        const mins = Math.floor(secs / 60);
+        const remSecs = secs % 60;
+        const timerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+        const timerBg = (secs <= 30) ? "#dc2626" : ((secs <= 90) ? "#f59e0b" : "#059669");
+
+        if (timerBadge) {
+          timerBadge.innerText = timerText;
+          timerBadge.style.background = timerBg;
+        }
+
+        if (expandedPill) {
+          expandedPill.style.display = data.is_expanded ? "inline-block" : "none";
+        }
       }
 
       if (contactedBadge) {
         contactedBadge.innerText = `📍 ${data.pharmacies_contacted_count} Pinged`;
-      }
-
-      if (expandedPill) {
-        expandedPill.style.display = data.is_expanded ? "inline-block" : "none";
       }
 
       if (img && data.map_url) {
@@ -6758,7 +6771,7 @@
       }
 
       // Update Zomato bottom floating tracker
-      if (zomatoSub && data.status === "BROADCASTING") {
+      if (zomatoSub && data.status === "BROADCASTING" && !isPaid) {
         zomatoSub.innerText = `Radar: ${data.pharmacies_contacted_count} Pharmacies pinged within ${data.search_radius_km}km`;
       }
     }
@@ -6766,6 +6779,14 @@
     async function testFastForwardExpand() {
       if (!activeOrderId || !token) {
         alert("No active broadcast order to expand.");
+        return;
+      }
+      if (isOrderPaid(currentCustomerOrder)) {
+        showInAppToast({
+          title: "Order Already Paid 💳",
+          message: "Payment has already been completed for this order. Radius expansion is disabled.",
+          type: "INFO"
+        });
         return;
       }
       const btn = document.getElementById("custFastForwardExpandBtn");
@@ -6786,6 +6807,13 @@
           });
           await fetchCustomerOrderRadar(activeOrderId);
           await fetchCustomerOrderDetails(activeOrderId);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          showInAppToast({
+            title: "Radius Expansion Disabled",
+            message: errData.error || "Expansion is not permitted for this order.",
+            type: "WARNING"
+          });
         }
       } catch (err) {
         console.error("Fast forward expand error:", err);
@@ -7250,6 +7278,13 @@
       if (modal) modal.style.display = "none";
     }
 
+    function isOrderPaid(ord) {
+      if (!ord) return false;
+      const payStatus = String(ord.mock_payment_status || "").toUpperCase();
+      const ordStatus = String(ord.status || "").toUpperCase();
+      return ["MOCK_PAID", "COMPLETED", "PAID"].includes(payStatus) || ["PAID", "PROCESSING", "DISPATCHED", "DELIVERED", "COMPLETED"].includes(ordStatus);
+    }
+
     async function fetchCustomerOrders() {
       if (!token || currentUser?.role !== "CUSTOMER") return;
       try {
@@ -7261,24 +7296,38 @@
           const orders = d.orders || [];
           const historyCountBtn = document.getElementById("custOrderHistoryCount");
           if (historyCountBtn) historyCountBtn.innerText = orders.length;
-          if (orders.length > 0) {
-            // Only auto-open the tracking card if an active in-flight order is currently in progress
-            const active = orders.find(o => ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY", "CONFIRMED", "PREPARING", "DISPATCHED"].includes(o.status));
-            if (active) {
-              activeOrderId = active.id;
-              document.getElementById("customerActiveOrderCard").style.display = "block";
-              document.getElementById("custOrderTrackingTitle").innerText = `Order #${active.id} Live Tracking`;
-              updateCustomerStatusUI(active);
-              renderCustomerPaymentUI(active);
-              fetchCustomerOrderDetails(active.id);
-            } else {
-              // If all orders are completed/delivered, keep active tracking card hidden
-              activeOrderId = null;
-              document.getElementById("customerActiveOrderCard").style.display = "none";
-            }
+
+          // Customer Requirement:
+          // If customer has an order where payment is NOT yet completed (BROADCASTING, PENDING_SELECTION, or CONFIRMED_PENDING_PHARMACY with !isOrderPaid):
+          // Reopening the app MUST show this active order (with pharmacy offers and payment option) so customer can complete payment or deselect.
+          // BUT once payment is completed, this order MUST NOT appear on Home screen when reopening or polling!
+          // Home stays clean for new searches/orders, and paid orders are tracked in "My Orders".
+          const activeUnpaid = orders.find(o => !isOrderPaid(o) && ["BROADCASTING", "PENDING_SELECTION", "CONFIRMED_PENDING_PHARMACY"].includes(o.status));
+
+          if (activeUnpaid) {
+            activeOrderId = activeUnpaid.id;
+            currentCustomerOrder = activeUnpaid;
+            const activeCard = document.getElementById("customerActiveOrderCard");
+            if (activeCard) activeCard.style.display = "block";
+            const titleEl = document.getElementById("custOrderTrackingTitle");
+            if (titleEl) titleEl.innerText = `Order #${activeUnpaid.id} Live Tracking`;
+            updateCustomerStatusUI(activeUnpaid);
+            renderCustomerPaymentUI(activeUnpaid);
+            fetchCustomerOrderDetails(activeUnpaid.id);
           } else {
+            // If all orders are completed, paid, or delivered, keep active tracking card hidden from Home
             activeOrderId = null;
-            document.getElementById("customerActiveOrderCard").style.display = "none";
+            currentCustomerOrder = null;
+            const activeCard = document.getElementById("customerActiveOrderCard");
+            if (activeCard) activeCard.style.display = "none";
+            const quotesSection = document.getElementById("custQuotesSection");
+            if (quotesSection) quotesSection.style.display = "none";
+            const sideBtn = document.getElementById("custRadarSideBtn");
+            if (sideBtn) sideBtn.style.display = "none";
+            const zomatoBar = document.getElementById("zomatoLiveTrackerBar");
+            if (zomatoBar) zomatoBar.style.display = "none";
+            closePharmacyQuoteModal();
+            closeCustomerRadarMap();
           }
         }
       } catch (e) {
@@ -7306,13 +7355,6 @@
       }
     }
 
-    function isOrderPaid(ord) {
-      if (!ord) return false;
-      const payStatus = String(ord.mock_payment_status || "").toUpperCase();
-      const ordStatus = String(ord.status || "").toUpperCase();
-      return ["MOCK_PAID", "COMPLETED", "PAID"].includes(payStatus) || ["PAID", "PROCESSING", "DISPATCHED", "DELIVERED", "COMPLETED"].includes(ordStatus);
-    }
-
     function renderCustomerPaymentUI(ord) {
       const container = document.getElementById("custPaymentSection");
       if (!container) return;
@@ -7336,15 +7378,18 @@
 
         // Payment has already been made! Do NOT show payment button!
         container.innerHTML = `
-          <div style="background:#ecfdf5; border:1.5px solid #10b981; padding:12px 16px; border-radius:10px; color:#065f46; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div style="background:#ecfdf5; border:1.5px solid #10b981; padding:12px 16px; border-radius:10px; color:#065f46; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:18px;">✅</span>
               <div>
                 <div style="font-weight:900; font-size:13.5px; color:#065f46;">Simulated Payment Completed (₹${ord.final_amount.toFixed(2)})</div>
-                <div style="font-size:11px; color:#047857;">Payment verified for this order. No further payment required.</div>
+                <div style="font-size:11px; color:#047857;">Payment verified for this order. Track live dispatch under My Orders.</div>
               </div>
             </div>
-            <span style="background:#d1fae5; color:#065f46; font-size:11px; font-weight:800; padding:4px 8px; border-radius:12px;">PAID ✓</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="background:#d1fae5; color:#065f46; font-size:11px; font-weight:800; padding:4px 8px; border-radius:12px;">PAID ✓</span>
+              <button type="button" class="btn-auth-submit" style="width:auto; padding:6px 14px; font-size:11.5px; background:#059669;" onclick="startNewOrderSession()">Done & New Order</button>
+            </div>
           </div>
         `;
       } else {
@@ -8063,6 +8108,10 @@
           const quotesSection = document.getElementById("custQuotesSection");
           if (quotesSection) quotesSection.style.display = "none";
           closePharmacyQuoteModal();
+          const fastExpandBtn = document.getElementById("custFastForwardExpandBtn");
+          if (fastExpandBtn) fastExpandBtn.style.display = "none";
+          const zomatoBar = document.getElementById("zomatoLiveTrackerBar");
+          if (zomatoBar) zomatoBar.style.display = "none";
           showInAppToast({
             title: "Payment Successful! 💳",
             message: "Money transferred successfully! The pharmacy has been notified to dispatch your medicines.",
@@ -8071,6 +8120,7 @@
           });
           fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
+          fetchCustomerOrders();
         } else {
           showInAppToast({
             title: "Payment Error ⚠️",

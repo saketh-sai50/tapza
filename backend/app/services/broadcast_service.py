@@ -218,17 +218,24 @@ def check_and_expand_order_broadcast(db, order_id: int) -> Dict[str, Any]:
     Checks if order has exceeded 4 minutes (240s) without an accepted quote.
     If so, automatically expands search radius by +5 km (to 10 km) and broadcasts
     to pharmacies in the second ring.
+    Once payment is completed or order is finalized/assigned, expansion is strictly skipped.
     """
     order = db.execute(
         """
         SELECT id, customer_id, delivery_address, status, broadcast_started_at,
-               customer_lat, customer_lng, search_radius_km, expanded_at
+               customer_lat, customer_lng, search_radius_km, expanded_at,
+               mock_payment_status, payment_status, pharmacy_id
         FROM orders WHERE id = ?
         """,
         (order_id,)
     ).fetchone()
 
     if not order or order["status"] not in ("BROADCASTING", "PENDING_SELECTION"):
+        return {"expanded": False}
+
+    # Strict check: Never expand radius if payment is already completed!
+    is_paid = (order["mock_payment_status"] in ("MOCK_PAID", "PAID", "COMPLETED")) or (order["payment_status"] in ("PAID", "COMPLETED"))
+    if is_paid:
         return {"expanded": False}
 
     current_radius = float(order["search_radius_km"] or 5.0)
