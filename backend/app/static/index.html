@@ -3733,7 +3733,7 @@
             </div>
 
             <!-- Received Pharmacy Quotes -->
-            <div id="custQuotesSection" style="margin-top:16px;">
+            <div id="custQuotesSection" style="display:none; margin-top:16px;">
               <h3 style="font-size:15px; font-weight:800; margin-bottom:10px;">
                 Received Pharmacy Offers (<span id="custQuotesCount">0</span>):
               </h3>
@@ -7610,26 +7610,34 @@
     function renderCustomerQuotes(quotes) {
       const el = document.getElementById("custQuotesList");
       const countEl = document.getElementById("custQuotesCount");
-      if (countEl) countEl.innerText = quotes.length;
-      if (!quotes.length) {
-        el.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted); font-size:13px;">Waiting for quotes from local pharmacies...</div>`;
-        lastRenderedQuotesSignature = "";
-        return;
-      }
-
-      cachedCustomerQuotes = quotes;
-      const isPaid = isOrderPaid(currentCustomerOrder);
       const quotesSection = document.getElementById("custQuotesSection");
+      const isPaid = isOrderPaid(currentCustomerOrder);
+      const isAssigned = Boolean(currentCustomerOrder && (currentCustomerOrder.assigned_pharmacy || currentCustomerOrder.status === "CONFIRMED_PENDING_PHARMACY"));
 
       if (isPaid) {
         // Once payment is done, the received pharmacy offers table must NEVER appear again!
         if (quotesSection) quotesSection.style.display = "none";
-        el.innerHTML = "";
+        if (el) el.innerHTML = "";
         closePharmacyQuoteModal();
         return;
-      } else {
-        if (quotesSection) quotesSection.style.display = "block";
       }
+
+      if (!quotes || !quotes.length) {
+        if (countEl) countEl.innerText = "0";
+        if (isAssigned) {
+          // Pharmacy is already selected! Do NOT show a confusing empty "Waiting for quotes (0)" box
+          if (quotesSection) quotesSection.style.display = "none";
+        } else {
+          if (quotesSection) quotesSection.style.display = "block";
+          if (el) el.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted); font-size:13px;">Waiting for quotes from local pharmacies...</div>`;
+        }
+        lastRenderedQuotesSignature = "";
+        return;
+      }
+
+      if (countEl) countEl.innerText = quotes.length;
+      if (quotesSection) quotesSection.style.display = "block";
+      cachedCustomerQuotes = quotes;
 
       // Signature to detect if quotes list or selection status changed
       const quotesSig = JSON.stringify(quotes.map(q => [q.id, q.status, q.total_quoted_price, q.available_items_count])) + "_" + (isPaid ? "PAID" : "UNPAID");
