@@ -3733,7 +3733,7 @@
             </div>
 
             <!-- Received Pharmacy Quotes -->
-            <div style="margin-top:16px;">
+            <div id="custQuotesSection" style="margin-top:16px;">
               <h3 style="font-size:15px; font-weight:800; margin-bottom:10px;">
                 Received Pharmacy Offers (<span id="custQuotesCount">0</span>):
               </h3>
@@ -7306,6 +7306,13 @@
       }
     }
 
+    function isOrderPaid(ord) {
+      if (!ord) return false;
+      const payStatus = String(ord.mock_payment_status || "").toUpperCase();
+      const ordStatus = String(ord.status || "").toUpperCase();
+      return ["MOCK_PAID", "COMPLETED", "PAID"].includes(payStatus) || ["PAID", "PROCESSING", "DISPATCHED", "DELIVERED", "COMPLETED"].includes(ordStatus);
+    }
+
     function renderCustomerPaymentUI(ord) {
       const container = document.getElementById("custPaymentSection");
       if (!container) return;
@@ -7319,9 +7326,14 @@
       container.style.display = "block";
 
       // Check if simulated payment is ALREADY completed!
-      const isPaid = Boolean(ord.mock_payment_status && ["MOCK_PAID", "COMPLETED", "PAID"].includes(ord.mock_payment_status));
+      const isPaid = isOrderPaid(ord);
+      const quotesSection = document.getElementById("custQuotesSection");
 
       if (isPaid) {
+        // Once payment is completed, NEVER show the comparison offers table!
+        if (quotesSection) quotesSection.style.display = "none";
+        closePharmacyQuoteModal();
+
         // Payment has already been made! Do NOT show payment button!
         container.innerHTML = `
           <div style="background:#ecfdf5; border:1.5px solid #10b981; padding:12px 16px; border-radius:10px; color:#065f46; display:flex; align-items:center; justify-content:space-between; gap:12px;">
@@ -7336,6 +7348,7 @@
           </div>
         `;
       } else {
+        if (quotesSection) quotesSection.style.display = "block";
         // Pharmacy has been selected, customer needs to make payment for this order
         container.innerHTML = `
           <div style="background:#fef3c7; border:1px solid #fde68a; padding:10px 14px; border-radius:8px; font-size:12px; color:#92400e; font-weight:800; margin-bottom:12px;">
@@ -7360,6 +7373,8 @@
       activeOrderId = null;
       currentCustomerOrder = null;
       document.getElementById("customerActiveOrderCard").style.display = "none";
+      const quotesSection = document.getElementById("custQuotesSection");
+      if (quotesSection) quotesSection.style.display = "block";
       const sideBtn = document.getElementById("custRadarSideBtn");
       if (sideBtn) sideBtn.style.display = "none";
       closeCustomerRadarMap();
@@ -7371,6 +7386,11 @@
 
     function updateCustomerStatusUI(ord) {
       if (!ord) return;
+      if (isOrderPaid(ord)) {
+        const quotesSection = document.getElementById("custQuotesSection");
+        if (quotesSection) quotesSection.style.display = "none";
+        closePharmacyQuoteModal();
+      }
       const statusBadge = document.getElementById("custOrderStatusBadge");
       const heading = document.getElementById("custLiveStatusHeading");
       const desc = document.getElementById("custLiveStatusDesc");
@@ -7553,7 +7573,18 @@
       }
 
       cachedCustomerQuotes = quotes;
-      const isPaid = Boolean(currentCustomerOrder?.mock_payment_status && ["MOCK_PAID", "COMPLETED", "PAID"].includes(currentCustomerOrder.mock_payment_status));
+      const isPaid = isOrderPaid(currentCustomerOrder);
+      const quotesSection = document.getElementById("custQuotesSection");
+
+      if (isPaid) {
+        // Once payment is done, the received pharmacy offers table must NEVER appear again!
+        if (quotesSection) quotesSection.style.display = "none";
+        el.innerHTML = "";
+        closePharmacyQuoteModal();
+        return;
+      } else {
+        if (quotesSection) quotesSection.style.display = "block";
+      }
 
       // Signature to detect if quotes list or selection status changed
       const quotesSig = JSON.stringify(quotes.map(q => [q.id, q.status, q.total_quoted_price, q.available_items_count])) + "_" + (isPaid ? "PAID" : "UNPAID");
@@ -8029,6 +8060,9 @@
         });
         const d = await res.json();
         if (res.ok) {
+          const quotesSection = document.getElementById("custQuotesSection");
+          if (quotesSection) quotesSection.style.display = "none";
+          closePharmacyQuoteModal();
           showInAppToast({
             title: "Payment Successful! 💳",
             message: "Money transferred successfully! The pharmacy has been notified to dispatch your medicines.",
