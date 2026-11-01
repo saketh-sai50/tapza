@@ -4230,6 +4230,89 @@
         </div>
       </div>
 
+      <!-- Onboard New Partner Pharmacy -->
+      <div class="card" style="border:1.5px solid #059669; background:#ffffff; box-shadow:0 4px 16px rgba(5,150,105,0.08); margin-bottom:16px;">
+        <div class="section-title" style="margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <span style="font-size:16px; font-weight:900; color:#065f46;">➕ Onboard New Partner Pharmacy</span>
+            <div style="font-size:12px; color:#64748b; font-weight:normal; margin-top:2px;">
+              Auto-geocodes street address using Geoapify API and indexes directly into SQLite R*Tree spatial database.
+            </div>
+          </div>
+          <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px;">
+            GEOAPIFY R*TREE READY
+          </span>
+        </div>
+
+        <form onsubmit="event.preventDefault(); submitNewPartnerPharmacy();">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                Pharmacy Name <span style="color:#ef4444;">*</span>
+              </label>
+              <input type="text" id="newPharmName" class="form-input" placeholder="e.g. Sri Balaji Medical & General Stores" required style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+
+            <div>
+              <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                City / Operating Zone <span style="color:#ef4444;">*</span>
+              </label>
+              <select id="newPharmZone" class="form-input" style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
+                <option value="Warangal">Warangal</option>
+                <option value="Hanamkonda">Hanamkonda</option>
+                <option value="Kazipet">Kazipet</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+              Full Street Address (used for Geoapify GPS Geocoding) <span style="color:#ef4444;">*</span>
+            </label>
+            <input type="text" id="newPharmAddress" class="form-input" placeholder="e.g. Shop 4, Darga Chowrastha, Near NIT Campus Road, Kazipet, Warangal 506004" required style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+            <div style="font-size:11px; color:#64748b; margin-top:3px;">
+              💡 The backend queries the Geoapify API with Warangal proximity bias to calculate latitude and longitude automatically.
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:14px;">
+            <div>
+              <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                Login Username <span style="color:#ef4444;">*</span>
+              </label>
+              <input type="text" id="newPharmUsername" class="form-input" placeholder="e.g. pharma_balaji" required style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+
+            <div>
+              <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                Login Password <span style="color:#ef4444;">*</span>
+              </label>
+              <input type="password" id="newPharmPassword" class="form-input" placeholder="Min 6 characters (e.g. BalajiPass@123)" required style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+
+            <div>
+              <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                Contact Phone
+              </label>
+              <input type="tel" id="newPharmPhone" class="form-input" placeholder="e.g. 9848012345" style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+
+            <div>
+              <label style="font-size:12px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">
+                Drug License Number
+              </label>
+              <input type="text" id="newPharmLicense" class="form-input" placeholder="e.g. TS-WGL-9988 (auto if blank)" style="width:100%; padding:10px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+          </div>
+
+          <button type="submit" id="newPharmSubmitBtn" class="btn-auth-submit" style="background:#059669; padding:13px 20px; font-size:13.5px; font-weight:800; border-radius:8px; width:100%; box-shadow:0 3px 10px rgba(5,150,105,0.25);">
+            💾 Save & Register Partner Pharmacy (Auto-Geocode & Index in R*Tree)
+          </button>
+        </form>
+
+        <div id="newPharmStatusBox" style="display:none; margin-top:14px;"></div>
+      </div>
+
       <!-- Manage Pharmacies -->
       <div class="card">
         <div class="section-title">
@@ -9270,17 +9353,169 @@
       }
     }
 
+    async function submitNewPartnerPharmacy() {
+      const nameInput = document.getElementById("newPharmName");
+      const addrInput = document.getElementById("newPharmAddress");
+      const userInput = document.getElementById("newPharmUsername");
+      const passInput = document.getElementById("newPharmPassword");
+      const phoneInput = document.getElementById("newPharmPhone");
+      const zoneSelect = document.getElementById("newPharmZone");
+      const licInput = document.getElementById("newPharmLicense");
+      const statusBox = document.getElementById("newPharmStatusBox");
+      const submitBtn = document.getElementById("newPharmSubmitBtn");
+
+      const pharmacy_name = (nameInput?.value || "").trim();
+      const address = (addrInput?.value || "").trim();
+      const username = (userInput?.value || "").trim();
+      const password = (passInput?.value || "").trim();
+      const phone = (phoneInput?.value || "").trim();
+      const zone = zoneSelect?.value || "Warangal";
+      const license_number = (licInput?.value || "").trim();
+
+      if (!pharmacy_name) {
+        alert("Please enter the Pharmacy Name.");
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!address) {
+        alert("Please enter the street address for Geoapify geocoding.");
+        if (addrInput) addrInput.focus();
+        return;
+      }
+      if (!username) {
+        alert("Please enter a unique login username for this pharmacy.");
+        if (userInput) userInput.focus();
+        return;
+      }
+      if (!password || password.length < 6) {
+        alert("Password must be at least 6 characters.");
+        if (passInput) passInput.focus();
+        return;
+      }
+
+      try {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerText = "⏳ Geocoding address with Geoapify & registering in R*Tree...";
+        }
+        if (statusBox) {
+          statusBox.style.display = "block";
+          statusBox.innerHTML = `
+            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; color:#0369a1; font-size:12.5px;">
+              📡 Calling Geoapify Geocoding API to resolve exact GPS coordinates and indexing into SQLite spatial R*Tree...
+            </div>
+          `;
+        }
+
+        const res = await fetch(`${API}/admin/pharmacies`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            pharmacy_name,
+            address,
+            username,
+            password,
+            phone,
+            zone,
+            license_number
+          })
+        });
+
+        const d = await res.json();
+        if (res.ok) {
+          const p = d.pharmacy;
+          if (statusBox) {
+            statusBox.innerHTML = `
+              <div style="background:#ecfdf5; border:1.5px solid #10b981; border-radius:10px; padding:14px; color:#065f46; font-size:13px;">
+                <div style="font-weight:900; font-size:14.5px; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                  <span>✅</span> <span>Partner Pharmacy Successfully Onboarded!</span>
+                </div>
+                <div style="margin-bottom:4px;"><b>🏥 Pharmacy:</b> ${escapeHtml(p.pharmacy_name)} (${escapeHtml(p.zone)})</div>
+                <div style="margin-bottom:4px;"><b>📍 Geocoded Address:</b> ${escapeHtml(p.address)}</div>
+                <div style="margin-bottom:4px;"><b>🌐 GPS Coordinates:</b> Lat: <b>${p.latitude.toFixed(6)}</b>, Lon: <b>${p.longitude.toFixed(6)}</b> (via Geoapify API)</div>
+                <div style="margin-bottom:4px;"><b>🗺️ Spatial Index:</b> <span style="background:#d1fae5; color:#065f46; padding:2px 8px; border-radius:4px; font-weight:800; font-size:11.5px;">✓ INDEXED IN SQLITE R*TREE</span> (Part of live 5km/10km broadcast group)</div>
+                <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #a7f3d0; font-size:12px;">
+                  <b>🔑 Login Credentials:</b> Username: <code style="background:#fff; padding:2px 6px; border-radius:4px; font-weight:800;">${escapeHtml(p.username)}</code> | Password: <code style="background:#fff; padding:2px 6px; border-radius:4px; font-weight:800;">${escapeHtml(password)}</code>
+                </div>
+              </div>
+            `;
+          }
+
+          // Clear inputs
+          if (nameInput) nameInput.value = "";
+          if (addrInput) addrInput.value = "";
+          if (userInput) userInput.value = "";
+          if (passInput) passInput.value = "";
+          if (phoneInput) phoneInput.value = "";
+          if (licInput) licInput.value = "";
+
+          showInAppToast({
+            title: "Partner Pharmacy Registered! 🏥",
+            message: `${p.pharmacy_name} geocoded and indexed in spatial R*Tree. Ready to receive broadcasts!`,
+            type: "SUCCESS",
+            duration: 6500
+          });
+
+          await loadAdminData();
+        } else {
+          if (statusBox) {
+            statusBox.innerHTML = `
+              <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; color:#b91c1c; font-size:12.5px;">
+                ⚠️ <b>Registration Failed:</b> ${escapeHtml(d.error || 'Failed to onboard pharmacy')}
+              </div>
+            `;
+          }
+          alert(d.error || "Failed to onboard pharmacy");
+        }
+      } catch (err) {
+        if (statusBox) {
+          statusBox.innerHTML = `
+            <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; color:#b91c1c; font-size:12.5px;">
+              ⚠️ <b>Network Error:</b> ${escapeHtml(err.message)}
+            </div>
+          `;
+        }
+        console.error("submitNewPartnerPharmacy error:", err);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = "💾 Save & Register Partner Pharmacy (Auto-Geocode & Index in R*Tree)";
+        }
+      }
+    }
+
     function renderAdminPharmacies(pharmacies) {
       const el = document.getElementById("adminPharmaciesTable");
-      el.innerHTML = pharmacies.slice(0, 15).map(p => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9; font-size:12.5px;">
-          <div>
-            <span style="font-weight:800;">${p.pharmacy_name}</span> (${p.email})
-            <div style="font-size:11px; color:var(--text-muted);">${p.zone} • License: ${p.license_number} • Won: ${p.orders_won_count}</div>
+      if (!pharmacies || !pharmacies.length) {
+        el.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">No onboarded pharmacies found.</div>`;
+        return;
+      }
+      el.innerHTML = pharmacies.slice(0, 50).map(p => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #f1f5f9; font-size:12.5px; gap:10px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:240px;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-weight:800; font-size:13.5px; color:#0f172a;">${escapeHtml(p.pharmacy_name)}</span>
+              <span class="role-pill role-pill-pharmacy" style="font-size:10px; padding:1px 6px;">${escapeHtml(p.zone || 'Warangal')}</span>
+              ${p.is_active ? '<span style="background:#ecfdf5; color:#059669; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;">ACTIVE</span>' : '<span style="background:#fef2f2; color:#dc2626; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;">SUSPENDED</span>'}
+            </div>
+            <div style="font-size:11.5px; color:#475569; margin-top:2px;">
+              <b>Username:</b> <code style="background:#f1f5f9; padding:1px 4px; border-radius:3px; font-weight:800;">${escapeHtml(p.username || p.email)}</code> • <b>License:</b> ${escapeHtml(p.license_number || 'N/A')}
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">
+              📍 ${escapeHtml(p.address || 'Address not set')}
+            </div>
+            <div style="font-size:10.5px; color:#059669; margin-top:2px; font-weight:700;">
+              🌐 R*Tree Index: Lat ${p.latitude !== null && p.latitude !== undefined ? p.latitude.toFixed(4) : 'N/A'}, Lon ${p.longitude !== null && p.longitude !== undefined ? p.longitude.toFixed(4) : 'N/A'} • Won: ${p.orders_won_count || 0} orders
+            </div>
           </div>
-          <button class="btn-logout" style="padding:4px 10px; font-size:11px;" onclick="togglePharmStatus(${p.user_id})">
-            ${p.is_active ? 'Suspend' : 'Activate'}
-          </button>
+          <div style="flex-shrink:0;">
+            <button class="btn-logout" style="padding:5px 12px; font-size:11.5px; font-weight:700;" onclick="togglePharmStatus(${p.user_id})">
+              ${p.is_active ? 'Suspend' : 'Activate'}
+            </button>
+          </div>
         </div>
       `).join("");
     }

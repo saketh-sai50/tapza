@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from app.db import get_db, transaction
-from app.utils.auth_helpers import token_required, role_required
+from app.utils.auth_helpers import token_required, role_required, hash_password
+from app.services.geo_service import geocode_address
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -106,8 +107,9 @@ def list_pharmacies():
     db = get_db()
     rows = db.execute(
         """
-        SELECT u.id as user_id, u.email, u.full_name, u.phone, u.created_at,
+        SELECT u.id as user_id, u.email, u.username, u.full_name, u.phone, u.created_at,
                p.id as profile_id, p.pharmacy_name, p.license_number, p.address, p.zone, p.is_active,
+               p.latitude, p.longitude,
                (SELECT COUNT(*) FROM quotes WHERE pharmacy_id = u.id) as quotes_submitted_count,
                (SELECT COUNT(*) FROM order_assignments WHERE pharmacy_id = u.id) as orders_won_count
         FROM users u
@@ -122,12 +124,15 @@ def list_pharmacies():
             "user_id": r["user_id"],
             "profile_id": r["profile_id"],
             "email": r["email"],
+            "username": r["username"] or r["email"],
             "full_name": r["full_name"],
             "phone": r["phone"],
             "pharmacy_name": r["pharmacy_name"],
             "license_number": r["license_number"],
             "address": r["address"],
             "zone": r["zone"],
+            "latitude": float(r["latitude"]) if r["latitude"] is not None else None,
+            "longitude": float(r["longitude"]) if r["longitude"] is not None else None,
             "is_active": bool(r["is_active"]),
             "quotes_submitted_count": r["quotes_submitted_count"],
             "orders_won_count": r["orders_won_count"],
@@ -136,6 +141,111 @@ def list_pharmacies():
         for r in rows
     ]
     return jsonify({"pharmacies": pharmacies}), 200
+
+
+@admin_bp.route("/pharmacies", methods=["POST"])
+def create_partner_pharmacy():
+    """
+    Onboards a new partner pharmacy:
+      1. Registers pharmacy credentials (username, password).
+      2. Geocodes street address into exact latitude & longitude using Geoapify API.
+      3. Persists profile in pharmacy_profiles.
+      4. Indexes pharmacy into SQLite R*Tree (pharmacy_rtree) for instant radius broadcasts.
+    """
+    data = request.get_json(silent=True) or {}
+    pharmacy_name = (data.get("pharmacy_name") or "").strip()
+    address = (data.get("address") or "").strip()
+    username = (data.get("username") or "").strip().lower()
+    password = (data.get("password") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    zone = (data.get("zone") or "").strip()
+    license_number = (data.get("license_number") or "").strip()
+
+    if not pharmacy_name:
+        return jsonify({"error": "Pharmacy Name is required"}), 400
+    if not address:
+        return jsonify({"error": "Full street address is required for geolocation"}), 400
+    if not username:
+        return jsonify({"error": "Login username is required"}), 400
+    if not password or len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    db = get_db()
+
+    # Check if username or email already taken
+    existing_user = db.execute(
+        "SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?",
+        (username, f"{username}@partner.tapza.com")
+    ).fetchone()
+    if existing_user:
+        return jsonify({"error": f"Username '{username}' is already in use. Please choose another username."}), 409
+
+    # Geocode address via Geoapify API
+    lat, lon, formatted_addr = geocode_address(address)
+
+    # Determine zone if not explicitly provided
+    if not zone:
+        addr_lower = (formatted_addr or address).lower()
+        if "hanamkonda" in addr_lower:
+            zone = "Hanamkonda"
+        elif "kazipet" in addr_lower:
+            zone = "Kazipet"
+        else:
+            zone = "Warangal"
+
+    pwd_hash = hash_password(password)
+    email = f"{username}@partner.tapza.com"
+    full_name = pharmacy_name
+
+    with transaction(db):
+        # 1. Create user in users table
+        cur = db.execute(
+            """
+            INSERT INTO users (email, username, password_hash, full_name, role, phone, zone)
+            VALUES (?, ?, ?, ?, 'PHARMACY', ?, ?)
+            """,
+            (email, username, pwd_hash, full_name, phone or "9000000000", zone)
+        )
+        u_id = cur.lastrowid
+
+        # 2. Assign license number if blank
+        if not license_number:
+            license_number = f"TS-WGL-{u_id:04d}"
+
+        # 3. Create pharmacy profile
+        db.execute(
+            """
+            INSERT INTO pharmacy_profiles (
+                user_id, pharmacy_name, license_number, address, zone, is_active, latitude, longitude, phone
+            )
+            VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
+            """,
+            (u_id, pharmacy_name, license_number, formatted_addr or address, zone, lat, lon, phone or "9000000000")
+        )
+
+        # 4. CRITICAL: Insert into SQLite R*Tree spatial index
+        db.execute(
+            """
+            INSERT OR REPLACE INTO pharmacy_rtree (id, min_lat, max_lat, min_lng, max_lng)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (u_id, lat, lat, lon, lon)
+        )
+
+    return jsonify({
+        "message": f"Partner pharmacy '{pharmacy_name}' onboarded successfully and indexed into SQLite R*Tree!",
+        "pharmacy": {
+            "user_id": u_id,
+            "pharmacy_name": pharmacy_name,
+            "username": username,
+            "license_number": license_number,
+            "address": formatted_addr or address,
+            "zone": zone,
+            "latitude": lat,
+            "longitude": lon,
+            "rtree_indexed": True
+        }
+    }), 201
 
 
 @admin_bp.route("/pharmacies/<int:pharmacy_id>/toggle", methods=["POST"])
