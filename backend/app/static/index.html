@@ -4636,6 +4636,8 @@
     // =============================================================
     const seenNotificationIds = new Set();
     let hasInitialNotificationsLoaded = false;
+    let globalAudioCtx = null;
+    let lastChimeTime = 0;
 
     // Lightweight unified toast helper used across features
     function showToast(msg, type = "info") {
@@ -4650,9 +4652,28 @@
 
     function playInAppChime(type) {
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
+        const nowMs = Date.now();
+        // Rate-limit chimes so rapid notifications never flood or stall the audio thread
+        if (nowMs - lastChimeTime < 1200) return;
+        lastChimeTime = nowMs;
+
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
+          globalAudioCtx = new AudioContextClass();
+        }
+
+        if (globalAudioCtx.state === 'suspended') {
+          globalAudioCtx.resume().catch(() => {});
+        }
+
+        const ctx = globalAudioCtx;
+        if (!ctx || ctx.state === 'suspended') {
+          // Autoplay policy prevented playback; exit smoothly without blocking
+          return;
+        }
+
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -4679,6 +4700,13 @@
           osc.start(now);
           osc.stop(now + 0.45);
         }
+
+        setTimeout(() => {
+          try {
+            osc.disconnect();
+            gain.disconnect();
+          } catch (_) {}
+        }, 600);
       } catch (e) {
         // Silently continue if audio context is restricted
       }
@@ -4829,8 +4857,15 @@
 
       container.prepend(toast);
 
+      // Keep at most 3 active toasts; synchronously remove any older excess toasts
       while (container.children.length > 3) {
-        dismissInAppToast(container.lastElementChild);
+        const oldest = container.lastElementChild;
+        if (oldest) {
+          if (oldest._dismissTimer) clearTimeout(oldest._dismissTimer);
+          container.removeChild(oldest);
+        } else {
+          break;
+        }
       }
 
       const timer = setTimeout(() => {
@@ -4840,12 +4875,19 @@
       toast._dismissTimer = timer;
     }
 
-    function dismissInAppToast(toast) {
-      if (!toast || toast.classList.contains("toast-hide")) return;
+    function dismissInAppToast(toast, immediate = false) {
+      if (!toast) return;
       if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
+      if (immediate) {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+        return;
+      }
+      if (toast.classList.contains("toast-hide")) return;
       toast.classList.add("toast-hide");
       setTimeout(() => {
-        if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+        try {
+          if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+        } catch (_) {}
       }, 260);
     }
 
@@ -6993,6 +7035,8 @@
         if (res.ok) {
           activeOrderId = d.order.order_id;
           cart = {};
+          closeCartModal();
+          closeMedProfileModal();
           renderCatalogueList(medicines);
           updateCartSummaryUI();
           showInAppToast({
@@ -7002,7 +7046,6 @@
             duration: 6000
           });
           switchCustomerTab("ORDERS");
-          fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
           setTimeout(() => {
             const statusCard = document.getElementById("custLiveStatusCard");
@@ -7271,6 +7314,8 @@
         if (res.ok) {
           activeOrderId = d.order.order_id;
           clearPrescriptionImage();
+          closeCartModal();
+          closeMedProfileModal();
           showInAppToast({
             title: "Prescription Uploaded! 📸",
             message: `Broadcasting prescription #${activeOrderId} to ${zone} pharmacies for OCR scanning & quotation.`,
@@ -7278,7 +7323,6 @@
             duration: 6000
           });
           switchCustomerTab("ORDERS");
-          fetchCustomerOrderDetails(activeOrderId);
           fetchNotifications();
           setTimeout(() => {
             const statusCard = document.getElementById("custLiveStatusCard");
@@ -7457,8 +7501,11 @@
       }
     }
 
+    let isFetchingCustomerOrderDetails = false;
+
     async function fetchCustomerOrderDetails(oid) {
-      if (!oid) return;
+      if (!oid || isFetchingCustomerOrderDetails) return;
+      isFetchingCustomerOrderDetails = true;
       try {
         const res = await fetch(`${API}/orders/${oid}`, {
           headers: { "Authorization": `Bearer ${token}` }
@@ -7474,6 +7521,8 @@
         }
       } catch (e) {
         console.error(e);
+      } finally {
+        isFetchingCustomerOrderDetails = false;
       }
     }
 
@@ -7705,9 +7754,11 @@
     let activeCustomerQuoteId = null;
     let cachedCustomerQuotes = [];
     let lastRenderedQuotesSignature = "";
+    let isFetchingCustomerQuotes = false;
 
     async function fetchQuotesForCustomerOrder(oid) {
-      if (!oid) return;
+      if (!oid || isFetchingCustomerQuotes) return;
+      isFetchingCustomerQuotes = true;
       try {
         const res = await fetch(`${API}/orders/${oid}/quotes`, {
           headers: { "Authorization": `Bearer ${token}` }
@@ -7721,6 +7772,8 @@
         }
       } catch (e) {
         console.error("fetchQuotesForCustomerOrder error:", e);
+      } finally {
+        isFetchingCustomerQuotes = false;
       }
     }
 
@@ -9559,8 +9612,11 @@
       }
     }
 
+    let isFetchingNotifications = false;
+
     async function fetchNotifications() {
-      if (!token) return;
+      if (!token || isFetchingNotifications) return;
+      isFetchingNotifications = true;
       try {
         const res = await fetch(`${API}/notifications`, {
           headers: { "Authorization": `Bearer ${token}` }
@@ -9590,30 +9646,46 @@
             hasInitialNotificationsLoaded = true;
           } else {
             // Live background polling: pop up any newly arrived unread notification
+            let shownCount = 0;
+            let quoteNeedsRefresh = false;
+            let refOrderId = null;
+
             currentNotifications.forEach(n => {
               if (!seenNotificationIds.has(n.id)) {
                 seenNotificationIds.add(n.id);
                 if (!n.is_read) {
-                  showInAppToast({
-                    title: n.title,
-                    message: n.message,
-                    type: n.event_type || "INFO",
-                    eventType: n.event_type,
-                    refId: n.reference_id
-                  });
+                  // Show at most 1 toast per poll cycle to prevent screen flooding or audio thread congestion
+                  if (shownCount < 1) {
+                    showInAppToast({
+                      title: n.title,
+                      message: n.message,
+                      type: n.event_type || "INFO",
+                      eventType: n.event_type,
+                      refId: n.reference_id
+                    });
+                    shownCount++;
+                  }
                   if (n.event_type === "NEW_QUOTE_RECEIVED" && n.reference_id) {
-                    fetchQuotesForCustomerOrder(n.reference_id);
-                    if (activeOrderId && Number(n.reference_id) === Number(activeOrderId)) {
-                      fetchCustomerOrderDetails(activeOrderId);
-                    }
+                    quoteNeedsRefresh = true;
+                    refOrderId = n.reference_id;
                   }
                 }
               }
             });
+
+            // Single debounced refresh if quotes arrived
+            if (quoteNeedsRefresh && refOrderId) {
+              fetchQuotesForCustomerOrder(refOrderId);
+              if (activeOrderId && Number(refOrderId) === Number(activeOrderId)) {
+                fetchCustomerOrderDetails(activeOrderId);
+              }
+            }
           }
         }
       } catch (e) {
         console.error(e);
+      } finally {
+        isFetchingNotifications = false;
       }
     }
 
