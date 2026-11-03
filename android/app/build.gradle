@@ -10,8 +10,8 @@ android {
         applicationId "com.tapza.radar"
         minSdk 24
         targetSdk 34
-        versionCode 17
-        versionName "1.0.17-meds"
+        versionCode 18
+        versionName "1.0.18-smooth"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -51,8 +51,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.17-meds
-          name: "Tapza Meds v1.0.17 (Custom Medicine App Icon & Rebranded Name)"
+          tag_name: v1.0.18-smooth
+          name: "Tapza Meds v1.0.18 (Zero-Freeze Smooth Order Request)"
           body: "Official Tapza Meds Android APK with custom medical cross & capsule pill icon. Features live GPS ordering, 5km/10km radius expansion, and instant over-the-air updates."
           files: |
             output/Tapza-Meds.apk
