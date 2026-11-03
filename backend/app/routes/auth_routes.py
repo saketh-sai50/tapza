@@ -12,23 +12,31 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json() or {}
-    email = (data.get("email") or "").strip().lower()
+    raw_ident = (data.get("email") or data.get("username") or "").strip()
+    raw_user = (data.get("username") or "").strip()
     password = data.get("password") or ""
     full_name = (data.get("full_name") or "").strip()
     role = (data.get("role") or "").strip().upper()
     phone = (data.get("phone") or "").strip()
-    zone = (data.get("zone") or "").strip().upper()
+    zone = (data.get("zone") or "Warangal").strip()
 
-    if not email or "@" not in email:
-        return jsonify({"error": "A valid email address is required"}), 400
+    if not raw_ident:
+        return jsonify({"error": "Username or Email address is required"}), 400
+
+    # Handle username vs email
+    if "@" in raw_ident:
+        email = raw_ident.lower()
+        username = (raw_user or raw_ident.split("@")[0]).lower()
+    else:
+        username = raw_ident.lower()
+        email = f"{username}@gmail.com"
+
     if len(password) < 6:
         return jsonify({"error": "Password must be at least 6 characters"}), 400
     if not full_name:
         return jsonify({"error": "Full name is required"}), 400
     if role not in ("CUSTOMER", "PHARMACY"):
         return jsonify({"error": "Role must be CUSTOMER or PHARMACY"}), 400
-    if not zone:
-        return jsonify({"error": "Zone is required (e.g., ZONE_A, ZONE_B, CENTRAL)"}), 400
 
     pharmacy_name = (data.get("pharmacy_name") or "").strip()
     license_number = (data.get("license_number") or "").strip()
@@ -41,9 +49,12 @@ def register():
             }), 400
 
     db = get_db()
-    existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+    existing = db.execute(
+        "SELECT id FROM users WHERE LOWER(email) = LOWER(?) OR (username IS NOT NULL AND LOWER(username) = LOWER(?))",
+        (email, username)
+    ).fetchone()
     if existing:
-        return jsonify({"error": "An account with this email already exists"}), 409
+        return jsonify({"error": "An account with this email/username already exists. Please log in directly."}), 409
 
     pwd_hash = hash_password(password)
 
@@ -51,10 +62,10 @@ def register():
         with transaction(db):
             cursor = db.execute(
                 """
-                INSERT INTO users (email, password_hash, full_name, role, phone, zone)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO users (email, username, password_hash, full_name, role, phone, zone)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (email, pwd_hash, full_name, role, phone, zone)
+                (email, username, pwd_hash, full_name, role, phone, zone)
             )
             user_id = cursor.lastrowid
 
@@ -98,11 +109,12 @@ def register():
         }, current_app.config["JWT_SECRET"])
 
         return jsonify({
-            "message": "Registration successful",
+            "message": "Registration successful and credentials saved",
             "token": token,
             "user": {
                 "id": user_id,
                 "email": email,
+                "username": username,
                 "full_name": full_name,
                 "role": role,
                 "phone": phone,
@@ -124,15 +136,21 @@ def login():
     if not identifier or not password:
         return jsonify({"error": "Email or Username and password are required"}), 400
 
+    prefix = identifier.split("@")[0] if "@" in identifier else identifier
+
     db = get_db()
-    # Check matching either email or username or email alias
+    # Check matching either email or username or email prefix/alias
     user = db.execute(
         """
         SELECT id, email, username, password_hash, full_name, role, phone, zone
         FROM users
-        WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)
+        WHERE LOWER(email) = LOWER(?)
+           OR (username IS NOT NULL AND LOWER(username) = LOWER(?))
+           OR (username IS NOT NULL AND LOWER(username) = LOWER(?))
+           OR LOWER(email) = LOWER(?)
+           OR LOWER(email) LIKE ?
         """,
-        (identifier, identifier, f"{identifier}@tapza.com")
+        (identifier, identifier, prefix, f"{prefix}@gmail.com", f"{prefix}@%")
     ).fetchone()
 
     if not user or not verify_password(password, user["password_hash"]):
@@ -166,6 +184,7 @@ def login():
         "user": {
             "id": user["id"],
             "email": user["email"],
+            "username": user["username"] or user["email"].split("@")[0],
             "full_name": user["full_name"],
             "role": user["role"],
             "phone": user["phone"],

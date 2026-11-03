@@ -5613,6 +5613,11 @@
       hideAllInterfaces();
       document.getElementById("authScreen").style.display = "block";
       switchAuthTab("CUSTOMER");
+      const savedIdent = localStorage.getItem("tapza_last_identifier");
+      if (savedIdent) {
+        const identInput = document.getElementById("authIdentifier");
+        if (identInput && !identInput.value) identInput.value = savedIdent;
+      }
     }
 
 
@@ -5735,20 +5740,29 @@
           const res = await fetch(`${API}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: identifier, password, full_name, phone, zone, role: "CUSTOMER" })
+            body: JSON.stringify({
+              email: identifier,
+              username: identifier.includes('@') ? identifier.split('@')[0] : identifier,
+              password,
+              full_name,
+              phone,
+              zone,
+              role: "CUSTOMER"
+            })
           });
           const d = await res.json();
           if (res.ok) {
             token = d.token;
             currentUser = d.user;
             localStorage.setItem("tapza_token", token);
+            localStorage.setItem("tapza_last_identifier", identifier);
             seenNotificationIds.clear();
             hasInitialNotificationsLoaded = false;
-            alert(`Welcome to Tapza, ${full_name}!`);
+            alert(`Welcome to Tapza, ${full_name}! Your account credentials have been saved. You can now log in anytime directly with your username or Gmail.`);
             renderAuthenticatedRoleView();
             fetchNotifications();
           } else {
-            alert("Registration Error: " + d.error);
+            alert("Registration Error: " + (d.error || "Failed to create account"));
           }
         } catch (e) {
           alert("Network Error: " + e.message);
@@ -5761,19 +5775,20 @@
         const res = await fetch(`${API}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: identifier, password })
+          body: JSON.stringify({ email: identifier, username: identifier, password })
         });
         const d = await res.json();
         if (res.ok) {
           token = d.token;
           currentUser = d.user;
           localStorage.setItem("tapza_token", token);
+          localStorage.setItem("tapza_last_identifier", identifier);
           seenNotificationIds.clear();
           hasInitialNotificationsLoaded = false;
           renderAuthenticatedRoleView();
           fetchNotifications();
         } else {
-          alert("Login Failed: " + d.error);
+          alert("Login Failed: " + (d.error || "Invalid username or password"));
         }
       } catch (e) {
         alert("Network Error: " + e.message);
