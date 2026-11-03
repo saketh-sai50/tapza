@@ -7796,6 +7796,34 @@
       openPharmacyQuoteModal(qid);
     }
 
+    function extractPharmacyCity(q) {
+      if (!q) return "Warangal";
+      let city = "";
+      if (q.pharmacy_zone && q.pharmacy_zone.trim() && q.pharmacy_zone.toUpperCase() !== "ALL") {
+        city = q.pharmacy_zone.trim();
+      } else {
+        const addr = (q.pharmacy_address || "").trim();
+        if (!addr) {
+          city = window.selectedCityName || "Warangal";
+        } else {
+          const parts = addr.split(",").map(p => p.trim()).filter(Boolean);
+          for (let i = parts.length - 1; i >= 0; i--) {
+            let p = parts[i].replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
+            const skipList = ["telangana", "andhra pradesh", "karnataka", "maharashtra", "tamil nadu", "india", "ts", "ap"];
+            if (!p || skipList.includes(p.toLowerCase())) continue;
+            if (/\b(road|rd|street|st|lane|opp|opposite|near|behind|beside|h\.?no|plot|flat|floor|building)\b/i.test(p)) continue;
+            city = p;
+            break;
+          }
+          if (!city) {
+            city = (parts[parts.length - 1] || "").replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim() || window.selectedCityName || "Warangal";
+          }
+        }
+      }
+      city = city.replace(/_/g, " ").trim();
+      return city.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    }
+
     function renderCustomerQuotes(quotes) {
       const el = document.getElementById("custQuotesList");
       const countEl = document.getElementById("custQuotesCount");
@@ -7860,35 +7888,7 @@
 
       lastRenderedQuotesSignature = quotesSig;
 
-    function extractPharmacyCity(q) {
-      if (!q) return "Warangal";
-      let city = "";
-      if (q.pharmacy_zone && q.pharmacy_zone.trim() && q.pharmacy_zone.toUpperCase() !== "ALL") {
-        city = q.pharmacy_zone.trim();
-      } else {
-        const addr = (q.pharmacy_address || "").trim();
-        if (!addr) {
-          city = window.selectedCityName || "Warangal";
-        } else {
-          const parts = addr.split(",").map(p => p.trim()).filter(Boolean);
-          for (let i = parts.length - 1; i >= 0; i--) {
-            let p = parts[i].replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim();
-            const skipList = ["telangana", "andhra pradesh", "karnataka", "maharashtra", "tamil nadu", "india", "ts", "ap"];
-            if (!p || skipList.includes(p.toLowerCase())) continue;
-            if (/\b(road|rd|street|st|lane|opp|opposite|near|behind|beside|h\.?no|plot|flat|floor|building)\b/i.test(p)) continue;
-            city = p;
-            break;
-          }
-          if (!city) {
-            city = (parts[parts.length - 1] || "").replace(/\b\d{5,6}\b/g, "").replace(/[-,\s]+$/g, "").trim() || window.selectedCityName || "Warangal";
-          }
-        }
-      }
-      city = city.replace(/_/g, " ").trim();
-      return city.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-    }
-
-    // 1. Build Interactive Comparison Table Rows
+      // 1. Build Interactive Comparison Table Rows
       const tableRowsHtml = quotes.map((q, idx) => {
         const isWinner = q.status === "SELECTED";
         const isViewing = q.id === activeQuote.id;
@@ -8042,6 +8042,7 @@
         ? parseFloat(q.total_savings)
         : Math.max(0, totalMrp - quotedTotal);
       const savingsPct = q.savings_pct !== undefined ? parseFloat(q.savings_pct) : (totalMrp > 0 ? Math.round((totalSavings / totalMrp) * 100) : 0);
+      const pharmacyCity = extractPharmacyCity(q);
 
       const itemsHtml = (q.items && q.items.length) ? q.items.map(it => {
         const itemMrp = parseFloat(it.unit_mrp || 0);
@@ -8111,9 +8112,11 @@
                 <span class="swiggy-verified-badge" title="Verified Pharmacy Partner">✓</span>
               </div>
 
-              <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px; display:flex; align-items:flex-start; gap:4px; font-weight:500; line-height:1.35; font-family:'Inter', sans-serif;">
-                <span style="color:#94a3b8;">📍</span>
-                <span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(q.pharmacy_address || '')}</span>
+              <div style="font-size:12px; color:#cbd5e1; margin-top:4px; display:flex; align-items:center; gap:5px; font-weight:600; font-family:'Inter', sans-serif;">
+                <span style="color:#38bdf8;">📍</span>
+                <span>${escapeHtml(pharmacyCity)}</span>
+                <span style="color:rgba(255,255,255,0.3);">•</span>
+                <span style="color:#34d399; font-weight:700;">Fast Delivery</span>
               </div>
             </div>
 
